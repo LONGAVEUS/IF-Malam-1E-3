@@ -1,0 +1,214 @@
+.page-title-running {
+  font-size: 2.5em;
+  font-weight: bold;
+  color: #ffffff;
+  text-shadow: 2px 2px 5px rgba(0, 0, 0, 0.8);
+
+  /* Batasi wadah agar teks bisa bergerak */
+  overflow: hidden;
+  white-space: nowrap; /* Mencegah teks turun baris */
+  width: 100%; /* Lebar penuh */
+  text-align: center; /* Opsional: Biar terlihat di tengah sebelum bergerak */
+
+  /* Jarak vertikal */
+  padding-top: 20px;
+  padding-bottom: 20px;
+
+  /* 2. Terapkan Animasi */
+  animation: marquee 10s linear infinite;
+}
+
+@keyframes marquee {
+  /* Mulai Animasi */
+  0% {
+    transform: translateX(25%);
+  }
+
+  /* Akhir Animasi */
+  100% {
+    transform: translateX(-25%);
+  }
+}
+
+body {
+  /* Menjadikan body full viewport height */
+  min-height: 100vh;
+
+  /* Flexbox untuk memposisikan konten di tengah */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin: 0;
+  padding: 20px;
+
+  /* Background Image Styling */
+  /* Ganti URL ini dengan gambar background Anda */
+  background-image: url("poltek.jpeg");
+  backdrop-filter: blur(8px);
+  background-size: cover;
+  background-position: center;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background-color: #f4f4f4;
+}
+
+/* Wadah utama yang membungkus formulir (Sekarang berbentuk Vertikal) */
+.main-container {
+  font-family: "Poppins", sans-serif;
+  position: relative;
+  width: 400px; /* Lebar Tunggal yang ideal untuk desain portrait */
+  max-width: 90%; /* Responsif di layar kecil */
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+  border-radius: 10px;
+  overflow: hidden; /* Penting untuk menjaga border-radius tetap rapi */
+  background: white; /* Base color agar transisi lebih bersih */
+}
+
+.form-box,
+.toggle-box {
+  padding: 30px 40px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+/* Styling untuk kotak informasi/toggle (Bagian UNGU di ATAS atau BAWAH) */
+.toggle-box {
+  background: linear-gradient(to right, #082451, #8e2de2);
+  color: white;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  /* Hilangkan padding vertikal agar lebih ringkas */
+  padding: 25px 40px;
+  transition: 1.8 ease-in-out;
+}
+
+.toggle-box h2 {
+  font-family: "Playfair Display", serif;
+  font-weight: 700; /* Tebal */
+  font-size: 3em;
+  margin-bottom: 5px;
+}
+
+/* Teks di Kotak Ungu */
+.toggle-box p {
+  font-family: "Poppins", sans-serif;
+  line-height: 1.5;
+  font-size: 15px;
+}
+
+/* Styling untuk kotaknya sendiri (Form Putih) */
+.form-box {
+  background: #ffffff;
+}
+
+h3 {
+  font-family: "Franklin Gothic Medium", "Arial Narrow", Arial, sans-serif;
+  margin-bottom: 10px;
+  font-weight: 600;
+}
+
+h3 {
+  /* Judul Form (Login/Registration) */
+  color: #333;
+  text-align: center;
+  margin-bottom: 25px;
+  font-size: 28px;
+}
+
+/* Input Fields */
+input[type="text"],
+input[type="password"],
+input[type="email"],
+input[type="tel"] {
+  width: 100%;
+  padding: 12px;
+  margin-bottom: 20px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  box-sizing: border-box;
+  transition: border-color 0.3s;
+}
+
+input:focus {
+  border-color: #141110;
+  outline: none;
+}
+
+/* Forgot Link */
+.forgot-link {
+  text-align: right;
+  margin-bottom: 20px;
+}
+
+.forgot-link a {
+  font-size: 13px;
+  color: #601278;
+  text-decoration: none;
+  transition: color 0.3s;
+}
+
+button {
+  padding: 10px 20px;
+  margin: 10px auto 15px auto;
+  display: block;
+  border-radius: 25px;
+  cursor: pointer;
+  font-weight: bold;
+  text-transform: uppercase;
+  transition: all 0.3s ease;
+}
+
+/* Button di Form Box (Login/Register) */
+.form-box button {
+  width: 100%;
+  background-color: #ae81ea;
+  color: white;
+  border: 2px solid #edd4f5;
+}
+
+.form-box button:hover {
+  background-color: #2db2e2;
+  border-color: #33055b;
+}
+
+/* Button di Toggle Box (Tombol Switch) */
+.toggle-box button {
+  background-color: white;
+  color: #340c83;
+  border: none;
+  padding: 8px 30px;
+  width: auto; /* Agar tidak 100% lebar */
+}
+
+/* sosial link */
+.social-text {
+  text-align: center;
+  margin: 15px 0;
+  color: #666;
+}
+
+.social-link {
+  display: flex;
+  justify-content: center;
+  gap: 15px;
+  margin-top: 20px;
+}
+
+.social-link a {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  text-decoration: none;
+  color: #333;
+  border: 1px solid #ddd;
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  font-weight: bold;
+  transition: all 0.3s;
+}
