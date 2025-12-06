@@ -88,6 +88,10 @@ $hari_pertama = date('N', strtotime("$tahun-$bulan-01")); // 1=Senin, 7=Minggu
 
 // Sesuaikan untuk kalender (Minggu = 0, Senin = 1, ..., Sabtu = 6)
 $offset = $hari_pertama - 1;
+$dashboard = ($role === 'admin') ? 'admin.php' :
+             (($role === 'notulis') ? 'Notulis.php' :
+             'tamu.php');
+
 ?>
 
 <!DOCTYPE html>
@@ -114,38 +118,26 @@ $offset = $hari_pertama - 1;
       </button>
     </div>
 
-    <nav class="sidebar-nav">
       <ul class="nav-list primary-nav">
-        <li class="nav-item">
-          <a href="notulis.php" class="nav-link">
-            <i class="fas fa-th-large nav-icon"></i>
-            <span class="nav-label">Dashboard</span>
-          </a>
-        </li>
-        <li class="nav-item">
-          <a href="jadwal_rapat.php" class="nav-link active">
-            <i class="fas fa-calendar-alt nav-icon"></i>
-            <span class="nav-label">Jadwal Rapat</span>
-          </a>
-        </li>
-        <li class="nav-item">
-          <a href="notulis.php" class="nav-link">
-            <i class="fas fa-file-alt nav-icon"></i>
-            <span class="nav-label">Notulen Rapat</span>
-          </a>
-        </li>
-        <li class="nav-item">
-          <a href="#" class="nav-link">
-            <i class="fas fa-bell nav-icon"></i>
-            <span class="nav-label">Notifikasi</span>
-          </a>
-        </li>
-        <li class="nav-item">
-          <a href="tamu.php" class="nav-link">
-            <i class="fas fa-info-circle nav-icon"></i>
-            <span class="nav-label">Informasi</span>
-          </a>
-        </li>
+        <?php if ($role === 'admin'): ?>
+        <li><a href="<?= $dashboard ?>" class="nav-link active"><i class="fas fa-th-large nav-icon"></i><span class="nav-label">Dashboard</span></a></li> 
+        <li><a href="jadwal_rapat.php" class="nav-link"><i class="fas fa-calendar-alt"></i> Jadwal Rapat</a></li>
+        <li><a href="notulen_list_admin.php" class="nav-link"><i class="fas fa-file-alt"></i> Notulen Rapat</a></li>
+        <li><a href="user_management.php" class="nav-link"><i class="fas fa-users"></i> User Management</a></li>
+
+        <?php elseif ($role === 'notulis'): ?>
+        <li><a href="<?= $dashboard ?>" class="nav-link active"><i class="fas fa-th-large nav-icon"></i><span class="nav-label">Dashboard</span></a></li> 
+        <li><a href="notulis.php" class="nav-link"><i class="fas fa-file-alt"></i> Notulen Rapat</a></li>
+        <li><a href="jadwal_rapat.php" class="nav-link"><i class="fas fa-calendar-alt"></i> Jadwal Rapat</a></li>
+        <li class="nav-item"><a href="#" class="nav-link"><i class="fas fa-bell nav-icon"></i><span class="nav-label">Notifikasi</span></a></li>
+        <li class="nav-item"><a href="#" class="nav-link"><i class="fas fa-info-circle nav-icon"></i><span class="nav-label">Informasi</span></a></li>
+
+        <?php elseif ($role === 'tamu'): ?>
+        <li><a href="<?= $dashboard ?>" class="nav-link active"><i class="fas fa-th-large nav-icon"></i><span class="nav-label">Dashboard</span></a></li> 
+        <li><a href="tamu.php" class="nav-link"><i class="fas fa-file-alt"></i> Notulen Rapat</a></li>
+        <li><a href="jadwal_rapat_tamu.php" class="nav-link"><i class="fas fa-calendar-alt"></i> Jadwal Rapat</a></li>
+        <?php endif; ?>
+
       </ul>
 
       <ul class="nav-list secondary-nav">

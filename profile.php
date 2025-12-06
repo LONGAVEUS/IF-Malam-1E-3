@@ -28,7 +28,7 @@ $dashboard = ($role === 'admin') ? 'admin.php' :
 <html lang="en">
 
 <head>
-  <title>Dashboard Admin</title>
+  <title>notulenrapat</title>
   <!-- Font Awesome -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <!-- External CSS -->
@@ -54,22 +54,21 @@ $dashboard = ($role === 'admin') ? 'admin.php' :
 
       <!-- Dashboard sesuai role -->
       <ul class="nav-list primary-nav">
-        <li><a href="<?= $dashboard ?>" class="nav-link">
-            <i class="fas fa-th-large"></i> Dashboard
-          </a></li>
-
         <?php if ($role === 'admin'): ?>
+        <li><a href="<?= $dashboard ?>" class="nav-link"><i class="fas fa-th-large"></i> Dashboard</a></li>
         <li><a href="jadwal_rapat.php" class="nav-link"><i class="fas fa-calendar-alt"></i> Jadwal Rapat</a></li>
         <li><a href="notulen_list_admin.php" class="nav-link"><i class="fas fa-file-alt"></i> Notulen Rapat</a></li>
         <li><a href="user_management.php" class="nav-link"><i class="fas fa-users"></i> User Management</a></li>
 
         <?php elseif ($role === 'notulis'): ?>
+        <li><a href="<?= $dashboard ?>" class="nav-link"><i class="fas fa-th-large"></i> Dashboard</a></li>
         <li><a href="notulis.php" class="nav-link"><i class="fas fa-file-alt"></i> Notulen Rapat</a></li>
         <li><a href="jadwal_rapat.php" class="nav-link"><i class="fas fa-calendar-alt"></i> Jadwal Rapat</a></li>
         <li class="nav-item"><a href="#" class="nav-link"><i class="fas fa-bell nav-icon"></i><span class="nav-label">Notifikasi</span></a></li>
         <li class="nav-item"><a href="#" class="nav-link"><i class="fas fa-info-circle nav-icon"></i><span class="nav-label">Informasi</span></a></li>
 
         <?php elseif ($role === 'tamu'): ?>
+        <li><a href="<?= $dashboard ?>" class="nav-link"><i class="fas fa-th-large"></i> Dashboard</a></li>
         <li><a href="tamu.php" class="nav-link"><i class="fas fa-file-alt"></i> Notulen Rapat</a></li>
         <li><a href="jadwal_rapat_tamu.php" class="nav-link"><i class="fas fa-calendar-alt"></i> Jadwal Rapat</a></li>
         <?php endif; ?>

@@ -214,6 +214,11 @@ $notulen_bulan_ini = $result_notulen_bulan_ini ? $result_notulen_bulan_ini->fetc
 // Ambil daftar notulen terbaru
 $sql_notulens = "SELECT id, judul, tanggal, isi, penanggung_jawab, status, lampiran FROM isinotulen ORDER BY tanggal DESC, id DESC LIMIT 5";
 $result_notulens = $conn->query($sql_notulens);
+
+$dashboard = ($role === 'admin') ? 'admin.php' :
+             (($role === 'notulis') ? 'Notulis.php' :
+             'tamu.php');
+
 ?>
 
 <!DOCTYPE html>
@@ -242,52 +247,42 @@ $result_notulens = $conn->query($sql_notulens);
     </div>
 
     <nav class="sidebar-nav">
+      <nav class="sidebar-nav">
+      <!-- Dashboard sesuai role -->
       <ul class="nav-list primary-nav">
-        <li class="nav-item">
-          <a href="notulis.php" class="nav-link active">
-            <i class="fas fa-th-large nav-icon"></i>
-            <span class="nav-label">Dashboard</span>
-          </a>
-        </li>
-        <li class="nav-item">
-          <a href="jadwal_rapat.php" class="nav-link">
-            <i class="fas fa-calendar-alt nav-icon"></i>
-            <span class="nav-label">Jadwal Rapat</span>
-          </a>
-        </li>
-        <li class="nav-item">
-          <a href="notulis.php" class="nav-link">
-            <i class="fas fa-file-alt nav-icon"></i>
-            <span class="nav-label">Notulen Rapat</span>
-          </a>
-        </li>
-        <li class="nav-item">
-          <a href="#" class="nav-link">
-            <i class="fas fa-bell nav-icon"></i>
-            <span class="nav-label">Notifikasi</span>
-          </a>
-        </li>
-        <li class="nav-item">
-          <a href="informasi.php" class="nav-link">
-            <i class="fas fa-info-circle nav-icon"></i>
-            <span class="nav-label">Informasi</span>
-          </a>
-        </li>
+        <?php if ($role === 'admin'): ?>
+        <li><a href="<?= $dashboard ?>" class="nav-link"><i class="fas fa-th-large"></i> Dashboard</a></li>
+        <li><a href="jadwal_rapat.php" class="nav-link"><i class="fas fa-calendar-alt"></i> Jadwal Rapat</a></li>
+        <li><a href="notulen_list_admin.php" class="nav-link"><i class="fas fa-file-alt"></i> Notulen Rapat</a></li>
+        <li><a href="user_management.php" class="nav-link"><i class="fas fa-users"></i> User Management</a></li>
+
+        <?php elseif ($role === 'notulis'): ?>
+        <li><a href="<?= $dashboard ?>" class="nav-link"><i class="fas fa-th-large"></i> Dashboard</a></li>
+        <li><a href="notulis.php" class="nav-link"><i class="fas fa-file-alt"></i> Notulen Rapat</a></li>
+        <li><a href="jadwal_rapat.php" class="nav-link"><i class="fas fa-calendar-alt"></i> Jadwal Rapat</a></li>
+        <li class="nav-item"><a href="#" class="nav-link"><i class="fas fa-bell nav-icon"></i><span class="nav-label">Notifikasi</span></a></li>
+        <li class="nav-item"><a href="#" class="nav-link"><i class="fas fa-info-circle nav-icon"></i><span class="nav-label">Informasi</span></a></li>
+
+        <?php elseif ($role === 'tamu'): ?>
+        <li><a href="<?= $dashboard ?>" class="nav-link"><i class="fas fa-th-large"></i> Dashboard</a></li>
+        <li><a href="tamu.php" class="nav-link"><i class="fas fa-file-alt"></i> Notulen Rapat</a></li>
+        <li><a href="jadwal_rapat_tamu.php" class="nav-link"><i class="fas fa-calendar-alt"></i> Jadwal Rapat</a></li>
+        <?php endif; ?>
+
       </ul>
 
+      <!-- Menu Profil & Logout -->
       <ul class="nav-list secondary-nav">
-        <li class="nav-item">
-          <a href="Profile.php" class="nav-link">
-            <i class="fas fa-user-circle nav-icon"></i>
-            <span class="nav-label">Profile</span>
-          </a>
-        </li>
-        <li class="nav-item">
-          <a href="notulis.php?action=logout" class="nav-link" onclick="return confirm('Yakin ingin logout?');">
-            <i class="fas fa-sign-out-alt nav-icon"></i>
-            <span class="nav-label">Logout</span>
-          </a>
-        </li>
+        <li><a href="profile.php" class="nav-link active">
+            <i class="fas fa-user-circle"></i> Profile
+          </a></li>
+
+        <li><a href="login.php?action=logout" class="nav-link">
+            <i class="fas fa-sign-out-alt"></i> Logout
+          </a></li>
+      </ul>
+
+    </nav>
       </ul>
     </nav>
   </div>
