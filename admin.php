@@ -57,7 +57,7 @@ $result_notulen_hari_ini = $conn->query($sql_notulen_hari_ini);
 $notulen_hari_ini = $result_notulen_hari_ini ? $result_notulen_hari_ini->fetch_assoc()['total'] : 0;
 
 // 4. Ambil Daftar 5 Pengguna Terbaru (dari tabel 'pengguna')
-$sql_users = "SELECT user_id, full_name, role FROM user WHERE is_active = 1 ORDER BY user_id DESC LIMIT 5";
+$sql_users = "SELECT user_id, full_name, role FROM user WHERE is_active = 1 ORDER BY user_id DESC LIMIT 10";
 $result_users = $conn->query($sql_users);
 ?>
 
@@ -96,7 +96,7 @@ $result_users = $conn->query($sql_users);
           </a>
         </li>
         <li class="nav-item">
-          <a href="#" class="nav-link">
+          <a href="jadwal_rapat.php" class="nav-link">
             <i class="fas fa-calendar-alt nav-icon"></i>
             <span class="nav-label">Jadwal Rapat</span>
           </a>
@@ -164,19 +164,12 @@ $result_users = $conn->query($sql_users);
           if ($result_users && $result_users->num_rows > 0) {
             while ($user = $result_users->fetch_assoc()) {
               ?>
-              <div class='user-item'>
-                <div class='user-name'><?php echo htmlspecialchars($user['full_name']); ?></div>
-                <div class='user-status <?php echo ($user['role'] == 'admin') ? 'online' : 'offline'; ?>'>
-                  <?php echo htmlspecialchars($user['role']); ?>
+                <div class='user-item'>
+                  <div class='user-name'><?php echo htmlspecialchars($user['full_name']); ?></div>
+                    <div class='user-status <?php echo ($user['role'] == 'admin')  ?>'>
+                    <?php echo htmlspecialchars($user['role']); ?>
+                  </div>
                 </div>
-                <a 
-                  href="delete_user.php?user_id=<?php echo htmlspecialchars($user['user_id']); ?>"
-                  class='delete-btn' 
-                  title='Hapus Pengguna'
-                  onclick="return confirm('Yakin ingin menonaktifkan pengguna ini?');">
-                  &times;
-                </a>
-            </div>
               <?php
             }
           } else {

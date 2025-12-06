@@ -1,0 +1,369 @@
+@import url("https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap");
+
+* {
+  font-family: "Poppins", sans-serif;
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  min-height: 100vh;
+  background: linear-gradient(#4b6a9b, #d1b7e8);
+}
+
+/*
+================================================
+    MAIN CONTENT AREA
+================================================
+*/
+.main-content {
+  margin-left: 280px;
+  padding: 20px;
+  color: white;
+  transition: margin-left 0.4s cubic-bezier(0.68, -0.55, 0.27, 1.55);
+  position: relative;
+  z-index: 5;
+  width: calc(100vw - 280px);
+}
+
+/*
+================================================
+    USER MANAGEMENT - FORM & TABLE
+================================================
+*/
+
+/* --- Area Tambah User (Form) --- */
+.form-add-user {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  flex-wrap: wrap;
+  margin-bottom: 20px;
+}
+
+.form-add-user input,
+.form-add-user select {
+  padding: 8px 12px;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+}
+
+.form-add-user button {
+  padding: 7px 15px;
+  background: #4a6cf7;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.3s ease;
+}
+
+.form-add-user button:hover {
+  background: #3a57d0;
+}
+
+/* --- Tabel Daftar User --- */
+.table-user {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 20px;
+  background: transparent;
+  border-radius: 12px;
+  overflow: hidden;
+  table-layout: fixed; /* Kunci untuk kontrol lebar kolom */
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+}
+
+/* Gaya Header */
+.table-user th {
+  background: #330858; /* Warna Header Ungu Gelap */
+  color: #fff;
+  padding: 15px 20px;
+  text-align: left;
+  /* HAPUS: width: 280px; agar tidak merusak tata letak fixed */
+}
+
+/* Gaya Baris (Data Cells) */
+.table-user td {
+  padding: 15px 20px;
+  border-bottom: 1px solid #ddd;
+  background: #ffffff; /* Background Putih Bersih */
+  color: #333;
+}
+
+/* Baris hover */
+.table-user tr:hover td {
+  background: #f2e8ff; /* Ungu Sangat Muda saat hover */
+}
+
+/* --- Pengaturan Lebar Kolom Proporsional --- */
+
+.table-user th:nth-child(1),
+.table-user td:nth-child(1) {
+  width: 90px;
+} /* NIM dikecilkan sedikit */
+/* Kolom Nama akan otomatis mengisi ruang sisa */
+.table-user th:nth-child(3),
+.table-user td:nth-child(3) {
+  width: 70px;
+} /* Role dikecilkan sedikit */
+.table-user th:nth-child(4),
+.table-user td:nth-child(4) {
+  width: 70px;
+} /* Status dikecilkan sedikit */
+
+/* Kolom Aksi: DITINGKATKAN untuk mencegah overflow */
+.table-user th.aksi,
+.table-user td.aksi {
+  width: 330px;
+}
+
+/* --- Input/Select/Button dalam Tabel --- */
+
+.table-user input,
+.table-user select {
+  padding: 3px 5px;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  min-width: 0;
+  font-size: 30px;
+}
+
+/* --- Kolom Aksi (Koreksi Final Overflow) --- */
+
+.table-user td.aksi form {
+  display: flex;
+  align-items: center;
+  gap: 6px; /* Gap sedikit untuk jarak */
+  flex-wrap: nowrap;
+}
+
+.table-user td.aksi input {
+  width: 85px; /* Input Nama di Aksi disesuaikan */
+  padding: 5px 8px;
+  font-size: 12px;
+}
+
+.table-user td.aksi select {
+  width: 80px; /* Dropdown Role/Status disesuaikan */
+  padding: 5px 8px;
+  font-size: 12px;
+}
+
+.table-user td.aksi button {
+  width: 65px; /* Tombol Update/Hapus disesuaikan */
+  padding: 6px 4px;
+  font-size: 11px;
+}
+
+/* --- Tombol Aksi --- */
+.btn-update {
+  background-color: #5a6268;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.btn-hapus {
+  background-color: #dc3545;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.table-user td.aksi button.btn-update:hover {
+  background-color: #6361e6;
+}
+
+.table-user td.aksi button.btn-hapus:hover {
+  background-color: #be3310;
+}
+
+/*
+================================================
+    SIDEBAR & NAVIGATION
+================================================
+*/
+.sidebar {
+  width: 260px;
+  height: calc(100vh - 32px);
+  background: #330858;
+  border-radius: 16px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  position: fixed;
+  left: 16px;
+  top: 16px;
+  color: #fff;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+  transition: width 0.45s cubic-bezier(0.68, -0.55, 0.27, 1.55), opacity 0.3s ease, transform 0.45s ease;
+  overflow: hidden;
+}
+
+/* --- Sidebar Collapsed State --- */
+.sidebar.collapsed {
+  width: 80px;
+  opacity: 0.95;
+  transform: translateX(0);
+}
+
+.sidebar.collapsed ~ .main-content {
+  margin-left: 120px;
+  width: calc(100vw - 120px);
+}
+
+.sidebar.collapsed .nav-label {
+  opacity: 0;
+  transform: translateX(-10px);
+}
+
+.sidebar.collapsed .logo-area img {
+  transform: scale(0.9);
+  opacity: 0.9;
+  width: 46px;
+}
+
+/* --- Header & Toggler --- */
+.sidebar-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px;
+}
+
+.logo-area img {
+  width: 50px;
+  height: 50px;
+  transition: transform 0.3s ease, width 0.3s ease, opacity 0.3s ease;
+}
+
+.toggler {
+  background: #fff;
+  border: none;
+  color: #8348b6;
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.4s ease, background 0.5s ease;
+}
+
+.sidebar.collapsed .toggler {
+  transform: rotate(180deg);
+}
+
+.toggler:hover {
+  background: #e0e0e0;
+}
+
+.sidebar-header .toggler span {
+  font-size: 1.75rem;
+}
+
+/* --- Navigasi --- */
+.sidebar-nav {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 10px 0;
+}
+
+.primary-nav,
+.secondary-nav {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.nav-item {
+  margin: 4px 0;
+}
+
+.nav-link {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 20px;
+  color: #fff;
+  text-decoration: none;
+  border-radius: 8px;
+  transition: background 0.3s ease, transform 0.3s ease;
+}
+
+.nav-link:hover {
+  background: rgba(255, 255, 255, 0.2);
+  transform: translateX(5px);
+}
+
+.nav-icon {
+  font-size: 18px;
+  width: 22px;
+  text-align: center;
+}
+
+.nav-label {
+  font-size: 15px;
+  font-weight: 500;
+  opacity: 1;
+  transform: translateX(0);
+  transition: all 0.3s ease;
+}
+
+/* Navigasi Sekunder (Bawah) */
+.secondary-nav {
+  border-top: 1px solid rgba(255, 255, 255, 0.2);
+  padding-top: 15px;
+  margin-top: auto;
+}
+
+/*
+================================================
+    RESPONSIVE DESIGN (MEDIA QUERIES)
+================================================
+*/
+@media (max-width: 768px) {
+  /* Pengaturan Tabel */
+  .table-user input,
+  .table-user select {
+    width: 100%;
+    margin-top: 4px;
+  }
+
+  /* Pengaturan Sidebar */
+  .sidebar {
+    width: 200px;
+    height: 100vh;
+    left: 0;
+    top: 0;
+    border-radius: 0;
+  }
+
+  .nav-label {
+    display: none;
+  }
+
+  .nav-icon {
+    font-size: 20px;
+  }
+
+  /* Main content harus menyesuaikan dengan sidebar yang lebih kecil */
+  .main-content {
+    margin-left: 220px;
+    width: calc(100vw - 220px);
+    padding: 20px;
+  }
+
+  /* Jika user tetap mengklik collapsed */
+  .sidebar.collapsed ~ .main-content {
+    margin-left: 100px;
+    width: calc(100vw - 100px);
+  }
+}

@@ -1,126 +1,108 @@
-.page-title-running {
-  font-size: 2.5em;
-  font-weight: bold;
-  color: #ffffff;
-  text-shadow: 2px 2px 5px rgba(0, 0, 0, 0.8);
+/* ===== RESET DASAR ===== */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
 
-  /* Batasi wadah agar teks bisa bergerak */
-  overflow: hidden;
-  white-space: nowrap; /* Mencegah teks turun baris */
-  width: 100%; /* Lebar penuh */
-  text-align: center; /* Opsional: Biar terlihat di tengah sebelum bergerak */
+html,
+body {
+  width: 100%;
+  height: 100%;
+  overflow: hidden !important;
+  font-family: "Poppins", sans-serif;
+  position: relative;
+}
 
-  /* Jarak vertikal */
-  padding-top: 20px;
-  padding-bottom: 20px;
-
-  /* 2. Terapkan Animasi */
-  animation: marquee 10s linear infinite;
+/* ===== BACKGROUND FULLSCREEN STABIL (ANTI SCROLL) ===== */
+body::before {
+  content: "";
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background-image: url("poltek.jpeg");
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  filter: blur(4px);
+  z-index: -1;
 }
 
 @keyframes marquee {
-  /* Mulai Animasi */
   0% {
     transform: translateX(25%);
   }
-
-  /* Akhir Animasi */
   100% {
     transform: translateX(-25%);
   }
 }
 
+/* ===== POSISI UTAMA (TENGAH LAYAR) ===== */
 body {
-  /* Menjadikan body full viewport height */
-  min-height: 100vh;
-
-  /* Flexbox untuk memposisikan konten di tengah */
   display: flex;
   justify-content: center;
   align-items: center;
-  margin: 0;
-  padding: 20px;
-
-  /* Background Image Styling */
-  /* Ganti URL ini dengan gambar background Anda */
-  background-image: url("poltek.jpeg");
-  backdrop-filter: blur(8px);
-  background-size: cover;
-  background-position: center;
-  min-height: 100vh;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  background-color: #f4f4f4;
 }
 
-/* Wadah utama yang membungkus formulir (Sekarang berbentuk Vertikal) */
+/* ===== CONTAINER UTAMA ===== */
 .main-container {
-  font-family: "Poppins", sans-serif;
-  position: relative;
-  width: 400px; /* Lebar Tunggal yang ideal untuk desain portrait */
-  max-width: 90%; /* Responsif di layar kecil */
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+  width: 400px;
+  max-width: 90%;
+  background: #fff;
   border-radius: 10px;
-  overflow: hidden; /* Penting untuk menjaga border-radius tetap rapi */
-  background: white; /* Base color agar transisi lebih bersih */
+  overflow: hidden;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+  font-family: "Poppins", sans-serif;
 }
 
+/* ===== FORM & BOX ===== */
 .form-box,
 .toggle-box {
-  padding: 30px 40px;
   width: 100%;
-  box-sizing: border-box;
+  padding: 30px 40px;
 }
 
-/* Styling untuk kotak informasi/toggle (Bagian UNGU di ATAS atau BAWAH) */
+/* ===== TOGGLE BOX (UNGU) ===== */
 .toggle-box {
   background: linear-gradient(to right, #082451, #8e2de2);
-  color: white;
+  color: #fff;
   text-align: center;
   display: flex;
   flex-direction: column;
-  justify-content: center;
   align-items: center;
-  /* Hilangkan padding vertikal agar lebih ringkas */
+  justify-content: center;
   padding: 25px 40px;
-  transition: 1.8 ease-in-out;
+  transition: 1.8s ease-in-out;
 }
 
 .toggle-box h2 {
   font-family: "Playfair Display", serif;
-  font-weight: 700; /* Tebal */
   font-size: 3em;
+  font-weight: 700;
   margin-bottom: 5px;
 }
 
-/* Teks di Kotak Ungu */
 .toggle-box p {
-  font-family: "Poppins", sans-serif;
-  line-height: 1.5;
   font-size: 15px;
+  line-height: 1.5;
 }
 
-/* Styling untuk kotaknya sendiri (Form Putih) */
+/* ===== FORM (PUTIH) ===== */
 .form-box {
-  background: #ffffff;
+  background: #fff;
 }
 
 h3 {
-  font-family: "Franklin Gothic Medium", "Arial Narrow", Arial, sans-serif;
-  margin-bottom: 10px;
-  font-weight: 600;
-}
-
-h3 {
-  /* Judul Form (Login/Registration) */
-  color: #333;
   text-align: center;
-  margin-bottom: 25px;
   font-size: 28px;
+  color: #333;
+  font-weight: 600;
+  margin-bottom: 25px;
 }
 
-/* Input Fields */
+/* ===== INPUT FIELD ===== */
 input[type="text"],
 input[type="password"],
 input[type="email"],
@@ -130,8 +112,7 @@ input[type="tel"] {
   margin-bottom: 20px;
   border: 1px solid #ddd;
   border-radius: 6px;
-  box-sizing: border-box;
-  transition: border-color 0.3s;
+  transition: 0.3s;
 }
 
 input:focus {
@@ -139,7 +120,7 @@ input:focus {
   outline: none;
 }
 
-/* Forgot Link */
+/* ===== FORGOT PASSWORD ===== */
 .forgot-link {
   text-align: right;
   margin-bottom: 20px;
@@ -149,25 +130,26 @@ input:focus {
   font-size: 13px;
   color: #601278;
   text-decoration: none;
-  transition: color 0.3s;
+  transition: 0.3s;
 }
 
+/* ===== BUTTON STYLE ===== */
 button {
-  padding: 10px 20px;
-  margin: 10px auto 15px auto;
   display: block;
+  margin: 10px auto 15px auto;
+  padding: 10px 20px;
   border-radius: 25px;
   cursor: pointer;
   font-weight: bold;
   text-transform: uppercase;
-  transition: all 0.3s ease;
+  transition: 0.3s ease;
 }
 
-/* Button di Form Box (Login/Register) */
+/* Button Form Putih */
 .form-box button {
   width: 100%;
   background-color: #ae81ea;
-  color: white;
+  color: #fff;
   border: 2px solid #edd4f5;
 }
 
@@ -176,16 +158,16 @@ button {
   border-color: #33055b;
 }
 
-/* Button di Toggle Box (Tombol Switch) */
+/* Button Switch (Toggle) */
 .toggle-box button {
-  background-color: white;
+  background-color: #fff;
   color: #340c83;
   border: none;
   padding: 8px 30px;
-  width: auto; /* Agar tidak 100% lebar */
+  width: auto;
 }
 
-/* sosial link */
+/* ===== SOSIAL MEDIA ===== */
 .social-text {
   text-align: center;
   margin: 15px 0;
@@ -200,15 +182,15 @@ button {
 }
 
 .social-link a {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  text-decoration: none;
-  color: #333;
-  border: 1px solid #ddd;
-  border-radius: 50%;
   width: 40px;
   height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  border: 1px solid #ddd;
+  text-decoration: none;
+  color: #333;
   font-weight: bold;
-  transition: all 0.3s;
+  transition: 0.3s;
 }
