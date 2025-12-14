@@ -396,30 +396,53 @@ body {
   width: 450px;
   max-width: 90%;
 
-  background: #fff;
+  background: linear-gradient(#4b6a9b, #d1b7e8);
   border-radius: 12px;
   overflow: hidden;
   box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
   font-family: "Poppins", sans-serif;
 }
 
-.modal-body {
-  width: 100%;
-  padding: 30px 40px;
-  background: linear-gradient(#4b6a9b, #d1b7e8);
-}
-
 /* Pastikan .modal-body menggunakan Flexbox Column */
 .modal-body {
-  background: linear-gradient(#4b6a9b, #d1b7e8);
+  width: 100%;
+  background: transparent;
   color: #fff;
   text-align: left;
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
+  justify-content: space-between;
   padding: 25px 40px;
   transition: 1.8s ease-in-out;
+}
+.modal-header-container {
+  width: 100%;
+  margin-bottom: 25px;
+  color: #fff;
+  display: flex; /* Aktifkan flex untuk menyejajarkan Judul dan Tombol Silang */
+  justify-content: space-between;
+  align-items: center;
+}
+
+.modal-header-container h2 {
+  font-size: 26px;
+  font-weight: 700;
+  margin: 0;
+}
+
+.close-button {
+  color: #fff;
+  font-size: 28px;
+  font-weight: bold;
+  cursor: pointer;
+  opacity: 0.8;
+  transition: opacity 0.2s ease;
+  padding: 0;
+}
+
+.close-button:hover {
+  opacity: 1;
 }
 
 /* Pastikan input/label memiliki margin */
@@ -488,4 +511,3 @@ body {
     flex-direction: column;
   }
 }
-
