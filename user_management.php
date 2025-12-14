@@ -269,8 +269,12 @@ if (!$users) {
     <!-- ================= MODAL ================= -->
     <div id="editUserModal" class="modal">
         <div class="modal-content">
+            
             <form method="POST" class="modal-body">
-                <h2>Edit Data Mahasiswa</h2>
+                <div class="modal-header-container">
+                    <h2>Edit Data Mahasiswa</h2>
+                    <span class="close-button" onclick="closeEditModal()">&times;</span>
+                </div>
                 <input type="hidden" id="modal_user_id" name="user_id">
 
                 <label for="modal_full_name">Nama Mahasiswa</label>
