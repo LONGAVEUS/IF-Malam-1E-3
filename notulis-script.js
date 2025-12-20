@@ -1,26 +1,19 @@
-// Dashboard Notulis - JavaScript Eksternal
+// Tamu Portal - JavaScript Eksternal
 document.addEventListener("DOMContentLoaded", function () {
-  console.log("Dashboard Notulis loaded successfully!");
+  console.log("Portal Tamu loaded successfully!");
 
   // Elements
   const sidebar = document.getElementById("sidebar");
   const sidebarToggler = document.getElementById("sidebarToggler");
-  const modal = document.getElementById("notulenModal");
-  const tambahBtn = document.getElementById("tambahNotulenBtn");
+  const modal = document.getElementById("detailModal");
   const closeBtn = document.getElementById("closeModal");
-  const cancelBtn = document.getElementById("cancelBtn");
-  const notulenForm = document.getElementById("notulenForm");
-
-  // Modal elements
+  const modalContent = document.getElementById("modalContent");
   const modalTitle = document.getElementById("modalTitle");
-  const formAction = document.getElementById("formAction");
-  const notulenId = document.getElementById("notulenId");
-  const submitBtn = document.getElementById("submitBtn");
 
   // Initialize
-  initDashboard();
+  initTamuPortal();
 
-  function initDashboard() {
+  function initTamuPortal() {
     const sidebarState = localStorage.getItem("sidebarCollapsed");
     if (sidebarState === "true") {
       sidebar.classList.add("collapsed");
@@ -28,7 +21,6 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 
     setupEventListeners();
-    setDefaultDate();
   }
 
   function setupEventListeners() {
@@ -42,19 +34,8 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 
     // Modal event listeners
-    if (tambahBtn) {
-      tambahBtn.addEventListener("click", function () {
-        resetModal();
-        showModal();
-      });
-    }
-
     if (closeBtn) {
       closeBtn.addEventListener("click", hideModal);
-    }
-
-    if (cancelBtn) {
-      cancelBtn.addEventListener("click", hideModal);
     }
 
     window.addEventListener("click", function (event) {
@@ -63,29 +44,10 @@ document.addEventListener("DOMContentLoaded", function () {
       }
     });
 
-    if (notulenForm) {
-      notulenForm.addEventListener("submit", handleFormSubmit);
-    }
-
-    // Event delegation untuk action buttons
-    document.addEventListener("click", function (event) {
-      const target = event.target;
-
-      if (target.closest(".action-btn.edit")) {
-        handleEditNotulen(target.closest(".action-btn.edit"));
-      }
-    });
-
     // Keyboard shortcuts
     document.addEventListener("keydown", function (event) {
       if (event.key === "Escape" && modal.style.display === "flex") {
         hideModal();
-      }
-
-      if (event.ctrlKey && event.key === "n") {
-        event.preventDefault();
-        resetModal();
-        showModal();
       }
     });
   }
@@ -101,14 +63,101 @@ document.addEventListener("DOMContentLoaded", function () {
     }
   }
 
+  function showNotulenDetail(notulenId) {
+    console.log("Menampilkan detail notulen ID:", notulenId);
+    modalTitle.textContent = "Detail Notulen";
+    modalContent.innerHTML = '<div class="loading"><i class="fas fa-spinner fa-spin"></i> Memuat detail notulen...</div>';
+
+    showModal();
+
+    fetch(`get_notulen_detail.php?id=${notulenId}`)
+      .then((response) => {
+        if (!response.ok) {
+          throw new Error("Network response was not ok");
+        }
+        return response.json();
+      })
+      .then((notulen) => {
+        console.log("Data notulen:", notulen);
+        if (notulen.error) {
+          modalContent.innerHTML = `<div class="error-message">${notulen.error}</div>`;
+          return;
+        }
+
+        const tanggal = new Date(notulen.tanggal).toLocaleDateString("id-ID", {
+          weekday: "long",
+          year: "numeric",
+          month: "long",
+          day: "numeric",
+        });
+
+        const waktu = new Date(notulen.tanggal).toLocaleTimeString("id-ID", {
+          hour: "2-digit",
+          minute: "2-digit",
+        });
+
+        let html = `
+                    <div class="notulen-detail">
+                        <div class="detail-item">
+                            <div class="detail-label">Judul Rapat</div>
+                            <div class="detail-value">${escapeHtml(notulen.judul)}</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">Tanggal & Waktu</div>
+                            <div class="detail-value">${tanggal} - ${waktu}</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">Penanggung Jawab</div>
+                            <div class="detail-value">${escapeHtml(notulen.penanggung_jawab)}</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">Isi Notulen</div>
+                            <div class="detail-value" style="white-space: pre-line;">${escapeHtml(notulen.isi)}</div>
+                        </div>
+                `;
+
+        if (notulen.lampiran) {
+          const namaFileAsli = notulen.nama_file_asli || notulen.lampiran;
+          html += `
+                        <div class="detail-item">
+                            <div class="detail-label">Lampiran</div>
+                            <div class="detail-value">
+                                <a href="view.php?file=${encodeURIComponent(notulen.lampiran)}" target="_blank" class="file-link">
+                                    <i class="fas fa-paperclip"></i> ${escapeHtml(namaFileAsli)}
+                                </a>
+                            </div>
+                        </div>
+                    `;
+        }
+
+        html += `
+                        <div class="detail-actions">
+                            <a href="view.php?file=${encodeURIComponent(notulen.lampiran)}" target="_blank" class="btn btn-download" ${
+          !notulen.lampiran ? 'style="display:none;"' : ""
+        }>
+                                <i class="fas fa-download"></i> Unduh Lampiran
+                            </a>
+                        </div>
+                    </div>
+                `;
+
+        modalContent.innerHTML = html;
+      })
+      .catch((error) => {
+        console.error("Error:", error);
+        modalContent.innerHTML = `
+                    <div class="error-message">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        <p>Terjadi kesalahan saat memuat detail notulen.</p>
+                        <p>Error: ${error.message}</p>
+                    </div>
+                `;
+      });
+  }
+
   function showModal() {
     modal.style.display = "flex";
     document.body.style.overflow = "hidden";
-
-    setTimeout(() => {
-      const firstInput = document.getElementById("tanggalRapat");
-      if (firstInput) firstInput.focus();
-    }, 100);
   }
 
   function hideModal() {
@@ -116,103 +165,12 @@ document.addEventListener("DOMContentLoaded", function () {
     document.body.style.overflow = "auto";
   }
 
-  function resetModal() {
-    if (notulenForm) {
-      notulenForm.reset();
-      formAction.name = "simpan_notulen";
-      formAction.value = "1";
-      notulenId.value = "";
-      modalTitle.textContent = "Tambah Notulen Baru";
-      submitBtn.textContent = "Simpan Notulen";
-    }
-    setDefaultDate();
+  function escapeHtml(unsafe) {
+    if (!unsafe) return "";
+    return unsafe.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
   }
 
-  function setDefaultDate() {
-    const today = new Date().toISOString().split("T")[0];
-    const dateInput = document.getElementById("tanggalRapat");
-    if (dateInput && !notulenId.value) {
-      dateInput.value = today;
-    }
-  }
-
-  function handleFormSubmit(e) {
-    e.preventDefault();
-
-    const tanggal = document.getElementById("tanggalRapat").value;
-    const isi = document.getElementById("isiNotulen").value.trim();
-
-    if (!tanggal || !isi) {
-      showNotification("Harap lengkapi tanggal dan isi notulen!", "error");
-      return;
-    }
-
-    notulenForm.submit();
-  }
-
-  function handleEditNotulen(button) {
-    const notulenIdValue = button.getAttribute("data-id");
-
-    button.disabled = true;
-    button.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
-
-    fetch(`edit_notulen.php?id=${notulenIdValue}`)
-      .then((response) => response.json())
-      .then((notulen) => {
-        if (notulen.error) {
-          showNotification(notulen.error, "error");
-          return;
-        }
-
-        // PERBAIKAN: Sesuaikan dengan field database
-        document.getElementById("jadwalId").value = notulen.jadwal_id || '';
-        document.getElementById("tanggalRapat").value = notulen.tanggal;
-        document.getElementById("peserta").value = notulen.peserta || '';
-        document.getElementById("isiNotulen").value = notulen.isi;
-
-        formAction.name = "update_notulen";
-        formAction.value = "1";
-        notulenId.value = notulen.id;
-        modalTitle.textContent = "Edit Notulen";
-        submitBtn.textContent = "Update Notulen";
-
-        showModal();
-      })
-      .catch((error) => {
-        console.error("Error:", error);
-        showNotification("Terjadi kesalahan saat memuat data notulen.", "error");
-      })
-      .finally(() => {
-        button.disabled = false;
-        button.innerHTML = '<i class="fas fa-edit"></i>';
-      });
-  }
-
-  function showNotification(message, type = "info") {
-    const existingNotifications = document.querySelectorAll(".notification");
-    existingNotifications.forEach((notif) => notif.remove());
-
-    const notification = document.createElement("div");
-    notification.className = `notification ${type}`;
-    notification.textContent = message;
-
-    document.body.appendChild(notification);
-
-    setTimeout(() => {
-      if (notification.parentNode) {
-        notification.style.opacity = "0";
-        notification.style.transform = "translateX(100%)";
-
-        setTimeout(() => {
-          if (notification.parentNode) {
-            notification.parentNode.removeChild(notification);
-          }
-        }, 300);
-      }
-    }, 5000);
-  }
+  // Expose functions to global scope
+  window.showNotulenDetail = showNotulenDetail;
+  window.hideModal = hideModal;
 });
-
-window.dashboard = {
-  showNotification,
-};
