@@ -2,6 +2,25 @@
 session_start();
 require_once 'koneksi.php';
 
+// ================== DATA USER LOGIN ==================
+$user_id = $_SESSION['user_id'];
+
+$stmtUser = $conn->prepare("
+    SELECT full_name, role, photo 
+    FROM user 
+    WHERE user_id = ?
+");
+$stmtUser->bind_param("i", $user_id);
+$stmtUser->execute();
+$userLogin = $stmtUser->get_result()->fetch_assoc();
+$stmtUser->close();
+
+// Jika foto kosong / tidak ada
+$fotoProfil = (!empty($userLogin['photo']) && file_exists($userLogin['photo']))
+    ? $userLogin['photo']
+    : 'uploads/profile_photos/default_profile.png';
+
+
 /* ================== INISIALISASI ================== */
 $message = "";
 $error   = "";
@@ -110,10 +129,39 @@ if (isset($_POST['hapus_user'])) {
 }
 
 /* ================== AMBIL DATA USER ================== */
-$users = $conn->query("SELECT * FROM user");
-if (!$users) {
-    die("Query error: " . $conn->error);
+/* ================== AMBIL DATA USER + PENCARIAN ================== */
+if (isset($_POST['submit']) && !empty($_POST['cari'])) {
+
+    $cari = "%" . trim($_POST['cari']) . "%";
+
+    $stmt = $conn->prepare("
+        SELECT * FROM user
+        WHERE 
+            nim LIKE ? OR
+            full_name LIKE ? OR
+            jurusan LIKE ? OR
+            angkatan LIKE ? OR
+            role LIKE ?
+        ORDER BY user_id DESC
+    ");
+
+    $stmt->bind_param(
+        "sssss",
+        $cari,
+        $cari,
+        $cari,
+        $cari,
+        $cari
+    );
+
+    $stmt->execute();
+    $users = $stmt->get_result();
+
+} else {
+
+    $users = $conn->query("SELECT * FROM user ORDER BY CAST(nim AS UNSIGNED) ASC");
 }
+
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -166,26 +214,41 @@ if (!$users) {
                 <li class="nav-item">
                     <a href="user_management.php" class="nav-link">
                         <i class="fas fa-users nav-icon"></i>
-                        <span class="nav-label">User Management</span>
+                        <span class="nav-label">Daftar pengguna</span>
                     </a>
                 </li>
             </ul>
 
             <!-- Secondary bottom nav -->
             <ul class="nav-list secondary-nav">
+
                 <li class="nav-item">
                     <a href="profile.php" class="nav-link">
                         <i class="fas fa-user-circle nav-icon"></i>
-                        <span class="nav-label">Profile</span>
+                        <span class="nav-label">Profil Saya</span>
                     </a>
                 </li>
                 <li class="nav-item">
                     <!-- Logout menggunakan PHP - tidak perlu file terpisah -->
                     <a href="admin.php?action=logout" class="nav-link" onclick="return confirm('Yakin ingin logout?');">
                         <i class="fas fa-sign-out-alt nav-icon"></i>
-                        <span class="nav-label">Logout</span>
+                        <span class="nav-label">Keluar</span>
                     </a>
                 </li>
+                <!-- PROFIL LOGIN -->
+                <li class="nav-item profile-user">
+                    <img src="<?= $fotoProfil; ?>" class="profile-avatar">
+
+                    <div class="profile-info">
+                        <span class="profile-name">
+                            <?= htmlspecialchars($userLogin['full_name']); ?>
+                        </span>
+                        <span class="profile-role">
+                            <?= ucfirst($userLogin['role']); ?>
+                        </span>
+                    </div>
+                </li>
+
             </ul>
         </nav>
     </div>
@@ -213,68 +276,79 @@ if (!$users) {
             <button name="add_user">Tambah User</button>
         </form>
 
-        <table class="table-user">
-            <tr>
-                <th>NIM</th>
-                <th>Nama</th>
-                <th>Jurusan</th>
-                <th>Angkatan</th>
-                <th>Role</th>
-                <th>Status</th>
-                <th>Aksi</th>
-            </tr>
+        <div class="search-container">
+            <form action="" method="POST" class="search-user">
+                <input type="text" name="cari" placeholder="pencarian" autocomplete="off">
+                <button type="submit" name="submit">Cari</button>
+            </form>
+        </div>
 
-            <?php while ($u = $users->fetch_assoc()): ?>
-            <tr>
-                <td><?= $u['nim'] ?></td>
-                <td><?= $u['full_name'] ?></td>
 
-                <td><?= $u['jurusan'] ?></td>
+        <div class="table-wrapper">
+            <table class="table-user">
+                <tr>
+                    <th>NIM</th>
+                    <th>Nama</th>
+                    <th>Jurusan</th>
+                    <th>Angkatan</th>
+                    <th>Role</th>
+                    <th>Status</th>
+                    <th>Aksi</th>
+                </tr>
 
-                <td><?= $u['angkatan'] ?></td>
+                <?php while ($u = $users->fetch_assoc()): ?>
+                <tr>
+                    <td><?= $u['nim'] ?></td>
+                    <td><?= $u['full_name'] ?></td>
 
-                <td><?= ucfirst($u['role']) ?></td>
+                    <td><?= $u['jurusan'] ?></td>
 
-                <?php 
+                    <td><?= $u['angkatan'] ?></td>
+
+                    <td><?= ucfirst($u['role']) ?></td>
+
+                    <?php 
                     $status_text = $u['is_active'] ? 'Aktif' : 'Nonaktif';
                     $status_class = $u['is_active'] ? 'status-aktif' : 'status-nonaktif';
                 ?>
-                <td class="<?= $status_class ?>"><?= $status_text ?></td>
+                    <td class="<?= $status_class ?>"><?= $status_text ?></td>
 
 
-                <td class="aksi">
-                    <button class="btn-update" onclick="openEditModal(
+                    <td class="aksi">
+                        <button class="btn-update" onclick="openEditModal(
                         '<?= htmlspecialchars($u['user_id']) ?>', 
                         '<?= htmlspecialchars($u['full_name']) ?>', 
                         '<?= htmlspecialchars($u['jurusan']) ?>', 
                         '<?= htmlspecialchars($u['angkatan']) ?>', 
                         '<?= htmlspecialchars($u['role']) ?>',
                         '<?= htmlspecialchars($u['is_active']) ?>'
-                        )">Edit
-                    </button>
-
-                    <form method="POST" style="display:inline">
-                        <input type="hidden" name="user_id" value="<?= $u['user_id'] ?>">
-                        <button name="hapus_user" class="btn-hapus"
-                            onclick="return confirm('Yakin ingin menghapus data <?= htmlspecialchars($u['full_name']) ?>?');">
-                            Hapus
+                        )"><i class="fas fa-edit"></i>Edit
                         </button>
-                    </form>
-                </td>
-            </tr>
-            <?php endwhile; ?>
-        </table>
+
+                        <form method="POST" style="display:inline">
+                            <input type="hidden" name="user_id" value="<?= $u['user_id'] ?>">
+                            <button name="hapus_user" class="btn-hapus"
+                                onclick="return confirm('Yakin ingin menghapus data <?= htmlspecialchars($u['full_name']) ?>?');">
+                                Hapus
+                            </button>
+                        </form>
+                    </td>
+                </tr>
+                <?php endwhile; ?>
+            </table>
+        </div>
     </div>
 
     <!-- ================= MODAL ================= -->
     <div id="editUserModal" class="modal">
         <div class="modal-content">
-            
+
             <form method="POST" class="modal-body">
                 <div class="modal-header-container">
                     <h2>Edit Data Mahasiswa</h2>
                     <span class="close-button" onclick="closeEditModal()">&times;</span>
                 </div>
+
                 <input type="hidden" id="modal_user_id" name="user_id">
 
                 <label for="modal_full_name">Nama Mahasiswa</label>
