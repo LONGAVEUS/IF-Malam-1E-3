@@ -1,152 +1,257 @@
 <?php
 session_start();
+require_once 'koneksi.php';
 
-// Pastikan sudah login
+/* ================== CEK LOGIN ================== */
 if (!isset($_SESSION['logged_in'])) {
     header("Location: login.php");
     exit();
 }
 
-require_once 'koneksi.php';
 
-$role = $_SESSION['role'];      
+/* ================== DATA USER LOGIN ================== */
+$user_id = $_SESSION['user_id'];
+
+$stmtUser = $conn->prepare("
+    SELECT full_name, role, photo
+    FROM user
+    WHERE user_id = ?
+");
+$stmtUser->bind_param("i", $user_id);
+$stmtUser->execute();
+$userLogin = $stmtUser->get_result()->fetch_assoc();
+$stmtUser->close();
+
+/* ================== FOTO PROFIL ================== */
+$fotoProfil = (!empty($userLogin['photo']) && file_exists($userLogin['photo']))
+    ? $userLogin['photo']
+    : 'uploads/profile_photos/default_profile.png';
+
+/* ================== SESSION DATA ================== */
+$role = $_SESSION['role'];
 $username = $_SESSION['username'];
 $photo = $_SESSION['photo'] ?? "default_profile.png";
-$current_photo_url = (!empty($_SESSION['photo'])) 
-    ? $_SESSION['photo'] 
+
+$current_photo_url = (!empty($_SESSION['photo']))
+    ? $_SESSION['photo']
     : "uploads/profile_photos/default_profile.png";
 
-// Tentukan dashboard berdasarkan role
-$dashboard = ($role === 'admin') ? 'admin.php' :
-             (($role === 'notulis') ? 'Notulis.php' :
-             'tamu.php');
-
+/* ================== DASHBOARD ROLE ================== */
+$dashboard = ($role === 'admin') ? 'admin.php'
+           : (($role === 'notulis') ? 'Notulis.php'
+           : 'tamu.php');
 ?>
-
-
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
-  <title>notulenrapat</title>
-  <!-- Font Awesome -->
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  <!-- External CSS -->
-  <link rel="stylesheet" href="profile.css">
+    <title>Profile</title>
+
+    <!-- Font Awesome -->
+    <link rel="stylesheet"
+          href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- External CSS -->
+    <link rel="stylesheet" href="profile.css">
 </head>
 
 <body>
-  <!-- Sidebar -->
-  <div class="sidebar">
+
+<!-- ================= SIDEBAR ================= -->
+<div class="sidebar">
+
     <div class="sidebar-header">
-      <div class="logo-area">
-        <a href="#" class="header-logo">
-          <!-- Ganti dengan path logo yang benar -->
-          <img src="poltek1.png" alt="Politeknik Negeri Batam" />
-        </a>
-      </div>
-      <button class="toggler">
-        <span class="fas fa-chevron-left"></span>
-      </button>
+        <div class="logo-area">
+            <a href="#" class="header-logo">
+                <img src="poltek1.png" alt="Politeknik Negeri Batam">
+            </a>
+        </div>
+
+        <button class="toggler">
+            <span class="fas fa-chevron-left"></span>
+        </button>
     </div>
 
     <nav class="sidebar-nav">
 
-      <!-- Dashboard sesuai role -->
-      <ul class="nav-list primary-nav">
-        <?php if ($role === 'admin'): ?>
-        <li><a href="<?= $dashboard ?>" class="nav-link"><i class="fas fa-th-large"></i> Dashboard</a></li>
-        <li><a href="jadwal_rapat.php" class="nav-link"><i class="fas fa-calendar-alt"></i> Jadwal Rapat</a></li>
-        <li><a href="notulen_list_admin.php" class="nav-link"><i class="fas fa-file-alt"></i> Notulen Rapat</a></li>
-        <li><a href="user_management.php" class="nav-link"><i class="fas fa-users"></i> User Management</a></li>
+        <!-- ===== PRIMARY NAV ===== -->
+        <ul class="nav-list primary-nav">
 
-        <?php elseif ($role === 'notulis'): ?>
-        <li><a href="<?= $dashboard ?>" class="nav-link"><i class="fas fa-th-large"></i> Dashboard</a></li>
-        <li><a href="notulis.php" class="nav-link"><i class="fas fa-file-alt"></i> Notulen Rapat</a></li>
-        <li><a href="jadwal_rapat.php" class="nav-link"><i class="fas fa-calendar-alt"></i> Jadwal Rapat</a></li>
-        <li class="nav-item"><a href="#" class="nav-link"><i class="fas fa-bell nav-icon"></i><span class="nav-label">Notifikasi</span></a></li>
-        <li class="nav-item"><a href="#" class="nav-link"><i class="fas fa-info-circle nav-icon"></i><span class="nav-label">Informasi</span></a></li>
+            <li>
+                <a href="<?= $dashboard ?>" class="nav-link">
+                    <i class="fas fa-th-large nav-icon"></i>
+                    <span class="nav-label">Dashboard</span>
+                </a>
+            </li>
 
-        <?php elseif ($role === 'tamu'): ?>
-        <li><a href="<?= $dashboard ?>" class="nav-link"><i class="fas fa-th-large"></i> Dashboard</a></li>
-        <li><a href="tamu.php" class="nav-link"><i class="fas fa-file-alt"></i> Notulen Rapat</a></li>
-        <li><a href="jadwal_rapat_tamu.php" class="nav-link"><i class="fas fa-calendar-alt"></i> Jadwal Rapat</a></li>
-        <?php endif; ?>
+            <?php if ($role === 'admin'): ?>
 
-      </ul>
+                <li>
+                    <a href="jadwal_rapat.php" class="nav-link">
+                        <i class="fas fa-calendar-alt nav-icon"></i>
+                        <span class="nav-label">Jadwal Rapat</span>
+                    </a>
+                </li>
 
-      <!-- Menu Profil & Logout -->
-      <ul class="nav-list secondary-nav">
-        <li><a href="profile.php" class="nav-link active">
-            <i class="fas fa-user-circle"></i> Profile
-          </a></li>
+                <li>
+                    <a href="notulen_list_admin.php" class="nav-link">
+                        <i class="fas fa-file-alt nav-icon"></i>
+                        <span class="nav-label">Notulen Rapat</span>
+                    </a>
+                </li>
 
-        <li><a href="login.php?action=logout" class="nav-link">
-            <i class="fas fa-sign-out-alt"></i> Logout
-          </a></li>
-      </ul>
+                <li>
+                    <a href="user_management.php" class="nav-link">
+                        <i class="fas fa-users nav-icon"></i>
+                        <span class="nav-label">User Management</span>
+                    </a>
+                </li>
+
+            <?php elseif ($role === 'notulis'): ?>
+
+                <li>
+                    <a href="notulis.php" class="nav-link">
+                        <i class="fas fa-file-alt nav-icon"></i>
+                        <span class="nav-label">Notulen Rapat</span>
+                    </a>
+                </li>
+
+                <li>
+                    <a href="jadwal_rapat.php" class="nav-link">
+                        <i class="fas fa-calendar-alt nav-icon"></i>
+                        <span class="nav-label">Jadwal Rapat</span>
+                    </a>
+                </li>
+
+                <li>
+                    <a href="#" class="nav-link">
+                        <i class="fas fa-bell nav-icon"></i>
+                        <span class="nav-label">Notifikasi</span>
+                    </a>
+                </li>
+
+            <?php elseif ($role === 'tamu'): ?>
+
+                <li>
+                    <a href="tamu.php" class="nav-link">
+                        <i class="fas fa-file-alt nav-icon"></i>
+                        <span class="nav-label">Notulen Rapat</span>
+                    </a>
+                </li>
+
+                <li>
+                    <a href="jadwal_rapat_tamu.php" class="nav-link">
+                        <i class="fas fa-calendar-alt nav-icon"></i>
+                        <span class="nav-label">Jadwal Rapat</span>
+                    </a>
+                </li>
+
+            <?php endif; ?>
+
+        </ul>
+
+        <!-- ===== SECONDARY NAV ===== -->
+        <ul class="nav-list secondary-nav">
+
+            <li>
+                <a href="profile.php" class="nav-link active">
+                    <i class="fas fa-user-circle nav-icon"></i>
+                    <span class="nav-label">Profil Saya</span>
+                </a>
+            </li>
+
+            <li>
+                <a href="login.php?action=logout" class="nav-link"
+                   onclick="return confirm('Yakin ingin logout?');">
+                    <i class="fas fa-sign-out-alt nav-icon"></i>
+                    <span class="nav-label">Keluar</span>
+                </a>
+            </li>
+
+            <!-- PROFIL LOGIN -->
+            <li class="nav-item profile-user">
+                <img src="<?= $fotoProfil ?>" class="profile-avatar" alt="Foto Profil">
+
+                <div class="profile-info">
+                    <span class="profile-name">
+                        <?= htmlspecialchars($userLogin['full_name']) ?>
+                    </span>
+                    <span class="profile-role">
+                        <?= ucfirst($userLogin['role']) ?>
+                    </span>
+                </div>
+            </li>
+
+        </ul>
 
     </nav>
-  </div>
+</div>
 
-  <!-- Main Content -->
-  <div class="main-content">
+<!-- ================= MAIN CONTENT ================= -->
+<div class="main-content">
+
     <div class="dashboard-header">
-      <h1>Profile</h1>
+        <h1>Profile</h1>
     </div>
 
     <div class="profile-container">
 
-      <div class="profile-section">
-        <form action="proses_photo.php" method="POST" enctype="multipart/form-data">
-          <h4>Ganti Foto Profil</h4>
-          <div class="profile-picture">
-            <img src="<?php echo $current_photo_url; ?>" alt="Foto Profil"
-              style="width:150px; height:150px; border-radius:50%; object-fit:cover;">
-          </div>
-          <input type="file" name="new_file_profile_pic" accept="image/*" required>
-          <button type="submit" name="upload_btn">Ganti Foto</button>
-        </form>
-      </div>
+        <!-- GANTI FOTO -->
+        <div class="profile-section">
+            <form action="proses_photo.php" method="POST" enctype="multipart/form-data">
+                <h4>Ganti Foto Profil</h4>
 
-      <div class="profile-section">
-        <form action="process_name.php" method="POST">
-          <h4>Ganti Nama Lengkap</h4>
-          <label for="full_name">Nama Lengkap Baru:</label>
-          <input type="text" id="full_name" name="new_full_name" required
-            value="<?php echo htmlspecialchars($_SESSION['username'] ?? ''); ?>">
-          <button type="submit" name="update_name_btn">Simpan Nama</button>
-        </form>
-      </div>
+                <div class="profile-picture">
+                    <img src="<?= $current_photo_url ?>" alt="Foto Profil"
+                         style="width:150px;height:150px;border-radius:50%;object-fit:cover;">
+                </div>
 
-      <div class="profile-section">
-        <form action="process_password.php" method="POST">
-          <h4>Ganti Password</h4>
-          <label for="old_password">Password Lama:</label>
-          <input type="password" id="old_password" name="old_password" required>
+                <input type="file" name="new_file_profile_pic" accept="image/*" required>
+                <button type="submit" name="upload_btn">Ganti Foto</button>
+            </form>
+        </div>
 
-          <label for="new_password">Password Baru:</label>
-          <input type="password" id="new_password" name="new_password" required>
+        <!-- GANTI NAMA -->
+        <div class="profile-section">
+            <form action="process_name.php" method="POST">
+                <h4>Ganti Nama Lengkap</h4>
 
-          <label for="confirm_password">Konfirmasi Password Baru:</label>
-          <input type="password" id="confirm_password" name="confirm_password" required>
+                <label for="full_name">Nama Lengkap Baru</label>
+                <input type="text" id="full_name" name="new_full_name" required
+                       value="<?= htmlspecialchars($_SESSION['username'] ?? '') ?>">
 
-          <button type="submit" name="update_password_btn">Ganti Password</button>
-        </form>
-      </div>
+                <button type="submit" name="update_name_btn">Simpan Nama</button>
+            </form>
+        </div>
+
+        <!-- GANTI PASSWORD -->
+        <div class="profile-section">
+            <form action="process_password.php" method="POST">
+                <h4>Ganti Password</h4>
+
+                <label>Password Lama</label>
+                <input type="password" name="old_password" required>
+
+                <label>Password Baru</label>
+                <input type="password" name="new_password" required>
+
+                <label>Konfirmasi Password Baru</label>
+                <input type="password" name="confirm_password" required>
+
+                <button type="submit" name="update_password_btn">
+                    Ganti Password
+                </button>
+            </form>
+        </div>
 
     </div>
-  </div>
+</div>
 
-  <!-- External JavaScript -->
-  <script src="admin.js"></script>
-
+<script src="admin.js"></script>
 
 </body>
-
 </html>
+
 <?php
-// Tutup koneksi di akhir file
 if (isset($conn)) {
     $conn->close();
 }
