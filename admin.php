@@ -1,44 +1,44 @@
 <?php
 session_start();
-if ($_SESSION['role'] !== 'admin') {
-    header("Location: login.php");
-    exit();
-}
+require_once 'koneksi.php'; 
 
-
-// Handle logout request
-if (isset($_GET['action']) && $_GET['action'] == 'logout') {
-    // Hapus semua data session
-    $_SESSION = array();
-    
-    // Hapus session cookie
-    if (ini_get("session.use_cookies")) {
-        $params = session_get_cookie_params();
-        setcookie(session_name(), '', time() - 42000,
-            $params["path"], $params["domain"],
-            $params["secure"], $params["httponly"]
-        );
-    }
-    
-    // Hancurkan session
-    session_destroy();
-    
-    // Redirect ke halaman login
-    header("Location: login.php");
-    exit();
-}
-
+// Proteksi login
 if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
     header("Location: login.php");
     exit();
 }
 
-// Pastikan user adalah admin
+// Proteksi role admin
 if ($_SESSION['role'] !== 'admin') {
-    die("Akses ditolak. Halaman ini hanya untuk administrator.");
+    header("Location: login.php");
+    exit();
 }
 
-require_once 'koneksi.php'; 
+// ================== DATA USER LOGIN ==================
+$user_id = $_SESSION['user_id'];
+
+$stmtUser = $conn->prepare("
+    SELECT full_name, role, photo
+    FROM user
+    WHERE user_id = ?
+");
+$stmtUser->bind_param("i", $user_id);
+$stmtUser->execute();
+$userLogin = $stmtUser->get_result()->fetch_assoc();
+$stmtUser->close();
+
+// Foto profil fallback
+$fotoProfil = (!empty($userLogin['photo']) && file_exists($userLogin['photo']))
+    ? $userLogin['photo']
+    : 'uploads/profile_photos/default_profile.png';
+
+// ================== LOGOUT ==================
+if (isset($_GET['action']) && $_GET['action'] === 'logout') {
+    session_destroy();
+    header("Location: login.php");
+    exit();
+}
+
 
 // 1. Ambil Total Pengguna (dari tabel 'pengguna')
 $sql_user_count = "SELECT COUNT(user_id) AS total FROM user WHERE is_active = 1";
@@ -63,6 +63,7 @@ $result_users = $conn->query($sql_users);
 
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <title>Dashboard Admin</title>
   <!-- Font Awesome -->
@@ -110,7 +111,7 @@ $result_users = $conn->query($sql_users);
         <li class="nav-item">
           <a href="user_management.php" class="nav-link">
             <i class="fas fa-users nav-icon"></i>
-            <span class="nav-label">User Management</span>
+            <span class="nav-label">Daftar Pengguna</span>
           </a>
         </li>
       </ul>
@@ -120,15 +121,29 @@ $result_users = $conn->query($sql_users);
         <li class="nav-item">
           <a href="profile.php" class="nav-link">
             <i class="fas fa-user-circle nav-icon"></i>
-            <span class="nav-label">Profile</span>
+            <span class="nav-label">Profil Saya</span>
           </a>
         </li>
         <li class="nav-item">
           <!-- Logout menggunakan PHP - tidak perlu file terpisah -->
           <a href="admin.php?action=logout" class="nav-link" onclick="return confirm('Yakin ingin logout?');">
             <i class="fas fa-sign-out-alt nav-icon"></i>
-            <span class="nav-label">Logout</span>
+            <span class="nav-label">Keluar</span>
           </a>
+        </li>
+
+        <!-- PROFIL LOGIN -->
+        <li class="nav-item profile-user">
+          <img src="<?= $fotoProfil; ?>" class="profile-avatar">
+
+          <div class="profile-info">
+            <span class="profile-name">
+              <?= htmlspecialchars($userLogin['full_name']); ?>
+            </span>
+            <span class="profile-role">
+              <?= ucfirst($userLogin['role']); ?>
+            </span>
+          </div>
         </li>
       </ul>
     </nav>
@@ -137,8 +152,9 @@ $result_users = $conn->query($sql_users);
   <!-- Main Content -->
   <div class="main-content">
     <div class="dashboard-header">
-      <h1>Dashboard</h1>
-      <p>Selamat Datang, <strong><?php echo htmlspecialchars($_SESSION['username']); ?></strong> (<?php echo htmlspecialchars($_SESSION['role']); ?>)</p>
+      <h1>Dashboard Admin</h1>
+      <p>Selamat Datang, <strong><?php echo htmlspecialchars($_SESSION['username']); ?></strong>
+        (<?php echo htmlspecialchars($_SESSION['role']); ?>)</p>
     </div>
 
     <div class="user-stats-grid">
@@ -164,13 +180,13 @@ $result_users = $conn->query($sql_users);
           if ($result_users && $result_users->num_rows > 0) {
             while ($user = $result_users->fetch_assoc()) {
               ?>
-                <div class='user-item'>
-                  <div class='user-name'><?php echo htmlspecialchars($user['full_name']); ?></div>
-                    <div class='user-status <?php echo ($user['role'] == 'admin')  ?>'>
-                    <?php echo htmlspecialchars($user['role']); ?>
-                  </div>
-                </div>
-              <?php
+          <div class='user-item'>
+            <div class='user-name'><?php echo htmlspecialchars($user['full_name']); ?></div>
+            <div class='user-status <?php echo ($user['role'] == 'admin')  ?>'>
+              <?php echo htmlspecialchars($user['role']); ?>
+            </div>
+          </div>
+          <?php
             }
           } else {
             echo "<p style='text-align: center; padding: 20px; color: #666;'>Tidak ada pengguna yang ditemukan.</p>";
@@ -183,8 +199,8 @@ $result_users = $conn->query($sql_users);
 
   <!-- External JavaScript -->
   <script src="admin.js"></script>
-  
-  
+
+
 </body>
 
 </html>
