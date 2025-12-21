@@ -1,29 +1,82 @@
 <?php
 session_start();
+require_once 'koneksi.php';
 
-// Handle logout request
-if (isset($_GET['action']) && $_GET['action'] == 'logout') {
-    $_SESSION = array();
-    
-    if (ini_get("session.use_cookies")) {
-        $params = session_get_cookie_params();
-        setcookie(session_name(), '', time() - 42000,
-            $params["path"], $params["domain"],
-            $params["secure"], $params["httponly"]
-        );
-    }
-    
-    session_destroy();
-    header("Location: login.php");
-    exit();
-}
-
+/* ==================================================
+   1. CEK LOGIN
+================================================== */
 if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
     header("Location: login.php");
     exit();
 }
 
-require_once 'koneksi.php';
+/* ==================================================
+   2. HANDLE LOGOUT
+================================================== */
+if (isset($_GET['action']) && $_GET['action'] === 'logout') {
+    $_SESSION = [];
+
+    if (ini_get("session.use_cookies")) {
+        $params = session_get_cookie_params();
+        setcookie(
+            session_name(),
+            '',
+            time() - 42000,
+            $params["path"],
+            $params["domain"],
+            $params["secure"],
+            $params["httponly"]
+        );
+    }
+
+    session_destroy();
+    header("Location: login.php");
+    exit();
+}
+
+/* ==================================================
+   3. AMBIL DATA USER LOGIN
+================================================== */
+$user_id = $_SESSION['user_id'];
+
+$stmtUser = $conn->prepare("
+    SELECT full_name, role, photo
+    FROM user
+    WHERE user_id = ?
+");
+$stmtUser->bind_param("i", $user_id);
+$stmtUser->execute();
+$userLogin = $stmtUser->get_result()->fetch_assoc();
+$stmtUser->close();
+
+/* ==================================================
+   4. VALIDASI USER
+================================================== */
+if (!$userLogin) {
+    // Jika user tidak ditemukan
+    session_destroy();
+    header("Location: login.php");
+    exit();
+}
+
+$role = $userLogin['role'];
+
+/* ==================================================
+   5. FOTO PROFIL (FALLBACK)
+================================================== */
+$fotoProfil = (!empty($userLogin['photo']) && file_exists($userLogin['photo']))
+    ? $userLogin['photo']
+    : 'uploads/profile_photos/default_profile.png';
+
+/* ==================================================
+   6. DASHBOARD BERDASARKAN ROLE
+================================================== */
+$dashboard = match ($role) {
+    'admin'   => 'admin.php',
+    'notulis' => 'notulis.php',
+    default   => 'tamu.php',
+};
+
 
 // Ambil parameter bulan dan tahun dari URL, default ke bulan dan tahun saat ini
 $bulan = isset($_GET['bulan']) ? intval($_GET['bulan']) : date('n');
@@ -88,14 +141,12 @@ $hari_pertama = date('N', strtotime("$tahun-$bulan-01")); // 1=Senin, 7=Minggu
 
 // Sesuaikan untuk kalender (Minggu = 0, Senin = 1, ..., Sabtu = 6)
 $offset = $hari_pertama - 1;
-$dashboard = ($role === 'admin') ? 'admin.php' :
-             (($role === 'notulis') ? 'Notulis.php' :
-             'tamu.php');
 
 ?>
 
 <!DOCTYPE html>
 <html lang="id">
+
 <head>
   <title>Jadwal Rapat</title>
   <meta charset="UTF-8">
@@ -105,73 +156,152 @@ $dashboard = ($role === 'admin') ? 'admin.php' :
 </head>
 
 <body>
-  <!-- Sidebar -->
-  <div class="sidebar" id="sidebar">
-    <div class="sidebar-header">
-      <div class="logo-area">
-        <a href="#" class="header-logo">
-          <img src="poltek1.png" alt="Politeknik Negeri Batam" />
-        </a>
-      </div>
-      <button class="toggler" id="sidebarToggler">
-        <span class="fas fa-chevron-left"></span>
-      </button>
-    </div>
+  <!-- ================= SIDEBAR ================= -->
+  <div class="sidebar">
 
+    <div class="sidebar-header">
+            <div class="logo-area">
+                <a href="#" class="header-logo">
+                    <!-- Ganti dengan path logo yang benar -->
+                    <img src="poltek1.png" alt="Politeknik Negeri Batam" />
+                </a>
+            </div>
+            <button class="toggler">
+                <span class="fas fa-chevron-left"></span>
+            </button>
+        </div>
+
+    <nav class="sidebar-nav">
+
+      <!-- ===== PRIMARY NAV ===== -->
       <ul class="nav-list primary-nav">
+
+        <li class="nav-item">
+          <a href="<?= $dashboard ?>" class="nav-link">
+            <i class="fas fa-th-large nav-icon"></i>
+            <span class="nav-label">Dashboard</span>
+          </a>
+        </li>
+
         <?php if ($role === 'admin'): ?>
-        <li><a href="<?= $dashboard ?>" class="nav-link active"><i class="fas fa-th-large nav-icon"></i><span class="nav-label">Dashboard</span></a></li> 
-        <li><a href="jadwal_rapat.php" class="nav-link"><i class="fas fa-calendar-alt"></i> Jadwal Rapat</a></li>
-        <li><a href="notulen_list_admin.php" class="nav-link"><i class="fas fa-file-alt"></i> Notulen Rapat</a></li>
-        <li><a href="user_management.php" class="nav-link"><i class="fas fa-users"></i> User Management</a></li>
+
+        <li class="nav-item">
+          <a href="jadwal_rapat.php" class="nav-link">
+            <i class="fas fa-calendar-alt nav-icon"></i>
+            <span class="nav-label">Jadwal Rapat</span>
+          </a>
+        </li>
+
+        <li class="nav-item">
+          <a href="notulen_list_admin.php" class="nav-link">
+            <i class="fas fa-file-alt nav-icon"></i>
+            <span class="nav-label">Notulen Rapat</span>
+          </a>
+        </li>
+
+        <li class="nav-item">
+          <a href="user_management.php" class="nav-link">
+            <i class="fas fa-users nav-icon"></i>
+            <span class="nav-label">Daftar Pengguna</span>
+          </a>
+        </li>
 
         <?php elseif ($role === 'notulis'): ?>
-        <li><a href="<?= $dashboard ?>" class="nav-link active"><i class="fas fa-th-large nav-icon"></i><span class="nav-label">Dashboard</span></a></li> 
-        <li><a href="notulis.php" class="nav-link"><i class="fas fa-file-alt"></i> Notulen Rapat</a></li>
-        <li><a href="jadwal_rapat.php" class="nav-link"><i class="fas fa-calendar-alt"></i> Jadwal Rapat</a></li>
-        <li class="nav-item"><a href="#" class="nav-link"><i class="fas fa-bell nav-icon"></i><span class="nav-label">Notifikasi</span></a></li>
-        <li class="nav-item"><a href="#" class="nav-link"><i class="fas fa-info-circle nav-icon"></i><span class="nav-label">Informasi</span></a></li>
+
+        <li class="nav-item">
+          <a href="notulis.php" class="nav-link">
+            <i class="fas fa-file-alt nav-icon"></i>
+            <span class="nav-label">Notulen Rapat</span>
+          </a>
+        </li>
+
+        <li class="nav-item">
+          <a href="jadwal_rapat.php" class="nav-link">
+            <i class="fas fa-calendar-alt nav-icon"></i>
+            <span class="nav-label">Jadwal Rapat</span>
+          </a>
+        </li>
+
+        <li class="nav-item">
+          <a href="#" class="nav-link">
+            <i class="fas fa-bell nav-icon"></i>
+            <span class="nav-label">Notifikasi</span>
+          </a>
+        </li>
 
         <?php elseif ($role === 'tamu'): ?>
-        <li><a href="<?= $dashboard ?>" class="nav-link active"><i class="fas fa-th-large nav-icon"></i><span class="nav-label">Dashboard</span></a></li> 
-        <li><a href="tamu.php" class="nav-link"><i class="fas fa-file-alt"></i> Notulen Rapat</a></li>
-        <li><a href="jadwal_rapat_tamu.php" class="nav-link"><i class="fas fa-calendar-alt"></i> Jadwal Rapat</a></li>
+
+        <li class="nav-item">
+          <a href="tamu.php" class="nav-link">
+            <i class="fas fa-file-alt nav-icon"></i>
+            <span class="nav-label">Notulen Rapat</span>
+          </a>
+        </li>
+
+        <li class="nav-item">
+          <a href="jadwal_rapat_tamu.php" class="nav-link">
+            <i class="fas fa-calendar-alt nav-icon"></i>
+            <span class="nav-label">Jadwal Rapat</span>
+          </a>
+        </li>
+
         <?php endif; ?>
 
       </ul>
 
+      <!-- ===== SECONDARY NAV ===== -->
       <ul class="nav-list secondary-nav">
+
         <li class="nav-item">
-          <a href="#" class="nav-link">
+          <a href="profile.php" class="nav-link active">
             <i class="fas fa-user-circle nav-icon"></i>
-            <span class="nav-label">Profile</span>
+            <span class="nav-label">Profil Saya</span>
           </a>
         </li>
+
         <li class="nav-item">
-          <a href="jadwal_rapat.php?action=logout" class="nav-link" onclick="return confirm('Yakin ingin logout?');">
+          <a href="login.php?action=logout" class="nav-link" onclick="return confirm('Yakin ingin logout?');">
             <i class="fas fa-sign-out-alt nav-icon"></i>
-            <span class="nav-label">Logout</span>
+            <span class="nav-label">Keluar</span>
           </a>
         </li>
+
+        <!-- PROFIL LOGIN -->
+        <li class="nav-item profile-user">
+          <img src="<?= $fotoProfil ?>" class="profile-avatar" alt="Foto Profil">
+
+          <div class="profile-info">
+            <span class="profile-name">
+              <?= htmlspecialchars($userLogin['full_name']) ?>
+            </span>
+            <span class="profile-role">
+              <?= ucfirst($userLogin['role']) ?>
+            </span>
+          </div>
+        </li>
+
       </ul>
+
     </nav>
   </div>
-
   <!-- Main Content -->
   <div class="main-content" id="mainContent">
     <div class="dashboard-header">
       <h1>Jadwal Rapat</h1>
-      <p>Selamat Datang, <strong><?php echo htmlspecialchars($_SESSION['username']); ?></strong> (<?php echo htmlspecialchars($_SESSION['role']); ?>)</p>
+      <p>Selamat Datang, <strong><?php echo htmlspecialchars($_SESSION['username']); ?></strong>
+        (<?php echo htmlspecialchars($_SESSION['role']); ?>)</p>
     </div>
 
     <div class="calendar-container">
       <div class="calendar-header">
         <div class="calendar-navigation">
-          <a href="jadwal_rapat.php?bulan=<?php echo $bulan_sebelumnya; ?>&tahun=<?php echo $tahun_sebelumnya; ?>" class="nav-btn">
+          <a href="jadwal_rapat.php?bulan=<?php echo $bulan_sebelumnya; ?>&tahun=<?php echo $tahun_sebelumnya; ?>"
+            class="nav-btn">
             <i class="fas fa-chevron-left"></i> Bulan Sebelumnya
           </a>
           <h2><?php echo getNamaBulan($bulan) . ' ' . $tahun; ?></h2>
-          <a href="jadwal_rapat.php?bulan=<?php echo $bulan_selanjutnya; ?>&tahun=<?php echo $tahun_selanjutnya; ?>" class="nav-btn">
+          <a href="jadwal_rapat.php?bulan=<?php echo $bulan_selanjutnya; ?>&tahun=<?php echo $tahun_selanjutnya; ?>"
+            class="nav-btn">
             Bulan Selanjutnya <i class="fas fa-chevron-right"></i>
           </a>
         </div>
@@ -253,6 +383,7 @@ $dashboard = ($role === 'admin') ? 'admin.php' :
 
   <script src="jadwal-script.js"></script>
 </body>
+
 </html>
 
 <?php
