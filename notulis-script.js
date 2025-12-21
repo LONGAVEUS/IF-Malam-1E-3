@@ -1,59 +1,27 @@
-// Tamu Portal - JavaScript Eksternal
+// ================= DASHBOARD NOTULIS =================
 document.addEventListener("DOMContentLoaded", function () {
-  console.log("Portal Tamu loaded successfully!");
+  /* ================= SIDEBAR ================= */
+  const sidebar = document.querySelector(".sidebar");
+  const toggler = document.querySelector(".toggler");
 
-  // Elements
-  const sidebar = document.getElementById("sidebar");
-  const sidebarToggler = document.getElementById("sidebarToggler");
-  const modal = document.getElementById("detailModal");
-  const closeBtn = document.getElementById("closeModal");
-  const modalContent = document.getElementById("modalContent");
-  const modalTitle = document.getElementById("modalTitle");
-
-  // Initialize
-  initTamuPortal();
-
-  function initTamuPortal() {
-    const sidebarState = localStorage.getItem("sidebarCollapsed");
-    if (sidebarState === "true") {
+  if (sidebar && toggler) {
+    // Load state dari localStorage
+    if (localStorage.getItem("sidebarCollapsed") === "true") {
       sidebar.classList.add("collapsed");
       updateTogglerIcon();
     }
 
-    setupEventListeners();
-  }
-
-  function setupEventListeners() {
-    // Sidebar toggler
-    if (sidebarToggler && sidebar) {
-      sidebarToggler.addEventListener("click", () => {
-        sidebar.classList.toggle("collapsed");
-        updateTogglerIcon();
-        localStorage.setItem("sidebarCollapsed", sidebar.classList.contains("collapsed"));
-      });
-    }
-
-    // Modal event listeners
-    if (closeBtn) {
-      closeBtn.addEventListener("click", hideModal);
-    }
-
-    window.addEventListener("click", function (event) {
-      if (event.target === modal) {
-        hideModal();
-      }
-    });
-
-    // Keyboard shortcuts
-    document.addEventListener("keydown", function (event) {
-      if (event.key === "Escape" && modal.style.display === "flex") {
-        hideModal();
-      }
+    toggler.addEventListener("click", function () {
+      sidebar.classList.toggle("collapsed");
+      localStorage.setItem("sidebarCollapsed", sidebar.classList.contains("collapsed"));
+      updateTogglerIcon();
     });
   }
 
   function updateTogglerIcon() {
-    const icon = sidebarToggler.querySelector("span");
+    const icon = toggler.querySelector("span");
+    if (!icon) return;
+
     if (sidebar.classList.contains("collapsed")) {
       icon.classList.remove("fa-chevron-left");
       icon.classList.add("fa-chevron-right");
@@ -63,97 +31,51 @@ document.addEventListener("DOMContentLoaded", function () {
     }
   }
 
-  function showNotulenDetail(notulenId) {
-    console.log("Menampilkan detail notulen ID:", notulenId);
-    modalTitle.textContent = "Detail Notulen";
-    modalContent.innerHTML = '<div class="loading"><i class="fas fa-spinner fa-spin"></i> Memuat detail notulen...</div>';
+  /* ================= MODAL & NOTULEN ================= */
+  const modal = document.getElementById("notulenModal");
+  const tambahBtn = document.getElementById("tambahNotulenBtn");
+  const closeBtn = document.getElementById("closeModal");
+  const cancelBtn = document.getElementById("cancelBtn");
+  const notulenForm = document.getElementById("notulenForm");
+  const fileInput = document.getElementById("lampiran");
 
-    showModal();
+  const modalTitle = document.getElementById("modalTitle");
+  const formAction = document.getElementById("formAction");
+  const notulenId = document.getElementById("notulenId");
+  const submitBtn = document.getElementById("submitBtn");
+  const currentFile = document.getElementById("currentFile");
+  const currentFileName = document.getElementById("currentFileName");
 
-    fetch(`get_notulen_detail.php?id=${notulenId}`)
-      .then((response) => {
-        if (!response.ok) {
-          throw new Error("Network response was not ok");
-        }
-        return response.json();
-      })
-      .then((notulen) => {
-        console.log("Data notulen:", notulen);
-        if (notulen.error) {
-          modalContent.innerHTML = `<div class="error-message">${notulen.error}</div>`;
-          return;
-        }
-
-        const tanggal = new Date(notulen.tanggal).toLocaleDateString("id-ID", {
-          weekday: "long",
-          year: "numeric",
-          month: "long",
-          day: "numeric",
-        });
-
-        const waktu = new Date(notulen.tanggal).toLocaleTimeString("id-ID", {
-          hour: "2-digit",
-          minute: "2-digit",
-        });
-
-        let html = `
-                    <div class="notulen-detail">
-                        <div class="detail-item">
-                            <div class="detail-label">Judul Rapat</div>
-                            <div class="detail-value">${escapeHtml(notulen.judul)}</div>
-                        </div>
-                        <div class="detail-item">
-                            <div class="detail-label">Tanggal & Waktu</div>
-                            <div class="detail-value">${tanggal} - ${waktu}</div>
-                        </div>
-                        <div class="detail-item">
-                            <div class="detail-label">Penanggung Jawab</div>
-                            <div class="detail-value">${escapeHtml(notulen.penanggung_jawab)}</div>
-                        </div>
-                        <div class="detail-item">
-                            <div class="detail-label">Isi Notulen</div>
-                            <div class="detail-value" style="white-space: pre-line;">${escapeHtml(notulen.isi)}</div>
-                        </div>
-                `;
-
-        if (notulen.lampiran) {
-          const namaFileAsli = notulen.nama_file_asli || notulen.lampiran;
-          html += `
-                        <div class="detail-item">
-                            <div class="detail-label">Lampiran</div>
-                            <div class="detail-value">
-                                <a href="view.php?file=${encodeURIComponent(notulen.lampiran)}" target="_blank" class="file-link">
-                                    <i class="fas fa-paperclip"></i> ${escapeHtml(namaFileAsli)}
-                                </a>
-                            </div>
-                        </div>
-                    `;
-        }
-
-        html += `
-                        <div class="detail-actions">
-                            <a href="view.php?file=${encodeURIComponent(notulen.lampiran)}" target="_blank" class="btn btn-download" ${
-          !notulen.lampiran ? 'style="display:none;"' : ""
-        }>
-                                <i class="fas fa-download"></i> Unduh Lampiran
-                            </a>
-                        </div>
-                    </div>
-                `;
-
-        modalContent.innerHTML = html;
-      })
-      .catch((error) => {
-        console.error("Error:", error);
-        modalContent.innerHTML = `
-                    <div class="error-message">
-                        <i class="fas fa-exclamation-triangle"></i>
-                        <p>Terjadi kesalahan saat memuat detail notulen.</p>
-                        <p>Error: ${error.message}</p>
-                    </div>
-                `;
-      });
+  /* ===== EVENT LISTENER ===== */
+  if (tambahBtn) {
+    tambahBtn.addEventListener("click", () => {
+      resetModal();
+      showModal();
+    });
   }
+
+  if (closeBtn) closeBtn.addEventListener("click", hideModal);
+  if (cancelBtn) cancelBtn.addEventListener("click", hideModal);
+
+  window.addEventListener("click", (e) => {
+    if (e.target === modal) hideModal();
+  });
+
+  if (notulenForm) {
+    notulenForm.addEventListener("submit", handleFormSubmit);
+  }
+
+  if (fileInput) {
+    fileInput.addEventListener("change", validateFile);
+  }
+
+  document.addEventListener("keydown", function (e) {
+    if (e.key === "Escape" && modal?.style.display === "flex") {
+      hideModal();
+    }
+  });
+
+  /* ================= FUNCTION ================= */
 
   function showModal() {
     modal.style.display = "flex";
@@ -165,12 +87,64 @@ document.addEventListener("DOMContentLoaded", function () {
     document.body.style.overflow = "auto";
   }
 
-  function escapeHtml(unsafe) {
-    if (!unsafe) return "";
-    return unsafe.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
+  function resetModal() {
+    notulenForm?.reset();
+    if (fileInput) fileInput.value = "";
+    if (currentFile) currentFile.style.display = "none";
+
+    if (formAction) {
+      formAction.name = "simpan_notulen";
+      formAction.value = "1";
+    }
+
+    if (notulenId) notulenId.value = "";
+    if (modalTitle) modalTitle.textContent = "Tambah Notulen";
+    if (submitBtn) submitBtn.textContent = "Simpan Notulen";
+
+    setDefaultDate();
   }
 
-  // Expose functions to global scope
-  window.showNotulenDetail = showNotulenDetail;
-  window.hideModal = hideModal;
+  function setDefaultDate() {
+    const dateInput = document.getElementById("tanggalRapat");
+    if (dateInput && !notulenId?.value) {
+      dateInput.value = new Date().toISOString().split("T")[0];
+    }
+  }
+
+  function handleFormSubmit(e) {
+    e.preventDefault();
+
+    const judul = document.getElementById("judulRapat")?.value.trim();
+    const tanggal = document.getElementById("tanggalRapat")?.value;
+    const isi = document.getElementById("isiNotulen")?.value.trim();
+
+    if (!judul || !tanggal || !isi) {
+      showNotification("Lengkapi semua field wajib!", "error");
+      return;
+    }
+
+    notulenForm.submit();
+  }
+
+  function validateFile() {
+    const file = fileInput.files[0];
+    if (!file) return;
+
+    const allowed = ["pdf", "doc", "docx", "jpg", "jpeg", "png"];
+    const ext = file.name.split(".").pop().toLowerCase();
+
+    if (!allowed.includes(ext) || file.size > 5 * 1024 * 1024) {
+      showNotification("File tidak valid (max 5MB)", "error");
+      fileInput.value = "";
+    }
+  }
+
+  function showNotification(msg, type = "info") {
+    const notif = document.createElement("div");
+    notif.className = `notification ${type}`;
+    notif.textContent = msg;
+    document.body.appendChild(notif);
+
+    setTimeout(() => notif.remove(), 4000);
+  }
 });
