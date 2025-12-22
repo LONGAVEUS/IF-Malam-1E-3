@@ -1,6 +1,10 @@
 <?php
 session_start();
+require_once 'SimpleXLSX.php'; 
 require_once 'koneksi.php';
+
+
+use Shuchkin\SimpleXLSX;
 
 // ================== DATA USER LOGIN ==================
 $user_id = $_SESSION['user_id'];
@@ -76,6 +80,52 @@ if (isset($_POST['add_user'])) {
     $stmt->close();
 }
 
+/* ================== UPLOAD USER MASSAL (EXCEL) ================== */
+
+
+if (isset($_POST['submit_excel'])) {
+    if ($xlsx = SimpleXLSX::parse($_FILES['import_excel']['tmp_name'])) {
+        
+        $success_count = 0;
+        $error_count = 0;
+        
+        // Ambil baris data (rows)
+        $rows = $xlsx->rows();
+        
+        
+        foreach ($rows as $index => $column) {
+            if ($index == 0) continue; 
+
+            $nim       = $column[0]; 
+            $full_name = $column[1];
+            $jurusan   = $column[2]; 
+            $angkatan  = $column[3]; 
+            $password  = $column[4]; 
+            $role      = strtolower($column[5]); 
+            $is_active = 1;
+            $photo     = "uploads/profile_photos/default_profile.png";
+
+            $stmt = $conn->prepare("INSERT INTO user (nim, password, role, jurusan, angkatan, full_name, is_active, creat_at, photo) VALUES (?, ?, ?, ?, ?, ?, ?, NOW(), ?)");
+            $stmt->bind_param("ssssisis", $nim, $password, $role, $jurusan, $angkatan, $full_name, $is_active, $photo);
+
+            if ($stmt->execute()) {
+                $success_count++;
+            } else {
+                $error_count++;
+            }
+            $stmt->close();
+        }
+        
+        $_SESSION['success_msg'] = "$success_count user berhasil ditambahkan! ($error_count gagal)";
+
+        header("Location: user_management.php");
+        exit();
+
+    } else {
+        $error = SimpleXLSX::parseError();
+    }
+}
+
 /* ================== EDIT USER ================== */
 if (isset($_POST['edit_user'])) {
 
@@ -103,12 +153,10 @@ if (isset($_POST['edit_user'])) {
     );
 
     if ($stmt->execute()) {
-        $message = "User berhasil diperbarui";
-    } else {
-        $error = $stmt->error;
+       $_SESSION['success_msg'] = "User berhasil diperbarui!"; 
+        header("Location: user_management.php");
+        exit();
     }
-
-    $stmt->close();
 }
 
 /* ================== HAPUS USER ================== */
@@ -120,15 +168,12 @@ if (isset($_POST['hapus_user'])) {
     $stmt->bind_param("i", $user_id);
 
     if ($stmt->execute()) {
-        $message = "User berhasil dihapus";
-    } else {
-        $error = $stmt->error;
+        $_SESSION['success_msg'] = "User berhasil dihapus!"; 
+        header("Location: user_management.php");
+        exit();
     }
-
-    $stmt->close();
 }
 
-/* ================== AMBIL DATA USER ================== */
 /* ================== AMBIL DATA USER + PENCARIAN ================== */
 if (isset($_POST['submit']) && !empty($_POST['cari'])) {
 
@@ -257,8 +302,14 @@ if (isset($_POST['submit']) && !empty($_POST['cari'])) {
     <div class="main-content">
         <h1>User Management</h1>
 
-        <?php if ($message): ?><p><?= $message ?></p><?php endif; ?>
-        <?php if ($error): ?><p style="color:red"><?= $error ?></p><?php endif; ?>
+        <?php if (isset($_SESSION['success_msg'])): ?>
+        <div id="auto-alert" class="alert alert-success">
+            <i class="fas fa-check-circle alert-icon"></i>
+            <span><?php echo $_SESSION['success_msg']; ?></span>
+        </div>
+        <?php unset($_SESSION['success_msg']); ?>
+        <?php endif; ?>
+
 
         <form method="POST" class="form-add-user">
             <input type="text" name="nim" placeholder="NIM" required>
@@ -275,6 +326,15 @@ if (isset($_POST['submit']) && !empty($_POST['cari'])) {
 
             <button name="add_user">Tambah User</button>
         </form>
+
+        <div class="import-box">
+            <form method="POST" enctype="multipart/form-data">
+                <strong> Import Massal (.xlsx) </strong>
+                <input type="file" name="import_excel" id="file_input" accept=".xlsx, .xls, .csv" required>
+                <button type="submit" name="submit_excel" class="btn-import"><i class="fas fa-upload"></i> Upload Excel
+                </button>
+            </form>
+        </div>
 
         <div class="search-container">
             <form action="" method="POST" class="search-user">
@@ -443,6 +503,23 @@ if (isset($_POST['submit']) && !empty($_POST['cari'])) {
                     icon.classList.add("fa-chevron-left");
                 }
             });
+        });
+        document.addEventListener("DOMContentLoaded", function () {
+            const alertElement = document.getElementById('auto-alert');
+
+            if (alertElement) {
+                // Tunggu 3 detik (3000 ms) sebelum mulai menghilang
+                setTimeout(function () {
+                    // Beri efek transisi CSS (opacity)
+                    alertElement.style.transition = "opacity 0.6s ease";
+                    alertElement.style.opacity = "0";
+
+                    // Setelah animasi pudar selesai (0.6 detik), hapus elemen dari layar
+                    setTimeout(function () {
+                        alertElement.remove();
+                    }, 600);
+                }, 3000);
+            }
         });
     </script>
 </body>
