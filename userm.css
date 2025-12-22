@@ -326,6 +326,102 @@ body {
   transform: translateY(-1px);
 }
 
+.import-box {
+  background: linear-gradient(135deg, #5f75a6, #4b6a9f);
+  padding: 18px 20px;
+  border-radius: 12px;
+  display: inline-block;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+}
+
+/* Form layout */
+.import-box form {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+/* Judul */
+.import-box strong {
+  color: #fff;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+/* Input file */
+.import-box input[type="file"] {
+  background: #ffffff;
+  padding: 6px 10px;
+  border-radius: 8px;
+  font-size: 13px;
+  border: none;
+  cursor: pointer;
+  flex-grow: 1;
+  min-width: 250px;
+  color: #333;
+}
+
+/* Button upload */
+.btn-import {
+  background: #2ecc71;
+  color: #fff;
+  border: none;
+  padding: 10px 16px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.3s ease;
+}
+
+/* Hover effect */
+.btn-import:hover {
+  background: #27ae60;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2);
+}
+
+/* Icon */
+.btn-import i {
+  font-size: 14px;
+}
+
+.alert {
+  padding: 15px 20px;
+  border-radius: 10px;
+  margin-bottom: 20px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-weight: 500;
+  animation: slideDown 0.5s ease-out;
+}
+
+.alert-success {
+  background-color: #d4edda;
+  color: #155724;
+  border: 1px solid #c3e6cb;
+}
+
+.alert-icon {
+  font-size: 20px;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 /* =======================
    TABLE USER
 ======================= */
