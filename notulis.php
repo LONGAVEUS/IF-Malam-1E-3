@@ -252,22 +252,25 @@ $result_notulens = $conn->query($sql_notulens);
 
 <body>
   <!-- Sidebar -->
-  <div class="sidebar" id="sidebar">
+    <!-- Sidebar -->
+  <div class="sidebar">
     <div class="sidebar-header">
       <div class="logo-area">
         <a href="#" class="header-logo">
+          <!-- Ganti dengan path logo yang benar -->
           <img src="poltek1.png" alt="Politeknik Negeri Batam" />
         </a>
       </div>
-      <button class="toggler" id="sidebarToggler">
+      <button class="toggler">
         <span class="fas fa-chevron-left"></span>
       </button>
     </div>
 
     <nav class="sidebar-nav">
+      <!-- Primary top nav -->
       <ul class="nav-list primary-nav">
         <li class="nav-item">
-          <a href="notulis.php" class="nav-link active">
+          <a href="admin.php" class="nav-link active">
             <i class="fas fa-th-large nav-icon"></i>
             <span class="nav-label">Dashboard</span>
           </a>
@@ -279,48 +282,52 @@ $result_notulens = $conn->query($sql_notulens);
           </a>
         </li>
         <li class="nav-item">
-          <a href="notulen_rapat.php" class="nav-link">
+          <a href="#" class="nav-link">
             <i class="fas fa-file-alt nav-icon"></i>
             <span class="nav-label">Notulen Rapat</span>
           </a>
         </li>
         <li class="nav-item">
-          <a href="#" class="nav-link">
-            <i class="fas fa-bell nav-icon"></i>
-            <span class="nav-label">Notifikasi</span>
+          <a href="user_management.php" class="nav-link">
+            <i class="fas fa-users nav-icon"></i>
+            <span class="nav-label">Daftar Pengguna</span>
           </a>
         </li>
       </ul>
 
+      <!-- Secondary bottom nav -->
       <ul class="nav-list secondary-nav">
         <li class="nav-item">
-          <a href="Profile.php" class="nav-link">
+          <a href="profile.php" class="nav-link">
             <i class="fas fa-user-circle nav-icon"></i>
             <span class="nav-label">Profil Saya</span>
           </a>
         </li>
         <li class="nav-item">
-          <a href="notulis.php?action=logout" class="nav-link" onclick="return confirm('Yakin ingin logout?');">
+          <!-- Logout menggunakan PHP - tidak perlu file terpisah -->
+          <a href="admin.php?action=logout" class="nav-link" onclick="return confirm('Yakin ingin logout?');">
             <i class="fas fa-sign-out-alt nav-icon"></i>
             <span class="nav-label">Keluar</span>
           </a>
         </li>
+
         <!-- PROFIL LOGIN -->
         <li class="nav-item profile-user">
-          <img src="<?= $fotoProfil ?>" class="profile-avatar" alt="Foto Profil">
+          <img src="<?= $fotoProfil; ?>" class="profile-avatar">
 
           <div class="profile-info">
             <span class="profile-name">
-              <?= htmlspecialchars($userLogin['full_name']) ?>
+              <?= htmlspecialchars($userLogin['full_name']); ?>
             </span>
             <span class="profile-role">
-              <?= ucfirst($userLogin['role']) ?>
+              <?= ucfirst($userLogin['role']); ?>
             </span>
           </div>
         </li>
       </ul>
     </nav>
   </div>
+
 
   <!-- Main Content -->
   <div class="main-content" id="mainContent">
