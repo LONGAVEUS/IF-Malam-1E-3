@@ -8,12 +8,6 @@ if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
     exit();
 }
 
-// Proteksi role admin
-if ($_SESSION['role'] !== 'notulis') {
-    header("Location: login.php");
-    exit();
-}
-
 /* ================== DATA USER LOGIN ================== */
 $user_id = $_SESSION['user_id'];
 
@@ -71,9 +65,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
 
         // Simpan ke database
-        $sql = "INSERT INTO isinotulen (judul, tanggal, isi, penanggung_jawab, status, lampiran) VALUES (?, ?, ?, ?, ?, ?)";
-        $stmt = $conn->prepare($sql);
-        $stmt->bind_param("ssssss", $judul, $tanggal, $isi, $penanggung_jawab, $status, $lampiran);
+        $sql = "INSERT INTO notulen (judul, hari, tanggal, Tempat, penanggung_jawab, notulis, Pembahasan, Hasil_akhir, status, lampiran, created_by_user_id) 
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+        $stmt = $conn->prepare("
+    INSERT INTO notulen 
+    (judul, hari, tanggal, Tempat, penanggung_jawab, notulis, Pembahasan, Hasil_akhir, status, lamptran, created_by_user_id) 
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
+  );
+
+$stmt->bind_param("ssssssssssi", $judul, $hari, $tanggal, $tempat, $penanggung_jawab, $notulis_name, $isi,  $status, $lamptan,  
+);
         
         if ($stmt->execute()) {
             $_SESSION['success_message'] = "Notulen berhasil disimpan!";
@@ -147,7 +148,7 @@ if (isset($_GET['hapus'])) {
     $id = intval($_GET['hapus']);
     
     // Hapus file lampiran jika ada
-    $sql_select = "SELECT lampiran FROM isinotulen WHERE id = ?";
+    $sql_select = "SELECT lampiran FROM notulen WHERE id = ?";
     $stmt_select = $conn->prepare($sql_select);
     $stmt_select->bind_param("i", $id);
     $stmt_select->execute();
@@ -164,7 +165,7 @@ if (isset($_GET['hapus'])) {
     }
     $stmt_select->close();
 
-    $sql = "DELETE FROM isinotulen WHERE id = ?";
+    $sql = "DELETE FROM notulen WHERE id = ?";
     $stmt = $conn->prepare($sql);
     $stmt->bind_param("i", $id);
     
@@ -190,6 +191,7 @@ function handleFileUpload($file) {
         $fileName = $file['name'];
         $fileSize = $file['size'];
         $fileType = $file['type'];
+        $notulis_name = $userLogin['full_name'] ?? $_SESSION['username'];
 
         // Validasi ekstensi file
         $allowedExtensions = ['pdf', 'doc', 'docx', 'jpg', 'jpeg', 'png', 'txt'];
@@ -218,22 +220,22 @@ function handleFileUpload($file) {
 }
 
 // Query untuk statistik dashboard
-$sql_notulen_count = "SELECT COUNT(id) AS total FROM isinotulen";
+$sql_notulen_count = "SELECT COUNT(id) AS total FROM notulen";
 $result_notulen_count = $conn->query($sql_notulen_count);
 $total_notulen = $result_notulen_count ? $result_notulen_count->fetch_assoc()['total'] : 0;
 
 $today = date('Y-m-d');
-$sql_notulen_hari_ini = "SELECT COUNT(id) AS total FROM isinotulen WHERE DATE(tanggal) = '$today'";
+$sql_notulen_hari_ini = "SELECT COUNT(id) AS total FROM notulen WHERE DATE(tanggal) = '$today'";
 $result_notulen_hari_ini = $conn->query($sql_notulen_hari_ini);
 $notulen_hari_ini = $result_notulen_hari_ini ? $result_notulen_hari_ini->fetch_assoc()['total'] : 0;
 
 $current_month = date('Y-m');
-$sql_notulen_bulan_ini = "SELECT COUNT(id) AS total FROM isinotulen WHERE DATE_FORMAT(tanggal, '%Y-%m') = '$current_month'";
+$sql_notulen_bulan_ini = "SELECT COUNT(id) AS total FROM notulen WHERE DATE_FORMAT(tanggal, '%Y-%m') = '$current_month'";
 $result_notulen_bulan_ini = $conn->query($sql_notulen_bulan_ini);
 $notulen_bulan_ini = $result_notulen_bulan_ini ? $result_notulen_bulan_ini->fetch_assoc()['total'] : 0;
 
 // Ambil daftar notulen terbaru
-$sql_notulens = "SELECT id, judul, tanggal, isi, penanggung_jawab, status, lampiran FROM isinotulen ORDER BY tanggal DESC, id DESC LIMIT 5";
+$sql_notulens = "SELECT id, judul, tanggal, Pembahasan as isi, penanggung_jawab, status, lampiran as lampiran FROM notulen ORDER BY tanggal DESC, id DESC LIMIT 5";
 $result_notulens = $conn->query($sql_notulens);
 ?>
 
@@ -277,7 +279,7 @@ $result_notulens = $conn->query($sql_notulens);
           </a>
         </li>
         <li class="nav-item">
-          <a href="notulis.php" class="nav-link">
+          <a href="notulen_rapat.php" class="nav-link">
             <i class="fas fa-file-alt nav-icon"></i>
             <span class="nav-label">Notulen Rapat</span>
           </a>
