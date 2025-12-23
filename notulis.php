@@ -252,7 +252,6 @@ $result_notulens = $conn->query($sql_notulens);
 
 <body>
   <!-- Sidebar -->
-    <!-- Sidebar -->
   <div class="sidebar">
     <div class="sidebar-header">
       <div class="logo-area">

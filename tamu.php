@@ -109,64 +109,80 @@ $notulen_bulan_ini = $result_notulen_bulan_ini ? $result_notulen_bulan_ini->fetc
     <link rel="stylesheet" href="tamu-style.css">
 </head>
 <body>
-    <!-- Sidebar -->
-    <div class="sidebar" id="sidebar">
-        <div class="sidebar-header">
-            <div class="logo-area">
-                <a href="#" class="header-logo">
-                    <img src="poltek1.png" alt="Politeknik Negeri Batam" />
-                </a>
-            </div>
-            <button class="toggler" id="sidebarToggler">
-                <span class="fas fa-chevron-left"></span>
-            </button>
-        </div>
-
-        <nav class="sidebar-nav">
-            <ul class="nav-list primary-nav">
-                <li class="nav-item">
-                    <a href="tamu.php" class="nav-link active">
-                        <i class="fas fa-th-large nav-icon"></i>
-                        <span class="nav-label">Dashboard</span>
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a href="jadwal_tamu.php" class="nav-link">
-                        <i class="fas fa-calendar-alt nav-icon"></i>
-                        <span class="nav-label">Jadwal Rapat</span>
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a href="notulen_tamu.php" class="nav-link">
-                        <i class="fas fa-file-alt nav-icon"></i>
-                        <span class="nav-label">Notulen Rapat</span>
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a href="notifikasi_tamu.php" class="nav-link">
-                        <i class="fas fa-bell nav-icon"></i>
-                        <span class="nav-label">Notifikasi</span>
-                        <span class="badge">3</span>
-                    </a>
-                </li>
-            </ul>
-
-            <ul class="nav-list secondary-nav">
-                <li class="nav-item">
-                    <a href="profil_tamu.php" class="nav-link">
-                        <i class="fas fa-user-circle nav-icon"></i>
-                        <span class="nav-label">Profil</span>
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a href="tamu.php?action=logout" class="nav-link" onclick="return confirm('Yakin ingin logout?');">
-                        <i class="fas fa-sign-out-alt nav-icon"></i>
-                        <span class="nav-label">Keluar</span>
-                    </a>
-                </li>
-            </ul>
-        </nav>
+      <div class="sidebar">
+    <div class="sidebar-header">
+      <div class="logo-area">
+        <a href="#" class="header-logo">
+          <!-- Ganti dengan path logo yang benar -->
+          <img src="poltek1.png" alt="Politeknik Negeri Batam" />
+        </a>
+      </div>
+      <button class="toggler">
+        <span class="fas fa-chevron-left"></span>
+      </button>
     </div>
+
+    <nav class="sidebar-nav">
+      <!-- Primary top nav -->
+      <ul class="nav-list primary-nav">
+        <li class="nav-item">
+          <a href="admin.php" class="nav-link active">
+            <i class="fas fa-th-large nav-icon"></i>
+            <span class="nav-label">Dashboard</span>
+          </a>
+        </li>
+        <li class="nav-item">
+          <a href="jadwal_rapat.php" class="nav-link">
+            <i class="fas fa-calendar-alt nav-icon"></i>
+            <span class="nav-label">Jadwal Rapat</span>
+          </a>
+        </li>
+        <li class="nav-item">
+          <a href="#" class="nav-link">
+            <i class="fas fa-file-alt nav-icon"></i>
+            <span class="nav-label">Notulen Rapat</span>
+          </a>
+        </li>
+        <li class="nav-item">
+          <a href="user_management.php" class="nav-link">
+            <i class="fas fa-users nav-icon"></i>
+            <span class="nav-label">Daftar Pengguna</span>
+          </a>
+        </li>
+      </ul>
+
+      <!-- Secondary bottom nav -->
+      <ul class="nav-list secondary-nav">
+        <li class="nav-item">
+          <a href="profile.php" class="nav-link">
+            <i class="fas fa-user-circle nav-icon"></i>
+            <span class="nav-label">Profil Saya</span>
+          </a>
+        </li>
+        <li class="nav-item">
+          <!-- Logout menggunakan PHP - tidak perlu file terpisah -->
+          <a href="admin.php?action=logout" class="nav-link" onclick="return confirm('Yakin ingin logout?');">
+            <i class="fas fa-sign-out-alt nav-icon"></i>
+            <span class="nav-label">Keluar</span>
+          </a>
+        </li>
+
+        <!-- PROFIL LOGIN -->
+        <li class="nav-item profile-user">
+          <img src="<?= $fotoProfil; ?>" class="profile-avatar">
+
+          <div class="profile-info">
+            <span class="profile-name">
+              <?= htmlspecialchars($userLogin['full_name']); ?>
+            </span>
+            <span class="profile-role">
+              <?= ucfirst($userLogin['role']); ?>
+            </span>
+          </div>
+        </li>
+      </ul>
+    </nav>
+  </div>
     
     <!-- Main Content -->
     <div class="main-content" id="mainContent">
