@@ -52,7 +52,6 @@ if (isset($_POST['fail'])) {
             opacity: 1;
 }
     </style>
-
 </head>
 <body>
 
@@ -91,6 +90,5 @@ window.onload = function() {
     }
 };
 </script>
-
-</body>
-</html>
+</body> 
+</html>  
