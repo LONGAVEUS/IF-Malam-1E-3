@@ -275,21 +275,15 @@ $result_notulens = $conn->query($sql_notulens);
           </a>
         </li>
         <li class="nav-item">
-          <a href="jadwal_rapat.php" class="nav-link">
-            <i class="fas fa-calendar-alt nav-icon"></i>
-            <span class="nav-label">Jadwal Rapat</span>
-          </a>
-        </li>
-        <li class="nav-item">
-          <a href="#" class="nav-link">
+          <a href="notulen_rapat.php" class="nav-link">
             <i class="fas fa-file-alt nav-icon"></i>
             <span class="nav-label">Notulen Rapat</span>
           </a>
         </li>
         <li class="nav-item">
-          <a href="user_management.php" class="nav-link">
-            <i class="fas fa-users nav-icon"></i>
-            <span class="nav-label">Daftar Pengguna</span>
+          <a href="jadwal_rapat.php" class="nav-link">
+            <i class="fas fa-calendar-alt nav-icon"></i>
+            <span class="nav-label">Jadwal Rapat</span>
           </a>
         </li>
       </ul>
@@ -368,13 +362,6 @@ $result_notulens = $conn->query($sql_notulens);
     </div>
 
     <div class="content-section">
-      <div class="section-header">
-        <h2><i class="fas fa-file-alt"></i> Notulen Terbaru</h2>
-        <button class="btn btn-add" id="tambahNotulenBtn">
-          <i class="fas fa-plus"></i> Tambah Notulen
-        </button>
-      </div>
-
       <div class="notulen-list" id="notulenList">
         <?php
         if ($result_notulens && $result_notulens->num_rows > 0) {

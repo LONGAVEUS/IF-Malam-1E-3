@@ -137,18 +137,6 @@ $notulen_bulan_ini = $result_notulen_bulan_ini ? $result_notulen_bulan_ini->fetc
             <span class="nav-label">Jadwal Rapat</span>
           </a>
         </li>
-        <li class="nav-item">
-          <a href="#" class="nav-link">
-            <i class="fas fa-file-alt nav-icon"></i>
-            <span class="nav-label">Notulen Rapat</span>
-          </a>
-        </li>
-        <li class="nav-item">
-          <a href="user_management.php" class="nav-link">
-            <i class="fas fa-users nav-icon"></i>
-            <span class="nav-label">Daftar Pengguna</span>
-          </a>
-        </li>
       </ul>
 
       <!-- Secondary bottom nav -->
