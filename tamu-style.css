@@ -1,10 +1,10 @@
 @import url("https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap");
 
 * {
-  font-family: "Poppins", sans-serif;
   margin: 0;
   padding: 0;
   box-sizing: border-box;
+  font-family: "Poppins", sans-serif;
 }
 
 body {
@@ -12,21 +12,21 @@ body {
   background: linear-gradient(#4b6a9b, #d1b7e8);
 }
 
+/* === SIDEBAR === */
 .sidebar {
   width: 260px;
   height: calc(100vh - 32px);
   background: #330858;
   border-radius: 16px;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
   position: fixed;
   left: 16px;
   top: 16px;
   color: #fff;
   box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
-  transition: width 0.45s cubic-bezier(0.68, -0.55, 0.27, 1.55), opacity 0.3s ease, transform 0.45s ease;
+  transition: width 0.3s ease;
   overflow: hidden;
+  display: flex;
+  flex-direction: column;
 }
 
 .sidebar-header {
@@ -39,13 +39,12 @@ body {
 .logo-area img {
   width: 50px;
   height: 50px;
-  transition: transform 0.3s ease, width 0.3s ease, opacity 0.3s ease;
 }
 
 .toggler {
   background: #fff;
   border: none;
-  color: #8348b6;
+  color: #3498db;
   width: 36px;
   height: 36px;
   border-radius: 8px;
@@ -53,22 +52,7 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: transform 0.4s ease, background 0.5s ease;
 }
-
-.sidebar.collapsed .toggler {
-  transform: rotate(180deg);
-}
-
-.toggler:hover {
-  background: #e0e0e0;
-}
-
-.sidebar-header .toggler span {
-  font-size: 1.75rem;
-}
-
-/*==== NAVIGASI =====*/
 
 .sidebar-nav {
   flex: 1;
@@ -78,11 +62,8 @@ body {
   padding: 10px 0;
 }
 
-.primary-nav,
-.secondary-nav {
+.nav-list {
   list-style: none;
-  margin: 0;
-  padding: 0;
 }
 
 .nav-item {
@@ -97,77 +78,31 @@ body {
   color: #fff;
   text-decoration: none;
   border-radius: 8px;
-  transition: background 0.3s ease, transform 0.3s ease;
+  transition: background 0.3s ease;
 }
 
 .nav-link:hover {
-  background: rgba(255, 255, 255, 0.2);
-  transform: translateX(5px);
+  background: rgba(255, 255, 255, 0.1);
 }
 
-/*==== ICON =====*/
+.nav-link.active {
+  background: rgba(255, 255, 255, 0.15);
+}
+
 .nav-icon {
   font-size: 18px;
   width: 22px;
   text-align: center;
 }
 
-/* LABEL */
 .nav-label {
   font-size: 15px;
   font-weight: 500;
-  opacity: 1;
-  transform: translateX(0);
-  transition: all 0.3s ease;
 }
 
-/* SECONDARY NAV DI BAWAH */
 .secondary-nav {
-  border-top: 1px solid rgba(255, 255, 255, 0.2);
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
   padding-top: 15px;
-  margin-top: auto;
-}
-
-/* ================= PROFILE SIDEBAR ================= */
-.profile-user {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 14px 16px;
-  border-top: 1px solid #e5e7eb;
-}
-
-.profile-avatar {
-  width: 42px;
-  height: 42px;
-  border-radius: 50%;
-  object-fit: cover;
-  border: 2px solid #e5e7eb;
-}
-
-.profile-info {
-  display: flex;
-  flex-direction: column;
-}
-
-.profile-name {
-  font-size: 14px;
-  font-weight: 600;
-  color: #f1f1f1;
-}
-
-.profile-role {
-  font-size: 12px;
-  color: #ddd;
-}
-
-.sidebar.collapsed .nav-label {
-  opacity: 0;
-  transform: translateX(-10px);
-}
-
-.sidebar.collapsed .profile-info {
-  display: none;
 }
 
 /* === MAIN CONTENT === */
@@ -199,8 +134,6 @@ body {
 }
 
 .user-count-box {
-  /*style masing masing kotak */
-  /*kotak memanjang dan mengisi ruang*/
   flex: 1 1 200px; /* fleksibel */
   padding: 20px;
   background-color: #4caf50;
@@ -522,15 +455,15 @@ body {
 /* === RESPONSIVE DESIGN === */
 @media (max-width: 768px) {
   .sidebar {
-    width: 200px;
+    width: 70px;
+    height: 100vh;
+    top: 0;
+    left: 0;
+    border-radius: 0;
   }
 
-  .nav-label {
-    display: none; /* sembunyikan teks di layar kecil */
-  }
-
-  .nav-icon {
-    font-size: 20px;
+  .sidebar:not(.collapsed) {
+    width: 250px;
   }
 
   .main-content {
