@@ -1,4 +1,4 @@
-// notulen-rapat.js - VERSI BAHARU DENGAN FUNGSI EDIT YANG DIPERBAIKI
+// notulen-rapat.js - VERSI BAHARU DENGAN TOAST NOTIFICATION
 document.addEventListener('DOMContentLoaded', function() {
     // Elements
     const notulenModal = document.getElementById('notulenModal');
@@ -52,7 +52,7 @@ document.addEventListener('DOMContentLoaded', function() {
         closeEditModalBtn?.addEventListener('click', closeEditModal);
         cancelNotulenFormBtn?.addEventListener('click', () => closeNotulenModal(true));
         
-        // Close modal when clicking outside overlay
+        // Close modal ketika klik di luar overlay
         document.addEventListener('click', function(event) {
             if (event.target === notulenModal) {
                 if (hasUnsavedChanges) {
@@ -69,7 +69,7 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
         
-        // Escape key to close modals
+        // Escape key untuk menutup modal
         document.addEventListener('keydown', function(event) {
             if (event.key === 'Escape') {
                 if (notulenModal.classList.contains('active')) {
@@ -88,11 +88,11 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
         
-        // Peserta search for create modal
+        // Peserta search untuk create modal
         pesertaSearch?.addEventListener('input', handlePesertaSearch);
         pesertaSearch?.addEventListener('focus', showSearchResults);
         
-        // Peserta selection for create modal
+        // Peserta selection untuk create modal
         searchResults?.addEventListener('click', handlePesertaSelection);
         selectedPesertaList?.addEventListener('click', handlePesertaRemoval);
         
@@ -359,123 +359,127 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Fungsi openEditModal yang baru dan lebih baik
     window.openEditModal = async function(notulenId) {
-    try {
-        console.log('Membuka modal edit untuk notulen ID:', notulenId);
-        
-        // Buka modal
-        const editModal = document.getElementById('editNotulenModal');
-        editModal.classList.add('active');
-        document.body.style.overflow = 'hidden';
-        
-        // Tampilkan loading
-        const modalBody = document.querySelector('#editNotulenModal .modal-body');
-        const originalContent = modalBody.innerHTML;
-        modalBody.innerHTML = `
-            <div class="loading">
-                <i class="fas fa-spinner fa-spin"></i> Memuat data notulen...
-            </div>
-        `;
-        
-        const response = await fetch(`edit_notulen.php?id=${notulenId}`);
-        const result = await response.json();
-        
-        console.log('Response dari server:', result);
-        
-        if (!result.success) {
-            throw new Error(result.error || 'Gagal memuat data notulen');
+        try {
+            console.log('Membuka modal edit untuk notulen ID:', notulenId);
+            showLoading();
+            
+            // Buka modal
+            const editModal = document.getElementById('editNotulenModal');
+            editModal.classList.add('active');
+            document.body.style.overflow = 'hidden';
+            
+            // Tampilkan loading
+            const modalBody = document.querySelector('#editNotulenModal .modal-body');
+            const originalContent = modalBody.innerHTML;
+            modalBody.innerHTML = `
+                <div class="loading">
+                    <i class="fas fa-spinner fa-spin"></i> Memuat data notulen...
+                </div>
+            `;
+            
+            const response = await fetch(`edit_notulen.php?id=${notulenId}`);
+            const result = await response.json();
+            
+            console.log('Response dari server:', result);
+            
+            if (!result.success) {
+                throw new Error(result.error || 'Gagal memuat data notulen');
+            }
+            
+            // Restore content
+            modalBody.innerHTML = originalContent;
+            
+            const data = result.data;
+            
+            // Tunggu DOM ready
+            await new Promise(resolve => setTimeout(resolve, 50));
+            
+            // Set nilai ke form - DENGAN PENGECEKAN
+            document.getElementById('editNotulenId').value = data.Id || '';
+            document.getElementById('editJudul').value = data.judul || '';
+            document.getElementById('editHari').value = data.hari || '';
+            document.getElementById('editTanggal').value = data.tanggal || '';
+            
+            // KRUSIAL: Set jam dengan pengecekan elemen dan data
+            const jamMulaiInput = document.getElementById('editJamMulai');
+            const jamSelesaiInput = document.getElementById('editJamSelesai');
+            
+            if (jamMulaiInput && data.jam_mulai) {
+                jamMulaiInput.value = data.jam_mulai;
+                console.log('✓ Jam Mulai diset:', data.jam_mulai);
+            } else {
+                console.error('✗ Gagal set Jam Mulai. Input:', jamMulaiInput, 'Data:', data.jam_mulai);
+            }
+            
+            if (jamSelesaiInput && data.jam_selesai) {
+                jamSelesaiInput.value = data.jam_selesai;
+                console.log('✓ Jam Selesai diset:', data.jam_selesai);
+            } else {
+                console.error('✗ Gagal set Jam Selesai. Input:', jamSelesaiInput, 'Data:', data.jam_selesai);
+            }
+            
+            document.getElementById('editTempat').value = data.Tempat || '';
+            document.getElementById('editNotulis').value = data.notulis || '';
+            
+            // KRUSIAL: Set jurusan dengan pengecekan
+            const jurusanInput = document.getElementById('editJurusan');
+            if (jurusanInput && data.jurusan) {
+                jurusanInput.value = data.jurusan;
+                console.log('✓ Jurusan diset:', data.jurusan);
+            } else {
+                console.error('✗ Gagal set Jurusan. Input:', jurusanInput, 'Data:', data.jurusan);
+            }
+            
+            document.getElementById('editPenanggungJawab').value = data.penanggung_jawab || '';
+            document.getElementById('editPembahasan').value = data.Pembahasan || '';
+            document.getElementById('editHasilAkhir').value = data.Hasil_akhir || '';
+            
+            // Set peserta
+            if (data.peserta_details && Array.isArray(data.peserta_details)) {
+                window.selectedPesertaEdit = data.peserta_details.map(p => ({
+                    id: String(p.id || p.user_id),
+                    name: p.name || p.full_name,
+                    nim: p.nim,
+                    role: p.role
+                }));
+            } else {
+                window.selectedPesertaEdit = [];
+            }
+            
+            updateEditSelectedPesertaList();
+            
+            setTimeout(() => {
+                updateEditSearchResults();
+            }, 100);
+            
+            // Tampilkan lampiran
+            if (data.lampiran_files && data.lampiran_files.length > 0) {
+                displayCurrentFilesEdit(data.lampiran_files);
+            } else {
+                document.getElementById('currentFiles').innerHTML = 
+                    '<div class="no-attachment">Tidak ada lampiran</div>';
+            }
+            
+            // Reset search
+            document.getElementById('editPesertaSearch').value = '';
+            
+            // Verifikasi final
+            setTimeout(() => {
+                console.log('=== VERIFIKASI FORM ===');
+                console.log('Jurusan:', document.getElementById('editJurusan').value);
+                console.log('Jam Mulai:', document.getElementById('editJamMulai').value);
+                console.log('Jam Selesai:', document.getElementById('editJamSelesai').value);
+            }, 200);
+            
+            hideLoading();
+            
+        } catch (error) {
+            console.error('Error:', error);
+            showToast('Terjadi kesalahan: ' + error.message, 'error');
+            closeEditModal();
+            hideLoading();
         }
-        
-        // Restore content
-        modalBody.innerHTML = originalContent;
-        
-        const data = result.data;
-        
-        // Tunggu DOM ready
-        await new Promise(resolve => setTimeout(resolve, 50));
-        
-        // Set nilai ke form - DENGAN PENGECEKAN
-        document.getElementById('editNotulenId').value = data.Id || '';
-        document.getElementById('editJudul').value = data.judul || '';
-        document.getElementById('editHari').value = data.hari || '';
-        document.getElementById('editTanggal').value = data.tanggal || '';
-        
-        // KRUSIAL: Set jam dengan pengecekan elemen dan data
-        const jamMulaiInput = document.getElementById('editJamMulai');
-        const jamSelesaiInput = document.getElementById('editJamSelesai');
-        
-        if (jamMulaiInput && data.jam_mulai) {
-            jamMulaiInput.value = data.jam_mulai;
-            console.log('✓ Jam Mulai diset:', data.jam_mulai);
-        } else {
-            console.error('✗ Gagal set Jam Mulai. Input:', jamMulaiInput, 'Data:', data.jam_mulai);
-        }
-        
-        if (jamSelesaiInput && data.jam_selesai) {
-            jamSelesaiInput.value = data.jam_selesai;
-            console.log('✓ Jam Selesai diset:', data.jam_selesai);
-        } else {
-            console.error('✗ Gagal set Jam Selesai. Input:', jamSelesaiInput, 'Data:', data.jam_selesai);
-        }
-        
-        document.getElementById('editTempat').value = data.Tempat || '';
-        document.getElementById('editNotulis').value = data.notulis || '';
-        
-        // KRUSIAL: Set jurusan dengan pengecekan
-        const jurusanInput = document.getElementById('editJurusan');
-        if (jurusanInput && data.jurusan) {
-            jurusanInput.value = data.jurusan;
-            console.log('✓ Jurusan diset:', data.jurusan);
-        } else {
-            console.error('✗ Gagal set Jurusan. Input:', jurusanInput, 'Data:', data.jurusan);
-        }
-        
-        document.getElementById('editPenanggungJawab').value = data.penanggung_jawab || '';
-        document.getElementById('editPembahasan').value = data.Pembahasan || '';
-        document.getElementById('editHasilAkhir').value = data.Hasil_akhir || '';
-        
-        // Set peserta
-        if (data.peserta_details && Array.isArray(data.peserta_details)) {
-            window.selectedPesertaEdit = data.peserta_details.map(p => ({
-                id: String(p.id || p.user_id),
-                name: p.name || p.full_name,
-                nim: p.nim,
-                role: p.role
-            }));
-        } else {
-            window.selectedPesertaEdit = [];
-        }
-        
-        updateEditSelectedPesertaList();
-        
-        setTimeout(() => {
-            updateEditSearchResults();
-        }, 100);
-        
-        // Tampilkan lampiran
-        if (data.lampiran_files && data.lampiran_files.length > 0) {
-            displayCurrentFilesEdit(data.lampiran_files);
-        } else {
-            document.getElementById('currentFiles').innerHTML = 
-                '<div class="no-attachment">Tidak ada lampiran</div>';
-        }
-        
-        // Reset search
-        document.getElementById('editPesertaSearch').value = '';
-        
-        // Verifikasi final
-        setTimeout(() => {
-            console.log('=== VERIFIKASI FORM ===');
-            console.log('Jurusan:', document.getElementById('editJurusan').value);
-            console.log('Jam Mulai:', document.getElementById('editJamMulai').value);
-            console.log('Jam Selesai:', document.getElementById('editJamSelesai').value);
-        }, 200);
-        
-    } catch (error) {
-        console.error('Error:', error);
-        alert('Terjadi kesalahan: ' + error.message);
-        closeEditModal();
-    }
-};
+    };
     
     function handleEditPesertaSearch(event) {
         const searchTerm = event.target.value.toLowerCase().trim();
@@ -679,13 +683,13 @@ document.addEventListener('DOMContentLoaded', function() {
         
         if (selectedPeserta.length === 0) {
             isValid = false;
-            showNotification('Harap pilih minimal 1 peserta!', 'error');
+            showToast('Harap pilih minimal 1 peserta!', 'error');
             document.querySelector('.peserta-search-container').classList.add('form-error');
         }
         
         if (!isValid) {
             event.preventDefault();
-            showNotification('Harap isi semua field yang wajib diisi!', 'error');
+            showToast('Harap isi semua field yang wajib diisi!', 'error');
         } else {
             hasUnsavedChanges = false;
         }
@@ -710,12 +714,12 @@ document.addEventListener('DOMContentLoaded', function() {
         
         if (!window.selectedPesertaEdit || window.selectedPesertaEdit.length === 0) {
             isValid = false;
-            showNotification('Pilih minimal 1 peserta!', 'error');
+            showToast('Pilih minimal 1 peserta!', 'error');
             document.querySelectorAll('.peserta-search-container')[1]?.classList.add('form-error');
         }
         
         if (!isValid) {
-            showNotification('Harap isi semua field yang wajib diisi!', 'error');
+            showToast('Harap isi semua field yang wajib diisi!', 'error');
             return;
         }
         
@@ -736,7 +740,7 @@ document.addEventListener('DOMContentLoaded', function() {
             
             if (data.includes('Notulen berhasil diperbarui!') || data.includes('success') || 
                 data.includes('berhasil')) {
-                showNotification('Notulen berhasil diperbarui!', 'success');
+                showToast('Notulen berhasil diperbarui!', 'success');
                 
                 setTimeout(() => {
                     closeEditModal();
@@ -746,15 +750,15 @@ document.addEventListener('DOMContentLoaded', function() {
                 // Coba parsing error message
                 const errorMatch = data.match(/class="alert alert-danger">.*?<i class="fas fa-exclamation-triangle"><\/i>\s*(.*?)<\/div>/s);
                 if (errorMatch && errorMatch[1]) {
-                    showNotification(errorMatch[1], 'error');
+                    showToast(errorMatch[1], 'error');
                 } else {
-                    showNotification('Terjadi kesalahan saat menyimpan!', 'error');
+                    showToast('Terjadi kesalahan saat menyimpan!', 'error');
                 }
             }
         })
         .catch(error => {
             console.error('Error:', error);
-            showNotification('Terjadi kesalahan koneksi!', 'error');
+            showToast('Terjadi kesalahan koneksi!', 'error');
         })
         .finally(() => {
             submitBtn.innerHTML = originalText;
@@ -810,24 +814,61 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
     
-    function showNotification(message, type = 'info') {
-        const existingNotification = document.querySelector('.notification');
-        if (existingNotification) {
-            existingNotification.remove();
-        }
+    // Fungsi toast notification (untuk digunakan di dalam file ini juga)
+    function showToast(message, type = 'info') {
+        // Hapus toast yang sudah ada
+        const existingToasts = document.querySelectorAll('.toast-notification');
+        existingToasts.forEach(toast => {
+            toast.classList.add('hiding');
+            setTimeout(() => {
+                if (toast.parentNode) {
+                    toast.parentNode.removeChild(toast);
+                }
+            }, 300);
+        });
         
-        const notification = document.createElement('div');
-        notification.className = `notification ${type}`;
-        notification.innerHTML = `
-            <i class="fas fa-${type === 'success' ? 'check-circle' : type === 'error' ? 'exclamation-triangle' : 'info-circle'}"></i>
-            <span>${message}</span>
+        // Buat toast baru
+        const toast = document.createElement('div');
+        toast.className = `toast-notification toast-${type}`;
+        
+        // Icon berdasarkan type
+        let icon = 'info-circle';
+        if (type === 'success') icon = 'check-circle';
+        if (type === 'error') icon = 'exclamation-triangle';
+        if (type === 'warning') icon = 'exclamation-circle';
+        
+        toast.innerHTML = `
+            <i class="fas fa-${icon} toast-icon"></i>
+            <span class="toast-message">${message}</span>
         `;
         
-        document.body.appendChild(notification);
+        // Tambahkan ke body
+        document.body.appendChild(toast);
         
+        // Hapus toast setelah 5 detik
         setTimeout(() => {
-            notification.remove();
-        }, 5000);
+            toast.classList.add('hiding');
+            setTimeout(() => {
+                if (toast.parentNode) {
+                    toast.parentNode.removeChild(toast);
+                }
+            }, 300);
+        }, 4700);
+    }
+    
+    // Fungsi loading
+    function showLoading() {
+        const loadingOverlay = document.getElementById('loadingOverlay');
+        if (loadingOverlay) {
+            loadingOverlay.classList.add('active');
+        }
+    }
+    
+    function hideLoading() {
+        const loadingOverlay = document.getElementById('loadingOverlay');
+        if (loadingOverlay) {
+            loadingOverlay.classList.remove('active');
+        }
     }
     
     // Event listener untuk update hari berdasarkan tanggal di create modal
@@ -848,7 +889,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // Validasi peserta sebelum submit
     function validatePeserta() {
         if (selectedPeserta.length === 0) {
-            showNotification('Harap pilih minimal 1 peserta!', 'error');
+            showToast('Harap pilih minimal 1 peserta!', 'error');
             return false;
         }
         return true;

@@ -281,6 +281,133 @@ body {
   gap: 8px;
 }
 
+/* === SEARCH CONTAINER === */
+.search-container {
+  background: #f8f9fa;
+  padding: 20px;
+  border-radius: 10px;
+  margin-bottom: 25px;
+  border: 1px solid #e9ecef;
+}
+
+.search-form {
+  display: flex;
+  gap: 15px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.search-bar {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  background: white;
+  border-radius: 8px;
+  padding: 0 15px;
+  border: 1px solid #dee2e6;
+}
+
+.search-bar i {
+  color: #6c757d;
+  margin-right: 10px;
+}
+
+.search-bar input {
+  width: 100%;
+  padding: 12px 0;
+  border: none;
+  outline: none;
+  font-size: 0.95rem;
+  background: transparent;
+}
+
+.date-time-filters {
+  display: flex;
+  gap: 10px;
+}
+
+.date-time-filters input {
+  padding: 10px;
+  border: 1px solid #dee2e6;
+  border-radius: 6px;
+  font-size: 0.9rem;
+}
+
+.search-btn {
+  background: #3498db;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 6px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 500;
+  transition: background 0.3s ease;
+}
+
+.search-btn:hover {
+  background: #2980b9;
+}
+
+.reset-btn {
+  background: #6c757d;
+  color: white;
+  text-decoration: none;
+  padding: 10px 15px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.9rem;
+  transition: background 0.3s ease;
+}
+
+.reset-btn:hover {
+  background: #5a6268;
+}
+
+/* Search Results Info */
+.search-info {
+  background: #e3f2fd;
+  color: #1976d2;
+  padding: 10px 15px;
+  border-radius: 6px;
+  margin-bottom: 15px;
+  font-size: 0.9rem;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.search-info i {
+  font-size: 1rem;
+}
+
+/* Kehadiran Status Styles */
+.kehadiran-status {
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-size: 0.8rem;
+  font-weight: 500;
+}
+
+.kehadiran-status.hadir {
+  background: #d4edda;
+  color: #155724;
+}
+
+.kehadiran-status.belum {
+  background: #fff3cd;
+  color: #856404;
+}
+
+.kehadiran-status.tidak-hadir {
+  background: #f8d7da;
+  color: #721c24;
+}
+
 /* === NOTULEN LIST === */
 .notulen-list {
   display: flex;
@@ -365,6 +492,13 @@ body {
 }
 .action-btn.view:hover {
   background: #2980b9;
+}
+
+.action-btn.konfirmasi {
+  background: #17a2b8;
+}
+.action-btn.konfirmasi:hover {
+  background: #138496;
 }
 
 .action-btn.download {
@@ -562,6 +696,26 @@ body {
 
   .filter-info {
     align-self: stretch;
+    justify-content: center;
+  }
+
+  /* Responsive Search */
+  .search-form {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  
+  .search-bar,
+  .date-time-filters {
+    width: 100%;
+  }
+  
+  .date-time-filters {
+    justify-content: space-between;
+  }
+  
+  .search-btn,
+  .reset-btn {
     justify-content: center;
   }
 

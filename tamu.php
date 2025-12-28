@@ -48,55 +48,92 @@ if (isset($_GET['action']) && $_GET['action'] === 'logout') {
     exit();
 }
 
-
 $user_id = $_SESSION['user_id'];
 
-// Query untuk mengambil notulen yang sudah dikirim (status sent/final) dan user termasuk sebagai peserta
-$sql_notulens = "SELECT DISTINCT n.*, k.status as status_kehadiran, k.waktu_konfirmasi 
-                FROM notulen n
-                INNER JOIN peserta_notulen pn ON n.id = pn.notulen_id
-                LEFT JOIN kehadiran k ON n.id = k.notulen_id AND k.user_id = ?
-                WHERE pn.user_id = ? AND n.status IN ('sent', 'final')
-                ORDER BY n.tanggal DESC";
-$stmt_notulens = $conn->prepare($sql_notulens);
-$stmt_notulens->bind_param("ii", $user_id, $user_id);
-$stmt_notulens->execute();
-$result_notulens = $stmt_notulens->get_result();
+// ================== HANDLE SEARCH PARAMETERS ==================
+$search_judul = isset($_GET['search_judul']) ? trim($_GET['search_judul']) : '';
+$search_tanggal = isset($_GET['search_tanggal']) ? trim($_GET['search_tanggal']) : '';
+$search_waktu = isset($_GET['search_waktu']) ? trim($_GET['search_waktu']) : '';
 
-// Statistik dashboard
+// ================== STATISTIK DASHBOARD ==================
+// Query untuk total notulen dengan filter
 $sql_notulen_count = "SELECT COUNT(DISTINCT n.id) AS total 
                      FROM notulen n
                      INNER JOIN peserta_notulen pn ON n.id = pn.notulen_id
                      WHERE pn.user_id = ? AND n.status IN ('sent', 'final')";
+
+// Query untuk notulen hari ini dengan filter
+$today = date('Y-m-d');
+$sql_notulen_hari_ini = "SELECT COUNT(DISTINCT n.id) AS total 
+                        FROM notulen n
+                        INNER JOIN peserta_notulen pn ON n.id = pn.notulen_id
+                        WHERE pn.user_id = ? AND DATE(n.tanggal) = ? AND n.status IN ('sent', 'final')";
+
+// Query untuk notulen bulan ini dengan filter
+$current_month = date('Y-m');
+$sql_notulen_bulan_ini = "SELECT COUNT(DISTINCT n.id) AS total 
+                         FROM notulen n
+                         INNER JOIN peserta_notulen pn ON n.id = pn.notulen_id
+                         WHERE pn.user_id = ? AND DATE_FORMAT(n.tanggal, '%Y-%m') = ? AND n.status IN ('sent', 'final')";
+
+// Prepare dan execute query statistik
 $stmt_count = $conn->prepare($sql_notulen_count);
 $stmt_count->bind_param("i", $user_id);
 $stmt_count->execute();
 $result_notulen_count = $stmt_count->get_result();
 $total_notulen = $result_notulen_count ? $result_notulen_count->fetch_assoc()['total'] : 0;
 
-// Hitung notulen hari ini
-$today = date('Y-m-d');
-$sql_notulen_hari_ini = "SELECT COUNT(DISTINCT n.id) AS total 
-                        FROM notulen n
-                        INNER JOIN peserta_notulen pn ON n.id = pn.notulen_id
-                        WHERE pn.user_id = ? AND DATE(n.tanggal) = ? AND n.status IN ('sent', 'final')";
 $stmt_hari_ini = $conn->prepare($sql_notulen_hari_ini);
 $stmt_hari_ini->bind_param("is", $user_id, $today);
 $stmt_hari_ini->execute();
 $result_notulen_hari_ini = $stmt_hari_ini->get_result();
 $notulen_hari_ini = $result_notulen_hari_ini ? $result_notulen_hari_ini->fetch_assoc()['total'] : 0;
 
-// Hitung notulen bulan ini
-$current_month = date('Y-m');
-$sql_notulen_bulan_ini = "SELECT COUNT(DISTINCT n.id) AS total 
-                         FROM notulen n
-                         INNER JOIN peserta_notulen pn ON n.id = pn.notulen_id
-                         WHERE pn.user_id = ? AND DATE_FORMAT(n.tanggal, '%Y-%m') = ? AND n.status IN ('sent', 'final')";
 $stmt_bulan_ini = $conn->prepare($sql_notulen_bulan_ini);
 $stmt_bulan_ini->bind_param("is", $user_id, $current_month);
 $stmt_bulan_ini->execute();
 $result_notulen_bulan_ini = $stmt_bulan_ini->get_result();
 $notulen_bulan_ini = $result_notulen_bulan_ini ? $result_notulen_bulan_ini->fetch_assoc()['total'] : 0;
+
+// ================== QUERY NOTULEN DENGAN FILTER ==================
+$sql_notulens = "SELECT DISTINCT n.*, k.status as status_kehadiran, k.waktu_konfirmasi 
+                FROM notulen n
+                INNER JOIN peserta_notulen pn ON n.id = pn.notulen_id
+                LEFT JOIN kehadiran k ON n.id = k.notulen_id AND k.user_id = ?
+                WHERE pn.user_id = ? AND n.status IN ('sent', 'final')";
+
+$params = [$user_id, $user_id];
+$types = "ii";
+
+// Tambahkan kondisi pencarian jika ada
+if (!empty($search_judul)) {
+    $sql_notulens .= " AND n.judul LIKE ?";
+    $params[] = "%" . $search_judul . "%";
+    $types .= "s";
+}
+
+if (!empty($search_tanggal)) {
+    $sql_notulens .= " AND DATE(n.tanggal) = ?";
+    $params[] = $search_tanggal;
+    $types .= "s";
+}
+
+if (!empty($search_waktu)) {
+    $sql_notulens .= " AND TIME(n.tanggal) = ?";
+    $params[] = $search_waktu . ":00"; // Format waktu HH:MM:SS
+    $types .= "s";
+}
+
+$sql_notulens .= " ORDER BY n.tanggal DESC";
+
+$stmt_notulens = $conn->prepare($sql_notulens);
+if ($types !== "ii") {
+    $stmt_notulens->bind_param($types, ...$params);
+} else {
+    $stmt_notulens->bind_param($types, $user_id, $user_id);
+}
+$stmt_notulens->execute();
+$result_notulens = $stmt_notulens->get_result();
 ?>
 
 <!DOCTYPE html>
@@ -107,6 +144,155 @@ $notulen_bulan_ini = $result_notulen_bulan_ini ? $result_notulen_bulan_ini->fetc
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="tamu-style.css">
+    <style>
+        /* === SEARCH CONTAINER === */
+        .search-container {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 25px;
+            border: 1px solid #e9ecef;
+        }
+
+        .search-form {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .search-bar {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            background: white;
+            border-radius: 8px;
+            padding: 0 15px;
+            border: 1px solid #dee2e6;
+        }
+
+        .search-bar i {
+            color: #6c757d;
+            margin-right: 10px;
+        }
+
+        .search-bar input {
+            width: 100%;
+            padding: 12px 0;
+            border: none;
+            outline: none;
+            font-size: 0.95rem;
+            background: transparent;
+        }
+
+        .date-time-filters {
+            display: flex;
+            gap: 10px;
+        }
+
+        .date-time-filters input {
+            padding: 10px;
+            border: 1px solid #dee2e6;
+            border-radius: 6px;
+            font-size: 0.9rem;
+        }
+
+        .search-btn {
+            background: #3498db;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-weight: 500;
+            transition: background 0.3s ease;
+        }
+
+        .search-btn:hover {
+            background: #2980b9;
+        }
+
+        .reset-btn {
+            background: #6c757d;
+            color: white;
+            text-decoration: none;
+            padding: 10px 15px;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.9rem;
+            transition: background 0.3s ease;
+        }
+
+        .reset-btn:hover {
+            background: #5a6268;
+        }
+
+        /* Responsive Design for Search */
+        @media (max-width: 768px) {
+            .search-form {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            
+            .search-bar,
+            .date-time-filters {
+                width: 100%;
+            }
+            
+            .date-time-filters {
+                justify-content: space-between;
+            }
+            
+            .search-btn,
+            .reset-btn {
+                justify-content: center;
+            }
+        }
+
+        /* Additional styles for search results info */
+        .search-info {
+            background: #e3f2fd;
+            color: #1976d2;
+            padding: 10px 15px;
+            border-radius: 6px;
+            margin-bottom: 15px;
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .search-info i {
+            font-size: 1rem;
+        }
+
+        .kehadiran-status {
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 0.8rem;
+            font-weight: 500;
+        }
+
+        .kehadiran-status.hadir {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .kehadiran-status.belum {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .kehadiran-status.tidak-hadir {
+            background: #f8d7da;
+            color: #721c24;
+        }
+    </style>
 </head>
 <body>
       <div class="sidebar">
@@ -206,6 +392,51 @@ $notulen_bulan_ini = $result_notulen_bulan_ini ? $result_notulen_bulan_ini->fetc
                 </div>
             </div>
 
+            <!-- Search Bar -->
+            <div class="search-container">
+                <form method="GET" class="search-form">
+                    <div class="search-bar">
+                        <i class="fas fa-search"></i>
+                        <input type="text" 
+                               name="search_judul" 
+                               placeholder="Cari Judul Notulen" 
+                               value="<?php echo isset($_GET['search_judul']) ? htmlspecialchars($_GET['search_judul']) : ''; ?>">
+                    </div>
+                    <div class="date-time-filters">
+                        <input type="date" 
+                               name="search_tanggal" 
+                               value="<?php echo isset($_GET['search_tanggal']) ? htmlspecialchars($_GET['search_tanggal']) : ''; ?>">
+                        <input type="time" 
+                               name="search_waktu" 
+                               value="<?php echo isset($_GET['search_waktu']) ? htmlspecialchars($_GET['search_waktu']) : ''; ?>">
+                    </div>
+                    <button type="submit" class="search-btn">
+                        <i class="fas fa-search"></i> Cari
+                    </button>
+                    <?php if(isset($_GET['search_judul']) || isset($_GET['search_tanggal']) || isset($_GET['search_waktu'])): ?>
+                        <a href="tamu.php" class="reset-btn">
+                            <i class="fas fa-undo"></i> Reset
+                        </a>
+                    <?php endif; ?>
+                </form>
+            </div>
+
+            <!-- Search Results Info -->
+            <?php if(!empty($search_judul) || !empty($search_tanggal) || !empty($search_waktu)): ?>
+                <div class="search-info">
+                    <i class="fas fa-filter"></i>
+                    <span>Filter aktif: 
+                        <?php 
+                        $filters = [];
+                        if(!empty($search_judul)) $filters[] = "Judul: \"$search_judul\"";
+                        if(!empty($search_tanggal)) $filters[] = "Tanggal: " . date('d M Y', strtotime($search_tanggal));
+                        if(!empty($search_waktu)) $filters[] = "Waktu: $search_waktu";
+                        echo implode(', ', $filters);
+                        ?>
+                    </span>
+                </div>
+            <?php endif; ?>
+
             <div class="notulen-list" id="notulenList">
                 <?php
                 if ($result_notulens && $result_notulens->num_rows > 0) {
@@ -290,9 +521,15 @@ $notulen_bulan_ini = $result_notulen_bulan_ini ? $result_notulen_bulan_ini->fetc
                 } else {
                     echo '<div class="empty-state">
                             <i class="fas fa-file-alt"></i>
-                            <h3>Tidak ada notulen tersedia</h3>
-                            <p>Belum ada notulen rapat yang diterbitkan untuk Anda.</p>
-                          </div>';
+                            <h3>Tidak ada notulen tersedia</h3>';
+                    
+                    if(!empty($search_judul) || !empty($search_tanggal) || !empty($search_waktu)) {
+                        echo '<p>Tidak ditemukan notulen dengan filter yang Anda cari.</p>';
+                    } else {
+                        echo '<p>Belum ada notulen rapat yang diterbitkan untuk Anda.</p>';
+                    }
+                    
+                    echo '</div>';
                 }
                 ?>
             </div>
@@ -350,10 +587,12 @@ $notulen_bulan_ini = $result_notulen_bulan_ini ? $result_notulen_bulan_ini->fetc
     
     function showLoading() {
         // Implement loading indicator
+        document.body.style.cursor = 'wait';
     }
     
     function hideLoading() {
         // Implement hide loading indicator
+        document.body.style.cursor = 'default';
     }
     </script>
 </body>

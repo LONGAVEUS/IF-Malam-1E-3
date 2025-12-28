@@ -51,6 +51,29 @@ $user_id = $_SESSION['user_id'];
 $success_msg = '';
 $error_msg = '';
 
+/* ================== PAGINATION ================== */
+$limit = 5; // Notulen per halaman
+$page = isset($_GET['page']) ? max(1, intval($_GET['page'])) : 1;
+$offset = ($page - 1) * $limit;
+
+// Hitung total notulen untuk pagination
+$sql_count = "SELECT COUNT(*) as total FROM notulen WHERE created_by_user_id = ?";
+$stmt_count = $conn->prepare($sql_count);
+$stmt_count->bind_param("i", $user_id);
+$stmt_count->execute();
+$result_count = $stmt_count->get_result();
+$total_notulens = $result_count->fetch_assoc()['total'];
+$stmt_count->close();
+
+// Hitung total halaman
+$total_pages = ceil($total_notulens / $limit);
+
+// Validasi page number
+if ($page > $total_pages && $total_pages > 0) {
+    header("Location: notulen_rapat.php?page=" . $total_pages);
+    exit();
+}
+
 // Handle form submission untuk buat notulen baru
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     if (isset($_POST['create_notulen'])) {
@@ -419,16 +442,17 @@ if (isset($_GET['error'])) {
     $error_msg = urldecode($_GET['error']);
 }
 
-// Ambil daftar notulen yang dibuat oleh notulis dengan field baru termasuk jurusan dan jam
+// Ambil daftar notulen yang dibuat oleh notulis dengan pagination
 $sql_notulens = "SELECT n.Id, n.judul, n.hari, n.tanggal, n.jam_mulai, n.jam_selesai, n.Tempat, n.notulis, n.jurusan, n.Pembahasan, n.Hasil_akhir, n.penanggung_jawab, 
                 n.status, n.lampiran, n.created_by_user_id,
                 (SELECT COUNT(*) FROM peserta_notulen pn WHERE pn.notulen_id = n.Id) as jumlah_peserta,
                 (SELECT COUNT(*) FROM kehadiran k WHERE k.notulen_id = n.Id AND k.status = 'hadir') as jumlah_hadir
                 FROM notulen n 
                 WHERE n.created_by_user_id = ? 
-                ORDER BY n.tanggal DESC, n.created_at DESC";
+                ORDER BY n.tanggal DESC, n.created_at DESC
+                LIMIT ? OFFSET ?";
 $stmt_notulens = $conn->prepare($sql_notulens);
-$stmt_notulens->bind_param("i", $user_id);
+$stmt_notulens->bind_param("iii", $user_id, $limit, $offset);
 $stmt_notulens->execute();
 $result_notulens = $stmt_notulens->get_result();
 
@@ -450,49 +474,6 @@ $default_hari = $hari_list[date('N') - 1]; // N adalah 1 (Senin) hingga 7 (Mingg
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="notulen-rapat.css">
-    <style>
-        /* Tambahan CSS untuk jurusan dan jam */
-        .notulen-jurusan {
-            display: flex;
-            align-items: center;
-            gap: 5px;
-            color: #7f8c8d;
-            font-size: 0.85rem;
-            max-width: 150px;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
-        }
-        
-        .notulen-jurusan i {
-            color: #8e44ad;
-            flex-shrink: 0;
-        }
-        
-        .notulen-jam {
-            display: flex;
-            align-items: center;
-            gap: 5px;
-            color: #7f8c8d;
-            font-size: 0.85rem;
-        }
-        
-        .notulen-jam i {
-            color: #3498db;
-        }
-        
-        @media (max-width: 768px) {
-            .notulen-meta {
-                flex-direction: column;
-                align-items: flex-start;
-                gap: 8px;
-            }
-            
-            .notulen-jurusan, .notulen-jam {
-                max-width: 100%;
-            }
-        }
-    </style>
 </head>
 <body>
     <!-- Sidebar -->
@@ -545,20 +526,8 @@ $default_hari = $hari_list[date('N') - 1]; // N adalah 1 (Senin) hingga 7 (Mingg
     <div class="main-content" id="mainContent">
         <div class="dashboard-header">
             <h1>Kelola Notulen Rapat</h1>
-            <p>Buat dan kelola notulen rapat Anda di sini</p>
+            <p>Buat dan kelola notulen rapat Anda di sini</p><br>
         </div>
-
-        <?php if ($success_msg): ?>
-            <div class="alert alert-success">
-                <i class="fas fa-check-circle"></i> <?php echo htmlspecialchars($success_msg); ?>
-            </div>
-        <?php endif; ?>
-        
-        <?php if ($error_msg): ?>
-            <div class="alert alert-danger">
-                <i class="fas fa-exclamation-triangle"></i> <?php echo htmlspecialchars($error_msg); ?>
-            </div>
-        <?php endif; ?>
 
         <!-- Tombol Tambah Notulen -->
         <div class="section-header">
@@ -577,8 +546,6 @@ $default_hari = $hari_list[date('N') - 1]; // N adalah 1 (Senin) hingga 7 (Mingg
                         $tanggal_formatted = date('d M Y', strtotime($notulen['tanggal']));
                         $jam_mulai_formatted = date('H:i', strtotime($notulen['jam_mulai']));
                         $jam_selesai_formatted = date('H:i', strtotime($notulen['jam_selesai']));
-                        // Gunakan pembahasan sebagai preview
-                        $preview = strlen($notulen['Pembahasan']) > 150 ? substr($notulen['Pembahasan'], 0, 150) . '...' : $notulen['Pembahasan'];
                         ?>
                         <div class="notulen-item clickable-item" data-id="<?php echo $notulen['Id']; ?>">
                             <div class="notulen-main">
@@ -588,27 +555,26 @@ $default_hari = $hari_list[date('N') - 1]; // N adalah 1 (Senin) hingga 7 (Mingg
                                         <?php echo ucfirst($notulen['status']); ?>
                                     </span>
                                 </div>
-                                <p class="notulen-preview"><?php echo htmlspecialchars($preview); ?></p>
                                 <div class="notulen-meta">
-                                    <span class="notulen-date">
+                                    <span class="notulen-meta-item">
                                         <i class="fas fa-calendar"></i> <?php echo htmlspecialchars($notulen['hari']); ?>, <?php echo $tanggal_formatted; ?>
                                     </span>
-                                    <span class="notulen-jam">
+                                    <span class="notulen-meta-item">
                                         <i class="fas fa-clock"></i> <?php echo $jam_mulai_formatted; ?> - <?php echo $jam_selesai_formatted; ?>
                                     </span>
-                                    <span class="notulen-tempat">
+                                    <span class="notulen-meta-item">
                                         <i class="fas fa-map-marker-alt"></i> <?php echo htmlspecialchars($notulen['Tempat']); ?>
                                     </span>
-                                    <span class="notulis">
+                                    <span class="notulen-meta-item">
                                         <i class="fas fa-user-edit"></i> <?php echo htmlspecialchars($notulen['notulis']); ?>
                                     </span>
-                                    <span class="notulen-jurusan">
+                                    <span class="notulen-meta-item">
                                         <i class="fas fa-graduation-cap"></i> <?php echo htmlspecialchars($notulen['jurusan']); ?>
                                     </span>
-                                    <span class="notulen-penanggung-jawab">
+                                    <span class="notulen-meta-item">
                                         <i class="fas fa-user"></i> <?php echo htmlspecialchars($notulen['penanggung_jawab']); ?>
                                     </span>
-                                    <span class="notulen-lampiran">
+                                    <span class="notulen-meta-item">
                                         <i class="fas fa-users"></i> <?php echo $notulen['jumlah_peserta']; ?> peserta
                                     </span>
                                     <?php if ($notulen['status'] == 'sent' || $notulen['status'] == 'final'): ?>
@@ -624,10 +590,10 @@ $default_hari = $hari_list[date('N') - 1]; // N adalah 1 (Senin) hingga 7 (Mingg
                                     <a href="#" class="action-btn edit" title="Edit" onclick="openEditModal(<?php echo $notulen['Id']; ?>); return false;">
                                         <i class="fas fa-edit"></i>
                                     </a>
-                                    <a href="notulen_rapat.php?action=send&id=<?php echo $notulen['Id']; ?>" class="action-btn send" title="Kirim" onclick="return confirm('Kirim notulen ke peserta?')">
+                                    <a href="notulen_rapat.php?action=send&id=<?php echo $notulen['Id']; ?>" class="action-btn send" title="Kirim" onclick="return confirmAction('Kirim notulen ke peserta?')">
                                         <i class="fas fa-paper-plane"></i>
                                     </a>
-                                    <a href="notulen_rapat.php?action=delete&id=<?php echo $notulen['Id']; ?>" class="action-btn delete" title="Hapus" onclick="return confirm('Yakin menghapus notulen?')">
+                                    <a href="notulen_rapat.php?action=delete&id=<?php echo $notulen['Id']; ?>" class="action-btn delete" title="Hapus" onclick="return confirmAction('Yakin menghapus notulen?')">
                                         <i class="fas fa-trash"></i>
                                     </a>
                                     
@@ -635,10 +601,10 @@ $default_hari = $hari_list[date('N') - 1]; // N adalah 1 (Senin) hingga 7 (Mingg
                                     <button class="action-btn view btn-kehadiran" title="Lihat Kehadiran" data-id="<?php echo $notulen['Id']; ?>">
                                         <i class="fas fa-user-check"></i>
                                     </button>
-                                    <a href="notulen_rapat.php?action=finalize&id=<?php echo $notulen['Id']; ?>" class="action-btn konfirmasi" title="Finalisasi" onclick="return confirm('Finalisasi notulen dan buat PDF?')">
+                                    <a href="notulen_rapat.php?action=finalize&id=<?php echo $notulen['Id']; ?>" class="action-btn konfirmasi" title="Finalisasi" onclick="return confirmAction('Finalisasi notulen dan buat PDF?')">
                                         <i class="fas fa-check-circle"></i>
                                     </a>
-                                    <a href="notulen_rapat.php?action=delete&id=<?php echo $notulen['Id']; ?>" class="action-btn delete" title="Hapus" onclick="return confirm('Yakin menghapus notulen?')">
+                                    <a href="notulen_rapat.php?action=delete&id=<?php echo $notulen['Id']; ?>" class="action-btn delete" title="Hapus" onclick="return confirmAction('Yakin menghapus notulen?')">
                                         <i class="fas fa-trash"></i>
                                     </a>
                                     
@@ -662,7 +628,7 @@ $default_hari = $hari_list[date('N') - 1]; // N adalah 1 (Senin) hingga 7 (Mingg
                                             <i class="fas fa-file-pdf"></i>
                                         </a>
                                     <?php } ?>
-                                    <a href="notulen_rapat.php?action=delete&id=<?php echo $notulen['Id']; ?>" class="action-btn delete" title="Hapus" onclick="return confirm('Yakin menghapus notulen?')">
+                                    <a href="notulen_rapat.php?action=delete&id=<?php echo $notulen['Id']; ?>" class="action-btn delete" title="Hapus" onclick="return confirmAction('Yakin menghapus notulen?')">
                                         <i class="fas fa-trash"></i>
                                     </a>
                                 <?php endif; ?>
@@ -677,6 +643,82 @@ $default_hari = $hari_list[date('N') - 1]; // N adalah 1 (Senin) hingga 7 (Mingg
                     </div>
                 <?php endif; ?>
             </div>
+
+            <!-- Pagination -->
+            <?php if ($total_pages > 1): ?>
+            <div class="pagination-container">
+                <div class="pagination-info">
+                    Menampilkan <?php echo ($offset + 1); ?>-<?php echo min($offset + $limit, $total_notulens); ?> dari <?php echo $total_notulens; ?> notulen
+                </div>
+                
+                <ul class="pagination">
+                    <?php if ($page > 1): ?>
+                        <li>
+                            <a href="?page=1" title="Halaman pertama">
+                                <i class="fas fa-angle-double-left"></i>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="?page=<?php echo $page - 1; ?>" title="Sebelumnya">
+                                <i class="fas fa-angle-left"></i>
+                            </a>
+                        </li>
+                    <?php else: ?>
+                        <li class="disabled">
+                            <span><i class="fas fa-angle-double-left"></i></span>
+                        </li>
+                        <li class="disabled">
+                            <span><i class="fas fa-angle-left"></i></span>
+                        </li>
+                    <?php endif; ?>
+                    
+                    <?php 
+                    // Tampilkan 3 halaman sebelum dan sesudah halaman aktif
+                    $start_page = max(1, $page - 2);
+                    $end_page = min($total_pages, $page + 2);
+                    
+                    if ($start_page > 1) {
+                        echo '<li><a href="?page=1">1</a></li>';
+                        if ($start_page > 2) echo '<li class="disabled"><span>...</span></li>';
+                    }
+                    
+                    for ($i = $start_page; $i <= $end_page; $i++): 
+                    ?>
+                        <li <?php echo ($i == $page) ? 'class="active"' : ''; ?>>
+                            <a href="?page=<?php echo $i; ?>"><?php echo $i; ?></a>
+                        </li>
+                    <?php endfor; ?>
+                    
+                    <?php if ($end_page < $total_pages): 
+                        if ($end_page < $total_pages - 1) echo '<li class="disabled"><span>...</span></li>';
+                    ?>
+                        <li>
+                            <a href="?page=<?php echo $total_pages; ?>"><?php echo $total_pages; ?></a>
+                        </li>
+                    <?php endif; ?>
+                    
+                    <?php if ($page < $total_pages): ?>
+                        <li>
+                            <a href="?page=<?php echo $page + 1; ?>" title="Berikutnya">
+                                <i class="fas fa-angle-right"></i>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="?page=<?php echo $total_pages; ?>" title="Halaman terakhir">
+                                <i class="fas fa-angle-double-right"></i>
+                            </a>
+                        </li>
+                    <?php else: ?>
+                        <li class="disabled">
+                            <span><i class="fas fa-angle-right"></i></span>
+                        </li>
+                        <li class="disabled">
+                            <span><i class="fas fa-angle-double-right"></i></span>
+                        </li>
+                    <?php endif; ?>
+                </ul>
+            </div>
+            <?php endif; ?>
         </div>
     </div>
 
@@ -995,11 +1037,98 @@ $default_hari = $hari_list[date('N') - 1]; // N adalah 1 (Senin) hingga 7 (Mingg
         </div>
     </div>
 
-    <!-- Hidden form untuk set action -->
-    <form id="actionForm" method="get" style="display: none;">
-        <input type="hidden" name="action" id="actionType">
-        <input type="hidden" name="id" id="actionId">
-    </form>
+    <!-- Loading Overlay -->
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="loading-spinner"></div>
+    </div>
+
+    <!-- Script untuk toast notification -->
+    <script>
+    // Fungsi untuk menampilkan toast notification
+    function showToast(message, type = 'info') {
+        const toast = document.createElement('div');
+        toast.className = `toast-notification toast-${type}`;
+        
+        // Icon berdasarkan type
+        let icon = 'info-circle';
+        if (type === 'success') icon = 'check-circle';
+        if (type === 'error') icon = 'exclamation-triangle';
+        if (type === 'warning') icon = 'exclamation-circle';
+        
+        toast.innerHTML = `
+            <i class="fas fa-${icon} toast-icon"></i>
+            <span class="toast-message">${message}</span>
+        `;
+        
+        // Tambahkan ke body
+        document.body.appendChild(toast);
+        
+        // Hapus toast setelah 5 detik
+        setTimeout(() => {
+            toast.classList.add('hiding');
+            setTimeout(() => {
+                if (toast.parentNode) {
+                    toast.parentNode.removeChild(toast);
+                }
+            }, 300);
+        }, 4700);
+    }
+
+    // Fungsi untuk menampilkan loading
+    function showLoading() {
+        document.getElementById('loadingOverlay').classList.add('active');
+    }
+
+    function hideLoading() {
+        document.getElementById('loadingOverlay').classList.remove('active');
+    }
+
+    // Fungsi untuk konfirmasi aksi
+    function confirmAction(message) {
+        return confirm(message);
+    }
+
+    // Tampilkan notifikasi dari PHP jika ada
+    <?php if (!empty($success_msg)): ?>
+        document.addEventListener('DOMContentLoaded', function() {
+            setTimeout(() => {
+                showToast('<?php echo addslashes($success_msg); ?>', 'success');
+            }, 300);
+        });
+    <?php endif; ?>
+
+    <?php if (!empty($error_msg)): ?>
+        document.addEventListener('DOMContentLoaded', function() {
+            setTimeout(() => {
+                showToast('<?php echo addslashes($error_msg); ?>', 'error');
+            }, 300);
+        });
+    <?php endif; ?>
+
+    // Handle sidebar toggler
+    document.addEventListener('DOMContentLoaded', function() {
+        const sidebarToggler = document.getElementById('sidebarToggler');
+        const sidebar = document.getElementById('sidebar');
+        
+        if (sidebarToggler && sidebar) {
+            sidebarToggler.addEventListener('click', function() {
+                sidebar.classList.toggle('collapsed');
+                
+                // Update icon
+                const icon = sidebarToggler.querySelector('span');
+                if (sidebar.classList.contains('collapsed')) {
+                    icon.className = 'fas fa-chevron-right';
+                } else {
+                    icon.className = 'fas fa-chevron-left';
+                }
+            });
+        }
+        
+        // Hide loading setelah halaman selesai load
+        setTimeout(hideLoading, 500);
+    });
+    </script>
+
     <script src="notulen-rapat.js"></script>
 </body>
 </html>

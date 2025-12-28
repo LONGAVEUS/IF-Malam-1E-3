@@ -170,7 +170,54 @@ document.addEventListener("DOMContentLoaded", function () {
     return unsafe.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
   }
 
+  // Function to confirm attendance
+  function konfirmasiKehadiran(notulenId) {
+    if (confirm('Apakah Anda benar-benar hadir dalam rapat ini?')) {
+      showLoading();
+      fetch('konfirmasi_kehadiran.php', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: 'notulen_id=' + notulenId
+      })
+      .then(response => response.json())
+      .then(data => {
+        hideLoading();
+        if (data.success) {
+          alert('Kehadiran berhasil dikonfirmasi!');
+          location.reload();
+        } else {
+          alert('Gagal mengkonfirmasi kehadiran: ' + data.message);
+        }
+      })
+      .catch(error => {
+        hideLoading();
+        console.error('Error:', error);
+        alert('Terjadi kesalahan saat mengkonfirmasi kehadiran');
+      });
+    }
+  }
+
+  // Function to show attachments
+  function showLampiran(notulenId) {
+    window.open('view_lampiran.php?notulen_id=' + notulenId, '_blank');
+  }
+
+  // Loading indicator functions
+  function showLoading() {
+    document.body.style.cursor = 'wait';
+  }
+
+  function hideLoading() {
+    document.body.style.cursor = 'default';
+  }
+
   // Expose functions to global scope
   window.showNotulenDetail = showNotulenDetail;
   window.hideModal = hideModal;
+  window.konfirmasiKehadiran = konfirmasiKehadiran;
+  window.showLampiran = showLampiran;
+  window.showLoading = showLoading;
+  window.hideLoading = hideLoading;
 });

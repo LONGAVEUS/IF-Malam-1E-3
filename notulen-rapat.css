@@ -129,8 +129,6 @@ body {
   margin-top: 20px;
 }
 
-
-
 .section-header h2 {
   color: #e9e5e5f8;
   font-size: 1.5rem;
@@ -230,28 +228,34 @@ body {
 
 .notulen-title {
   color: #2c3e50;
-  font-size: 1.1rem;
-  margin-bottom: 8px;
+  font-size: 1.2rem;
   font-weight: 600;
+  margin: 0;
+  flex: 1;
+  min-width: 200px;
 }
 
 .notulen-preview {
-  color: #7f8c8d;
-  font-size: 0.9rem;
+  display: none;
+}
+
+.notulen-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
   margin-bottom: 15px;
-  line-height: 1.4;
+  flex-wrap: wrap;
+  gap: 10px;
 }
 
 .notulen-meta {
   display: flex;
-  align-items: center;
-  gap: 20px;
   flex-wrap: wrap;
+  gap: 15px;
+  margin-top: 10px;
 }
 
-.notulen-date,
-.notulen-penanggung-jawab,
-.notulen-lampiran {
+.notulen-meta-item {
   display: flex;
   align-items: center;
   gap: 5px;
@@ -435,7 +439,6 @@ body {
   background: #f9f9f9;
 }
 
-
 /* === PESERTA SEARCH === */
 .peserta-search-container {
   position: relative;
@@ -515,36 +518,37 @@ body {
 .search-result-item:last-child {
   border-bottom: none;
 }
-/* Responsive adjustments */
+
+/* Responsive adjustments for search results */
 @media (max-width: 768px) {
-.search-result-item {
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 10px;
-}
+  .search-result-item {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
 
-.user-checkbox {
-  align-self: flex-start;
-}
+  .user-checkbox {
+    align-self: flex-start;
+  }
     
-.user-info {
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 5px;
-  width: 100%;
-}
+  .user-info {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 5px;
+    width: 100%;
+  }
 
-.result-name {
-  font-weight: 500;
-  color: #2c3e50;
-  flex: 1;
-}
+  .result-name {
+    font-weight: 500;
+    color: #2c3e50;
+    flex: 1;
+  }
 
-.result-nim {
-  color: #7f8c8d;
-  font-size: 0.9em;
-  margin: 0 10px;
-}
+  .result-nim {
+    color: #7f8c8d;
+    font-size: 0.9em;
+    margin: 0 10px;
+  }
 }
 
 .result-role {
@@ -804,11 +808,12 @@ body {
 
 /* Status badge */
 .notulen-status {
-  padding: 4px 10px;
+  padding: 6px 12px;
   border-radius: 20px;
   font-size: 0.8rem;
   font-weight: 500;
   text-transform: uppercase;
+  white-space: nowrap;
 }
 
 .status-draft {
@@ -824,13 +829,6 @@ body {
 .status-final {
   background-color: #27ae60;
   color: white;
-}
-
-.notulen-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  margin-bottom: 10px;
 }
 
 /* Status kehadiran */
@@ -963,39 +961,79 @@ body {
   border-top: 1px solid #eee;
 }
 
-/* === NOTIFICATION === */
-.notification {
-  position: fixed;
-  top: 20px;
-  right: 20px;
-  padding: 15px 20px;
-  border-radius: 6px;
-  color: white;
-  font-weight: 500;
-  z-index: 3000;
-  max-width: 400px;
-  animation: slideIn 0.3s ease;
-}
-
-@keyframes slideIn {
-  from {
-    transform: translateX(100%);
-    opacity: 0;
-  }
-  to {
-    transform: translateX(0);
+/* === NOTIFICATION TOAST === */
+.toast-notification {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    padding: 15px 20px;
+    border-radius: 8px;
+    color: white;
+    font-weight: 500;
+    z-index: 9999;
+    max-width: 350px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    animation: slideInRight 0.3s ease, fadeOut 0.3s ease 4.7s;
     opacity: 1;
-  }
+    transition: opacity 0.3s ease;
 }
 
-.notification.success {
-  background: #27ae60;
+.toast-notification.hiding {
+    opacity: 0;
 }
-.notification.error {
-  background: #e74c3c;
+
+@keyframes slideInRight {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
 }
-.notification.info {
-  background: #3498db;
+
+@keyframes fadeOut {
+    from {
+        opacity: 1;
+    }
+    to {
+        opacity: 0;
+    }
+}
+
+.toast-success {
+    background: linear-gradient(135deg, #27ae60, #2ecc71);
+    border-left: 4px solid #2ecc71;
+}
+
+.toast-error {
+    background: linear-gradient(135deg, #e74c3c, #e67e22);
+    border-left: 4px solid #c0392b;
+}
+
+.toast-info {
+    background: linear-gradient(135deg, #3498db, #2980b9);
+    border-left: 4px solid #2980b9;
+}
+
+.toast-warning {
+    background: linear-gradient(135deg, #f39c12, #e67e22);
+    border-left: 4px solid #d68910;
+}
+
+.toast-icon {
+    font-size: 18px;
+    width: 24px;
+    text-align: center;
+}
+
+.toast-message {
+    flex: 1;
+    font-size: 14px;
 }
 
 /* === DETAIL MODAL UPDATES === */
@@ -1045,6 +1083,7 @@ body {
   color: #3498db;
   align-self: flex-start;
 }
+
 .peserta-status {
   padding: 4px 8px;
   border-radius: 4px;
@@ -1123,6 +1162,116 @@ body {
 .empty-state h3 {
   color: #2c3e50;
   margin-bottom: 10px;
+}
+
+/* === PAGINATION === */
+.pagination-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-top: 30px;
+    padding-top: 20px;
+    border-top: 1px solid #ecf0f1;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.pagination-info {
+    color: #7f8c8d;
+    font-size: 14px;
+    margin-right: 10px;
+}
+
+.pagination {
+    display: flex;
+    list-style: none;
+    gap: 5px;
+}
+
+.pagination li {
+    display: inline-block;
+}
+
+.pagination a,
+.pagination span {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 36px;
+    height: 36px;
+    padding: 0 8px;
+    border-radius: 6px;
+    text-decoration: none;
+    font-size: 14px;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    color: #2c3e50;
+    background: #f8f9fa;
+    border: 1px solid #e0e0e0;
+}
+
+.pagination a:hover {
+    background: #3498db;
+    color: white;
+    border-color: #3498db;
+    transform: translateY(-1px);
+}
+
+.pagination .active a,
+.pagination .active span {
+    background: #3498db;
+    color: white;
+    border-color: #3498db;
+    font-weight: 600;
+    cursor: default;
+}
+
+.pagination .disabled a,
+.pagination .disabled span {
+    color: #bdc3c7;
+    background: #f8f9fa;
+    border-color: #ecf0f1;
+    cursor: not-allowed;
+}
+
+.pagination .disabled a:hover {
+    background: #f8f9fa;
+    color: #bdc3c7;
+    border-color: #ecf0f1;
+    transform: none;
+}
+
+/* === LOADING OVERLAY === */
+.loading-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+}
+
+.loading-overlay.active {
+    display: flex;
+}
+
+.loading-spinner {
+    width: 50px;
+    height: 50px;
+    border: 3px solid rgba(255, 255, 255, 0.3);
+    border-radius: 50%;
+    border-top-color: white;
+    animation: spin 1s ease-in-out infinite;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
 }
 
 /* === RESPONSIVE DESIGN === */
@@ -1206,8 +1355,6 @@ body {
     width: 100%;
   }
 
-
-
   .result-nim,
   .result-role {
     margin-left: 0;
@@ -1235,6 +1382,24 @@ body {
 
   .peserta-status {
     align-self: flex-start;
+  }
+
+  /* Responsive adjustments for pagination */
+  .pagination-container {
+    flex-direction: column;
+    gap: 15px;
+  }
+  
+  .pagination-info {
+    margin-right: 0;
+    margin-bottom: 10px;
+  }
+  
+  .pagination a,
+  .pagination span {
+    min-width: 32px;
+    height: 32px;
+    font-size: 13px;
   }
 }
 
@@ -1265,8 +1430,20 @@ body {
     max-height: 300px;
     min-height: 150px;
   }
+  
+  .toast-notification {
+    left: 10px;
+    right: 10px;
+    max-width: calc(100% - 20px);
+  }
+  
+  .pagination {
+    flex-wrap: wrap;
+    justify-content: center;
+  }
 }
-/* Alert styles */
+
+/* Alert styles (old - keep for compatibility) */
 .alert {
   padding: 15px;
   border-radius: 6px;
@@ -1513,32 +1690,6 @@ body {
   font-size: 1.1rem;
 }
 
-/* Responsive adjustments */
-@media (max-width: 768px) {
-  .form-row {
-      grid-template-columns: 1fr;
-      gap: 15px;
-  }
-  .form-actions {
-      flex-direction: column;
-    }
-    
-  .form-actions .btn {
-      width: 100%;
-      margin-bottom: 10px;
-    }
-    
-  .notulen-actions {
-      width: 100%;
-      justify-content: center;
-    }
-    
-  .action-btn {
-      flex: 1;
-      margin: 0 2px;
-    }
-}
-
 /* Modal form specific */
 .modal-overlay {
   display: none;
@@ -1596,6 +1747,7 @@ body {
   margin: 0 auto;
   line-height: 1.6;
 }
+
 /* Loading spinner */
 .fa-spin {
     animation: fa-spin 2s infinite linear;
@@ -1665,32 +1817,6 @@ body {
   align-items: center;
   justify-content: center;
   z-index: 10;
-}
-
-/* Tambahkan style untuk elemen baru */
-.notulen-tempat {
-  display: flex;
-  align-items: center;
-  gap: 5px;
-  color: #7f8c8d;
-  font-size: 0.85rem;
-}
-
-.notulis {
-  display: flex;
-  align-items: center;
-  gap: 5px;
-  color: #7f8c8d;
-  font-size: 0.85rem;
-}
-
-/* Responsive untuk elemen meta baru */
-@media (max-width: 768px) {
-.notulen-meta {
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 10px;
-    }
 }
 
 /* Style untuk select hari */
