@@ -1,58 +1,70 @@
 <?php
-// edit_notulen.php
+session_start();
 require_once 'koneksi.php';
+
+if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
+    header('HTTP/1.1 401 Unauthorized');
+    echo json_encode(['success' => false, 'error' => 'Unauthorized']);
+    exit();
+}
 
 $notulen_id = $_GET['id'] ?? 0;
 
-// PERBAIKAN: Gunakan query terpisah untuk notulen dan peserta
-$sql_notulen = "SELECT 
-    n.Id, n.judul, n.hari, n.tanggal, n.Tempat, n.notulis, 
-    n.jurusan, n.penanggung_jawab, n.Pembahasan, n.Hasil_akhir, 
-    n.status, n.lampiran, n.created_by_user_id
-    FROM notulen n
-    WHERE n.Id = ?";
-
-$stmt = $conn->prepare($sql_notulen);
-$stmt->bind_param("i", $notulen_id);
+$sql = "SELECT 
+            Id, 
+            judul, 
+            hari, 
+            tanggal, 
+            TIME(jam_mulai) as jam_mulai, 
+            TIME(jam_selesai) as jam_selesai,
+            Tempat, 
+            notulis, 
+            jurusan, 
+            Pembahasan, 
+            Hasil_akhir, 
+            penanggung_jawab, 
+            status, 
+            lampiran 
+        FROM notulen 
+        WHERE Id = ? AND created_by_user_id = ?";
+        
+$stmt = $conn->prepare($sql);
+$stmt->bind_param("ii", $notulen_id, $_SESSION['user_id']);
 $stmt->execute();
 $result = $stmt->get_result();
 
-if ($row = $result->fetch_assoc()) {
-    $notulen_data = $row;
+if ($result->num_rows > 0) {
+    $notulen = $result->fetch_assoc();
     
-    // Decode lampiran files
-    $notulen_data['lampiran_files'] = [];
-    if (!empty($row['lampiran']) && $row['lampiran'] !== 'null') {
-        $decoded = json_decode($row['lampiran'], true);
-        if (is_array($decoded)) {
-            $notulen_data['lampiran_files'] = $decoded;
-        }
+    // Format jam dengan benar
+    if (!empty($notulen['jam_mulai'])) {
+        $notulen['jam_mulai'] = date('H:i', strtotime($notulen['jam_mulai']));
     }
     
-    // Ambil peserta secara terpisah
-    $sql_peserta = "SELECT 
-        u.user_id, u.full_name, u.nim, u.role
-        FROM peserta_notulen pn
-        JOIN user u ON pn.user_id = u.user_id
-        WHERE pn.notulen_id = ?
-        ORDER BY u.full_name";
+    if (!empty($notulen['jam_selesai'])) {
+        $notulen['jam_selesai'] = date('H:i', strtotime($notulen['jam_selesai']));
+    }
     
+    // Decode lampiran jika ada
+    $notulen['lampiran_files'] = [];
+    if ($notulen['lampiran'] && $notulen['lampiran'] != 'null') {
+        $notulen['lampiran_files'] = json_decode($notulen['lampiran'], true);
+    }
+    
+    // Ambil peserta
+    $sql_peserta = "SELECT u.user_id as id, u.nim, u.full_name as name, u.role 
+                    FROM peserta_notulen pn 
+                    JOIN user u ON pn.user_id = u.user_id 
+                    WHERE pn.notulen_id = ?";
     $stmt_peserta = $conn->prepare($sql_peserta);
     $stmt_peserta->bind_param("i", $notulen_id);
     $stmt_peserta->execute();
-    $result_peserta = $stmt_peserta->get_result();
-    
-    $peserta_details = [];
-    while ($peserta = $result_peserta->fetch_assoc()) {
-        $peserta_details[] = $peserta;
-    }
-    $stmt_peserta->close();
-    
-    $notulen_data['peserta_details'] = $peserta_details;
+    $peserta = $stmt_peserta->get_result()->fetch_all(MYSQLI_ASSOC);
+    $notulen['peserta_details'] = $peserta;
     
     echo json_encode([
         'success' => true,
-        'data' => $notulen_data
+        'data' => $notulen
     ]);
 } else {
     echo json_encode([
