@@ -108,6 +108,10 @@ function generateNotulenPDF($notulen_id) {
     $pdf->Cell(40, 6, 'Notulis', 0, 0, 'L');
     $pdf->Cell(5, 6, ':', 0, 0, 'L');
     $pdf->Cell(0, 6, $notulen['notulis'], 0, 1, 'L');
+
+    $pdf->Cell(40, 6, 'Jurusan', 0, 0, 'L');
+    $pdf->Cell(5, 6, ':', 0, 0, 'L');
+    $pdf->Cell(0, 6, $notulen['jurusan'], 0, 1, 'L')
     
     $pdf->Ln(10);
     

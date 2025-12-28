@@ -57,15 +57,19 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         $judul = $_POST['judul'] ?? '';
         $hari = $_POST['hari'] ?? '';
         $tanggal = $_POST['tanggal'] ?? '';
+        $jam_mulai = $_POST['jam_mulai'] ?? '';
+        $jam_selesai = $_POST['jam_selesai'] ?? '';
         $tempat = $_POST['tempat'] ?? '';
         $notulis = $_POST['notulis'] ?? '';
+        $jurusan = $_POST['jurusan'] ?? '';
         $penanggung_jawab = $_POST['penanggung_jawab'] ?? '';
         $pembahasan = $_POST['pembahasan'] ?? '';
         $hasil_akhir = $_POST['hasil_akhir'] ?? '';
         $peserta_ids = isset($_POST['peserta_ids']) ? explode(',', $_POST['peserta_ids']) : [];
         
         // Validasi
-        if (empty($judul) || empty($hari) || empty($tanggal) || empty($tempat) || empty($notulis) || empty($penanggung_jawab)) {
+        if (empty($judul) || empty($hari) || empty($tanggal) || empty($jam_mulai) || empty($jam_selesai) || 
+            empty($tempat) || empty($notulis) || empty($penanggung_jawab) || empty($jurusan)) {
             $error_msg = "Field wajib diisi!";
         } else {
             // Konversi format tanggal
@@ -107,13 +111,13 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             $conn->begin_transaction();
             
             try {
-                // Insert notulen dengan field baru
-                $sql_notulen = "INSERT INTO notulen (judul, hari, tanggal, Tempat, notulis, Pembahasan, Hasil_akhir, penanggung_jawab, status, lampiran, created_by_user_id, created_at) 
-                               VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'draft', ?, ?, NOW())";
+                // Insert notulen dengan field baru termasuk jurusan dan jam
+                $sql_notulen = "INSERT INTO notulen (judul, hari, tanggal, jam_mulai, jam_selesai, Tempat, notulis, jurusan, Pembahasan, Hasil_akhir, penanggung_jawab, status, lampiran, created_by_user_id, created_at) 
+                               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'draft', ?, ?, NOW())";
                 $stmt_notulen = $conn->prepare($sql_notulen);
                 
                 $lampiran_json = !empty($lampiran_files) ? json_encode($lampiran_files) : NULL;
-                $stmt_notulen->bind_param("sssssssssi", $judul, $hari, $tanggal_formatted, $tempat, $notulis, $pembahasan, $hasil_akhir, $penanggung_jawab, $lampiran_json, $user_id);
+                $stmt_notulen->bind_param("ssssssssssssi", $judul, $hari, $tanggal_formatted, $jam_mulai, $jam_selesai, $tempat, $notulis, $jurusan, $pembahasan, $hasil_akhir, $penanggung_jawab, $lampiran_json, $user_id);
                 
                 if ($stmt_notulen->execute()) {
                     $notulen_id = $stmt_notulen->insert_id;
@@ -162,15 +166,19 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         $judul = $_POST['judul'] ?? '';
         $hari = $_POST['hari'] ?? '';
         $tanggal = $_POST['tanggal'] ?? '';
+        $jam_mulai = $_POST['jam_mulai'] ?? '';
+        $jam_selesai = $_POST['jam_selesai'] ?? '';
         $tempat = $_POST['tempat'] ?? '';
         $notulis = $_POST['notulis'] ?? '';
+        $jurusan = $_POST['jurusan'] ?? '';
         $penanggung_jawab = $_POST['penanggung_jawab'] ?? '';
         $pembahasan = $_POST['pembahasan'] ?? '';
         $hasil_akhir = $_POST['hasil_akhir'] ?? '';
         $peserta_ids = isset($_POST['peserta_ids']) ? explode(',', $_POST['peserta_ids']) : [];
         
         // Validasi
-        if (empty($judul) || empty($hari) || empty($tanggal) || empty($tempat) || empty($notulis) || empty($penanggung_jawab) || $notulen_id == 0) {
+        if (empty($judul) || empty($hari) || empty($tanggal) || empty($jam_mulai) || empty($jam_selesai) || 
+            empty($tempat) || empty($notulis) || empty($penanggung_jawab) || empty($jurusan) || $notulen_id == 0) {
             $error_msg = "Field wajib diisi!";
         } else {
             // Konversi format tanggal
@@ -213,17 +221,17 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             
             try {
                 // Get existing lampiran
-                $sql_check_status = "SELECT status FROM notulen WHERE Id = ? AND created_by_user_id = ?";
-                $stmt_check = $conn->prepare($sql_check_status);
-                $stmt_check->bind_param("ii", $notulen_id, $user_id);
-                $stmt_check->execute();
-                $stmt_check->bind_result($current_status);
-                $stmt_check->fetch();
-                $stmt_check->close();
+                $sql_get_lampiran = "SELECT lampiran FROM notulen WHERE Id = ?";
+                $stmt_get_lampiran = $conn->prepare($sql_get_lampiran);
+                $stmt_get_lampiran->bind_param("i", $notulen_id);
+                $stmt_get_lampiran->execute();
+                $stmt_get_lampiran->bind_result($existing_lampiran_json);
+                $stmt_get_lampiran->fetch();
+                $stmt_get_lampiran->close();
                 
                 // Combine existing and new lampiran
                 $combined_lampiran = [];
-                if ($existing_lampiran_json) {
+                if ($existing_lampiran_json && $existing_lampiran_json !== 'null') {
                     $existing_lampiran = json_decode($existing_lampiran_json, true);
                     if (is_array($existing_lampiran)) {
                         $combined_lampiran = $existing_lampiran;
@@ -236,14 +244,14 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 
                 $lampiran_json = !empty($combined_lampiran) ? json_encode($combined_lampiran) : NULL;
                 
-                // Update notulen dengan field baru
+                // Update notulen dengan field baru termasuk jurusan dan jam
                 $sql_update = "UPDATE notulen 
-                              SET judul = ?, hari = ?, tanggal = ?, Tempat = ?, notulis = ?, 
+                              SET judul = ?, hari = ?, tanggal = ?, jam_mulai = ?, jam_selesai = ?, Tempat = ?, notulis = ?, jurusan = ?,
                                   Pembahasan = ?, Hasil_akhir = ?, penanggung_jawab = ?, lampiran = ?
                               WHERE Id = ? AND created_by_user_id = ? AND status = 'draft'";
                 $stmt_update = $conn->prepare($sql_update);
-                $stmt_update->bind_param("sssssssssii", $judul, $hari, $tanggal_formatted, $tempat, 
-                                        $notulis, $pembahasan, $hasil_akhir, $penanggung_jawab, $lampiran_json, $notulen_id, $user_id);
+                $stmt_update->bind_param("ssssssssssssii", $judul, $hari, $tanggal_formatted, $jam_mulai, $jam_selesai, $tempat, 
+                                        $notulis, $jurusan, $pembahasan, $hasil_akhir, $penanggung_jawab, $lampiran_json, $notulen_id, $user_id);
                 
                 if ($stmt_update->execute()) {
                     // Delete existing peserta
@@ -411,8 +419,8 @@ if (isset($_GET['error'])) {
     $error_msg = urldecode($_GET['error']);
 }
 
-// Ambil daftar notulen yang dibuat oleh notulis dengan field baru
-$sql_notulens = "SELECT n.Id, n.judul, n.hari, n.tanggal, n.Tempat, n.notulis, n.Pembahasan, n.Hasil_akhir, n.penanggung_jawab, 
+// Ambil daftar notulen yang dibuat oleh notulis dengan field baru termasuk jurusan dan jam
+$sql_notulens = "SELECT n.Id, n.judul, n.hari, n.tanggal, n.jam_mulai, n.jam_selesai, n.Tempat, n.notulis, n.jurusan, n.Pembahasan, n.Hasil_akhir, n.penanggung_jawab, 
                 n.status, n.lampiran, n.created_by_user_id,
                 (SELECT COUNT(*) FROM peserta_notulen pn WHERE pn.notulen_id = n.Id) as jumlah_peserta,
                 (SELECT COUNT(*) FROM kehadiran k WHERE k.notulen_id = n.Id AND k.status = 'hadir') as jumlah_hadir
@@ -442,6 +450,49 @@ $default_hari = $hari_list[date('N') - 1]; // N adalah 1 (Senin) hingga 7 (Mingg
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="notulen-rapat.css">
+    <style>
+        /* Tambahan CSS untuk jurusan dan jam */
+        .notulen-jurusan {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            color: #7f8c8d;
+            font-size: 0.85rem;
+            max-width: 150px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        
+        .notulen-jurusan i {
+            color: #8e44ad;
+            flex-shrink: 0;
+        }
+        
+        .notulen-jam {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            color: #7f8c8d;
+            font-size: 0.85rem;
+        }
+        
+        .notulen-jam i {
+            color: #3498db;
+        }
+        
+        @media (max-width: 768px) {
+            .notulen-meta {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 8px;
+            }
+            
+            .notulen-jurusan, .notulen-jam {
+                max-width: 100%;
+            }
+        }
+    </style>
 </head>
 <body>
     <!-- Sidebar -->
@@ -457,33 +508,27 @@ $default_hari = $hari_list[date('N') - 1]; // N adalah 1 (Senin) hingga 7 (Mingg
             </button>
         </div>
 
-        <nav class="sidebar-nav">
-            <ul class="nav-list primary-nav">
-                <li class="nav-item">
-                    <a href="notulis.php" class="nav-link">
-                        <i class="fas fa-th-large nav-icon"></i>
-                        <span class="nav-label">Dashboard</span>
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a href="notulen_rapat.php" class="nav-link active">
-                        <i class="fas fa-file-alt nav-icon"></i>
-                        <span class="nav-label">Notulen Rapat</span>
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a href="jadwal_rapat.php" class="nav-link">
-                        <i class="fas fa-calendar-alt nav-icon"></i>
-                        <span class="nav-label">Jadwal Rapat</span>
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a href="profil.php" class="nav-link">
-                        <i class="fas fa-user-circle nav-icon"></i>
-                        <span class="nav-label">Profil</span>
-                    </a>
-                </li>
-            </ul>
+    <nav class="sidebar-nav">
+      <ul class="nav-list primary-nav">
+        <li class="nav-item">
+          <a href="admin.php" class="nav-link active">
+            <i class="fas fa-th-large nav-icon"></i>
+            <span class="nav-label">Dashboard</span>
+          </a>
+        </li>
+        <li class="nav-item">
+          <a href="notulen_rapat.php" class="nav-link">
+            <i class="fas fa-file-alt nav-icon"></i>
+            <span class="nav-label">Notulen Rapat</span>
+          </a>
+        </li>
+        <li class="nav-item">
+          <a href="jadwal_rapat.php" class="nav-link">
+            <i class="fas fa-calendar-alt nav-icon"></i>
+            <span class="nav-label">Jadwal Rapat</span>
+          </a>
+        </li>
+      </ul>
 
             <ul class="nav-list secondary-nav">
                 <li class="nav-item">
@@ -530,6 +575,8 @@ $default_hari = $hari_list[date('N') - 1]; // N adalah 1 (Senin) hingga 7 (Mingg
                     <?php while ($notulen = $result_notulens->fetch_assoc()): ?>
                         <?php
                         $tanggal_formatted = date('d M Y', strtotime($notulen['tanggal']));
+                        $jam_mulai_formatted = date('H:i', strtotime($notulen['jam_mulai']));
+                        $jam_selesai_formatted = date('H:i', strtotime($notulen['jam_selesai']));
                         // Gunakan pembahasan sebagai preview
                         $preview = strlen($notulen['Pembahasan']) > 150 ? substr($notulen['Pembahasan'], 0, 150) . '...' : $notulen['Pembahasan'];
                         ?>
@@ -546,11 +593,17 @@ $default_hari = $hari_list[date('N') - 1]; // N adalah 1 (Senin) hingga 7 (Mingg
                                     <span class="notulen-date">
                                         <i class="fas fa-calendar"></i> <?php echo htmlspecialchars($notulen['hari']); ?>, <?php echo $tanggal_formatted; ?>
                                     </span>
+                                    <span class="notulen-jam">
+                                        <i class="fas fa-clock"></i> <?php echo $jam_mulai_formatted; ?> - <?php echo $jam_selesai_formatted; ?>
+                                    </span>
                                     <span class="notulen-tempat">
                                         <i class="fas fa-map-marker-alt"></i> <?php echo htmlspecialchars($notulen['Tempat']); ?>
                                     </span>
                                     <span class="notulis">
                                         <i class="fas fa-user-edit"></i> <?php echo htmlspecialchars($notulen['notulis']); ?>
+                                    </span>
+                                    <span class="notulen-jurusan">
+                                        <i class="fas fa-graduation-cap"></i> <?php echo htmlspecialchars($notulen['jurusan']); ?>
                                     </span>
                                     <span class="notulen-penanggung-jawab">
                                         <i class="fas fa-user"></i> <?php echo htmlspecialchars($notulen['penanggung_jawab']); ?>
@@ -638,13 +691,13 @@ $default_hari = $hari_list[date('N') - 1]; // N adalah 1 (Senin) hingga 7 (Mingg
                 <form method="POST" enctype="multipart/form-data" id="notulenForm">
                     <div class="form-row">
                         <div class="form-group">
-                            <label class="required">Judul Rapat</label>
-                            <input type="text" name="judul" class="form-control" placeholder="Masukkan judul rapat" required maxlength="35">
+                            <label for="createJudul" class="required">Judul Rapat</label>
+                            <input type="text" name="judul" id="createJudul" class="form-control" placeholder="Masukkan judul rapat" required maxlength="35">
                         </div>
                         
                         <div class="form-group">
-                            <label class="required">Hari</label>
-                            <select name="hari" class="form-control" required>
+                            <label for="createHari" class="required">Hari</label>
+                            <select name="hari" id="createHari" class="form-control" required>
                                 <option value="">Pilih Hari</option>
                                 <option value="Senin" <?php echo ($default_hari == 'Senin') ? 'selected' : ''; ?>>Senin</option>
                                 <option value="Selasa" <?php echo ($default_hari == 'Selasa') ? 'selected' : ''; ?>>Selasa</option>
@@ -659,34 +712,53 @@ $default_hari = $hari_list[date('N') - 1]; // N adalah 1 (Senin) hingga 7 (Mingg
                     
                     <div class="form-row">
                         <div class="form-group">
-                            <label class="required">Tanggal Rapat</label>
-                            <input type="date" name="tanggal" class="form-control" value="<?php echo $default_tanggal; ?>" required>
+                            <label for="createTanggal" class="required">Tanggal Rapat</label>
+                            <input type="date" name="tanggal" id="createTanggal" class="form-control" value="<?php echo $default_tanggal; ?>" required>
                         </div>
                         
                         <div class="form-group">
-                            <label class="required">Tempat</label>
-                            <input type="text" name="tempat" class="form-control" placeholder="Masukkan tempat rapat" required maxlength="55">
+                            <label for="createTempat" class="required">Tempat</label>
+                            <input type="text" name="tempat" id="createTempat" class="form-control" placeholder="Masukkan tempat rapat" required maxlength="55">
                         </div>
                     </div>
                     
                     <div class="form-row">
                         <div class="form-group">
-                            <label class="required">Notulis</label>
-                            <input type="text" name="notulis" class="form-control" placeholder="Masukkan nama notulis" required maxlength="50">
+                            <label for="createJamMulai" class="required">Jam Mulai</label>
+                            <input type="time" name="jam_mulai" id="createJamMulai" class="form-control" required>
                         </div>
                         
                         <div class="form-group">
-                            <label class="required">Penanggung Jawab</label>
-                            <input type="text" name="penanggung_jawab" class="form-control" placeholder="Nama penanggung jawab rapat" required maxlength="50">
+                            <label for="createJamSelesai" class="required">Jam Selesai</label>
+                            <input type="time" name="jam_selesai" id="createJamSelesai" class="form-control" required>
+                        </div>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="createNotulis" class="required">Notulis</label>
+                            <input type="text" name="notulis" id="createNotulis" class="form-control" placeholder="Masukkan nama notulis" required maxlength="50">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="createJurusan" class="required">Jurusan</label>
+                            <input type="text" name="jurusan" id="createJurusan" class="form-control" placeholder="Masukkan jurusan" required maxlength="100">
+                        </div>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="createPenanggungJawab" class="required">Penanggung Jawab</label>
+                            <input type="text" name="penanggung_jawab" id="createPenanggungJawab" class="form-control" placeholder="Nama penanggung jawab rapat" required maxlength="50">
                         </div>
                     </div>
                     
                     <div class="form-group">
-                        <label class="required">Peserta Rapat</label>
+                        <label for="pesertaSearch" class="required">Peserta Rapat</label>
                         <div class="peserta-search-container">
                             <div class="search-wrapper">
                                 <i class="fas fa-search search-icon"></i>
-                                <input type="text" id="pesertaSearch" class="peserta-search" placeholder="Cari peserta (nama atau NIM)...">
+                                <input type="text" id="pesertaSearch" class="peserta-search" placeholder="Cari peserta (nama atau NIM)..." aria-label="Cari peserta rapat">
                             </div>
                             <div class="search-results" id="searchResults">
                                 <?php 
@@ -724,18 +796,18 @@ $default_hari = $hari_list[date('N') - 1]; // N adalah 1 (Senin) hingga 7 (Mingg
                     </div>
                     
                     <div class="form-group">
-                        <label>Pembahasan</label>
-                        <textarea name="pembahasan" class="form-control" placeholder="Tulis pembahasan rapat di sini..." rows="5"></textarea>
+                        <label for="createPembahasan">Pembahasan</label>
+                        <textarea name="pembahasan" id="createPembahasan" class="form-control" placeholder="Tulis pembahasan rapat di sini..." rows="5"></textarea>
                     </div>
                     
                     <div class="form-group">
-                        <label>Hasil Akhir</label>
-                        <textarea name="hasil_akhir" class="form-control" placeholder="Tulis hasil akhir rapat di sini..." rows="5"></textarea>
+                        <label for="createHasilAkhir">Hasil Akhir</label>
+                        <textarea name="hasil_akhir" id="createHasilAkhir" class="form-control" placeholder="Tulis hasil akhir rapat di sini..." rows="5"></textarea>
                     </div>
                     
                     <div class="form-group">
-                        <label>Lampiran (Opsional)</label>
-                        <input type="file" name="lampiran[]" class="form-control" multiple accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.txt,.zip,.rar,.ppt,.pptx">
+                        <label for="createLampiran">Lampiran (Opsional)</label>
+                        <input type="file" name="lampiran[]" id="createLampiran" class="form-control" multiple accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.txt,.zip,.rar,.ppt,.pptx">
                         <div class="file-hint">Format: PDF, DOC, DOCX, JPG, PNG, TXT, ZIP, RAR, PPT. Maks 10MB per file.</div>
                     </div>
                     
@@ -785,12 +857,12 @@ $default_hari = $hari_list[date('N') - 1]; // N adalah 1 (Senin) hingga 7 (Mingg
                     
                     <div class="form-row">
                         <div class="form-group">
-                            <label class="required">Judul Rapat</label>
+                            <label for="editJudul" class="required">Judul Rapat</label>
                             <input type="text" name="judul" id="editJudul" class="form-control" placeholder="Masukkan judul rapat" required maxlength="35">
                         </div>
                         
                         <div class="form-group">
-                            <label class="required">Hari</label>
+                            <label for="editHari" class="required">Hari</label>
                             <select name="hari" id="editHari" class="form-control" required>
                                 <option value="">Pilih Hari</option>
                                 <option value="Senin">Senin</option>
@@ -806,34 +878,53 @@ $default_hari = $hari_list[date('N') - 1]; // N adalah 1 (Senin) hingga 7 (Mingg
                     
                     <div class="form-row">
                         <div class="form-group">
-                            <label class="required">Tanggal Rapat</label>
+                            <label for="editTanggal" class="required">Tanggal Rapat</label>
                             <input type="date" name="tanggal" id="editTanggal" class="form-control" required>
                         </div>
                         
                         <div class="form-group">
-                            <label class="required">Tempat</label>
+                            <label for="editTempat" class="required">Tempat</label>
                             <input type="text" name="tempat" id="editTempat" class="form-control" placeholder="Masukkan tempat rapat" required maxlength="55">
                         </div>
                     </div>
                     
                     <div class="form-row">
                         <div class="form-group">
-                            <label class="required">Notulis</label>
+                            <label for="editJamMulai" class="required">Jam Mulai</label>
+                            <input type="time" name="jam_mulai" id="editJamMulai" class="form-control" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="editJamSelesai" class="required">Jam Selesai</label>
+                            <input type="time" name="jam_selesai" id="editJamSelesai" class="form-control" required>
+                        </div>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="editNotulis" class="required">Notulis</label>
                             <input type="text" name="notulis" id="editNotulis" class="form-control" placeholder="Masukkan nama notulis" required maxlength="50">
                         </div>
                         
                         <div class="form-group">
-                            <label class="required">Penanggung Jawab</label>
+                            <label for="editJurusan" class="required">Jurusan</label>
+                            <input type="text" name="jurusan" id="editJurusan" class="form-control" placeholder="Masukkan jurusan" required maxlength="100">
+                        </div>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="editPenanggungJawab" class="required">Penanggung Jawab</label>
                             <input type="text" name="penanggung_jawab" id="editPenanggungJawab" class="form-control" placeholder="Nama penanggung jawab rapat" required maxlength="50">
                         </div>
                     </div>
                     
                     <div class="form-group">
-                        <label class="required">Peserta Rapat</label>
+                        <label for="editPesertaSearch" class="required">Peserta Rapat</label>
                         <div class="peserta-search-container">
                             <div class="search-wrapper">
                                 <i class="fas fa-search search-icon"></i>
-                                <input type="text" id="editPesertaSearch" class="peserta-search" placeholder="Cari peserta (nama atau NIM)...">
+                                <input type="text" id="editPesertaSearch" class="peserta-search" placeholder="Cari peserta (nama atau NIM)..." aria-label="Cari peserta rapat">
                             </div>
                             <div class="search-results" id="editSearchResults">
                                 <?php 
@@ -871,23 +962,23 @@ $default_hari = $hari_list[date('N') - 1]; // N adalah 1 (Senin) hingga 7 (Mingg
                     </div>
                     
                     <div class="form-group">
-                        <label>Pembahasan</label>
+                        <label for="editPembahasan">Pembahasan</label>
                         <textarea name="pembahasan" id="editPembahasan" class="form-control" placeholder="Tulis pembahasan rapat di sini..." rows="5"></textarea>
                     </div>
                     
                     <div class="form-group">
-                        <label>Hasil Akhir</label>
+                        <label for="editHasilAkhir">Hasil Akhir</label>
                         <textarea name="hasil_akhir" id="editHasilAkhir" class="form-control" placeholder="Tulis hasil akhir rapat di sini..." rows="5"></textarea>
                     </div>
                     
                     <div class="form-group">
-                        <label>Lampiran Saat Ini</label>
+                        <label for="currentFiles">Lampiran Saat Ini</label>
                         <div id="currentFiles" class="file-list"></div>
                     </div>
                     
                     <div class="form-group">
-                        <label>Tambahkan Lampiran Baru (Opsional)</label>
-                        <input type="file" name="lampiran[]" class="form-control" multiple accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.txt,.zip,.rar,.ppt,.pptx">
+                        <label for="editLampiran">Tambahkan Lampiran Baru (Opsional)</label>
+                        <input type="file" name="lampiran[]" id="editLampiran" class="form-control" multiple accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.txt,.zip,.rar,.ppt,.pptx">
                         <div class="file-hint">Format: PDF, DOC, DOCX, JPG, PNG, TXT, ZIP, RAR, PPT. Maks 10MB per file.</div>
                     </div>
                     

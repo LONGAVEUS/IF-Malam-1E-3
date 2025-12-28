@@ -266,7 +266,6 @@ $result_notulens = $conn->query($sql_notulens);
     </div>
 
     <nav class="sidebar-nav">
-      <!-- Primary top nav -->
       <ul class="nav-list primary-nav">
         <li class="nav-item">
           <a href="admin.php" class="nav-link active">
