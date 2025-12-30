@@ -1,10 +1,10 @@
 @import url("https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap");
 
 * {
+  font-family: "Poppins", sans-serif;
   margin: 0;
   padding: 0;
   box-sizing: border-box;
-  font-family: "Poppins", sans-serif;
 }
 
 body {
@@ -12,61 +12,34 @@ body {
   background: linear-gradient(#4b6a9b, #d1b7e8);
 }
 
-/* === SIDEBAR === */
 .sidebar {
-  width: 260px;
-  height: calc(100vh - 32px);
+  width: 16.25rem;
+  height: calc(100vh - 2rem);
   background: #330858;
-  border-radius: 16px;
+  border-radius: 1rem;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
   position: fixed;
-  left: 16px;
-  top: 16px;
+  padding: 0.625rem;
+  left: 1rem;
+  top: 1rem;
   color: #fff;
   box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
   transition: width 0.45s cubic-bezier(0.68, -0.55, 0.27, 1.55), opacity 0.3s ease, transform 0.45s ease;
-  overflow: hidden;
 }
 
 .sidebar-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 20px;
+  padding: 1.25rem;
 }
 
 .logo-area img {
-  width: 50px;
-  height: 50px;
-  transition: transform 0.3s ease, width 0.3s ease, opacity 0.3s ease
-}
-
-.toggler {
-  background: #fff;
-  border: none;
-  color: #8348b6;
-  width: 36px;
-  height: 36px;
-  border-radius: 8px;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: transform 0.4s ease, background 0.5s ease;
-}
-
-.sidebar.collapsed .toggler {
-  transform: rotate(180deg);
-}
-
-.toggler:hover {
-  background: #e0e0e0;
-}
-
-.sidebar-header .toggler span {
-  font-size: 1.75rem;
+  width: 3.125rem;
+  height: 3.125rem;
+  transition: transform 0.3s ease, width 0.3s ease, opacity 0.3s ease;
 }
 
 /*==== NAVIGASI =====*/
@@ -76,7 +49,7 @@ body {
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  padding: 10px 0;
+  padding: 0.625rem 0;
 }
 
 .primary-nav,
@@ -87,17 +60,17 @@ body {
 }
 
 .nav-item {
-  margin: 4px 0;
+  margin: 0.25rem 0;
 }
 
 .nav-link {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 12px 20px;
+  gap: 0.75rem;
+  padding: 0.75rem 1.25rem;
   color: #fff;
   text-decoration: none;
-  border-radius: 8px;
+  border-radius: 0.625rem;
   transition: background 0.3s ease, transform 0.3s ease;
 }
 
@@ -111,17 +84,17 @@ body {
 .profile-user {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 16px;
+  gap: 0.75rem;
+  padding: 1rem;
   border-top: 1px solid rgba(255, 255, 255, 0.2);
 }
 
 /* FOTO PROFIL ANTI LONJONG */
 .profile-avatar {
-  width: 42px;
-  height: 42px;
-  min-width: 42px;
-  min-height: 42px;
+  width: 2.6rem;
+  height: 2.6rem;
+  min-width: 2.6rem;
+  min-height: 2.6rem;
   aspect-ratio: 1 / 1;
   border-radius: 50%;
   object-fit: cover;
@@ -136,85 +109,90 @@ body {
 }
 
 .profile-name {
-  font-size: 14px;
+  font-size: 0.8rem;
   font-weight: 600;
   color: #f1f1f1;
 }
 
 .profile-role {
-  font-size: 12px;
+  font-size: 0.75rem;
   color: #ddd;
 }
 
-/* PROFILE SAAT COLLAPSE */
+.sidebar.collapsed .nav-label {
+  opacity: 0;
+  transform: translateX(-10px);
+}
+
 .sidebar.collapsed .profile-info {
   display: none;
 }
 
-.sidebar.collapsed .profile-user {
-  justify-content: center;
-}
-
-.nav-link.active {
-  background: rgba(255, 255, 255, 0.15);
-}
-
+/*==== ICON =====*/
 .nav-icon {
-  font-size: 18px;
-  width: 22px;
+  font-size: 1.25rem;
+  width: 1.375rem;
   text-align: center;
 }
 
 /* LABEL */
 .nav-label {
-  font-size: 15px;
+  font-size: 0.9rem;
   font-weight: 500;
   opacity: 1;
   transform: translateX(0);
   transition: all 0.3s ease;
 }
 
-
+/* SECONDARY NAV DI BAWAH */
 .secondary-nav {
   border-top: 1px solid rgba(255, 255, 255, 0.2);
-  padding-top: 15px;
+  padding-top: 0.9rem;
   margin-top: auto;
 }
 
-/* === MAIN CONTENT === */
+/*main content */
 .main-content {
-  margin-left: 280px;
-  padding: 40px;
+  margin-left: 17.5rem;
+  padding: 2.5rem;
   color: white;
-  transition: margin-left 0.3s ease;
+  transition: margin-left 0.4s cubic-bezier(0.68, -0.55, 0.27, 1.55);
+  position: relative;
+  z-index: 5;
+  width: calc(100vw - 17.5rem);
+}
+
+.sidebar.collapsed ~ .main-content {
+  margin-left: 7.5rem;
+  width: calc(100vw - 7.5rem);
 }
 
 .dashboard-header h1 {
-  font-size: 32px;
+  font-size: 2rem;
   font-weight: 700;
-  margin-bottom: 10px;
+  margin-bottom: 0.6rem;
 }
 
 .dashboard-header p {
-  font-size: 18px;
+  font-size: 1.125rem;
   color: #f0f0f0;
-  max-width: 800px;
+  max-width: 50rem;
   line-height: 1.6;
 }
 
 .user-stats-grid {
-  display: flex; /* kotak berjejer */
-  gap: 20px; /* jarak */
-  flex-wrap: wrap; /* untuk responsif */
-  margin-top: 30px; /* jarak dari judul dasbord */
+  display: flex;
+  gap: 1.25rem;
+  flex-wrap: wrap;
+  margin-top: 30px;
 }
 
 .user-count-box {
-  flex: 1 1 200px; /* fleksibel */
-  padding: 20px;
+  flex: 1 1 12.5rem;
+  padding: 1.25rem;
   background-color: #4caf50;
   color: white;
-  border-radius: 8px;
+  border-radius: 0.5rem;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
   text-align: center;
   transition: transform 0.3s ease-in-out;
@@ -250,8 +228,8 @@ body {
 /* === CONTENT SECTION === */
 .content-section {
   background: white;
-  border-radius: 10px;
-  padding: 30px;
+  border-radius: 0.6rem;
+  padding: 1.8rem;
   box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
   margin-top: 20px;
 }
@@ -260,8 +238,8 @@ body {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 25px;
-  padding-bottom: 15px;
+  margin-bottom: 1.5rem;
+  padding-bottom: 0.9rem;
   border-bottom: 1px solid #ecf0f1;
 }
 
@@ -273,155 +251,28 @@ body {
 .filter-info {
   background: #e3f2fd;
   color: #1976d2;
-  padding: 8px 15px;
-  border-radius: 6px;
+  padding: 0.5rem 0.9rem;
+  border-radius: 0.3rem;
   font-size: 0.9rem;
   display: flex;
   align-items: center;
-  gap: 8px;
-}
-
-/* === SEARCH CONTAINER === */
-.search-container {
-  background: #f8f9fa;
-  padding: 20px;
-  border-radius: 10px;
-  margin-bottom: 25px;
-  border: 1px solid #e9ecef;
-}
-
-.search-form {
-  display: flex;
-  gap: 15px;
-  align-items: center;
-  flex-wrap: wrap;
-}
-
-.search-bar {
-  flex: 1;
-  display: flex;
-  align-items: center;
-  background: white;
-  border-radius: 8px;
-  padding: 0 15px;
-  border: 1px solid #dee2e6;
-}
-
-.search-bar i {
-  color: #6c757d;
-  margin-right: 10px;
-}
-
-.search-bar input {
-  width: 100%;
-  padding: 12px 0;
-  border: none;
-  outline: none;
-  font-size: 0.95rem;
-  background: transparent;
-}
-
-.date-time-filters {
-  display: flex;
-  gap: 10px;
-}
-
-.date-time-filters input {
-  padding: 10px;
-  border: 1px solid #dee2e6;
-  border-radius: 6px;
-  font-size: 0.9rem;
-}
-
-.search-btn {
-  background: #3498db;
-  color: white;
-  border: none;
-  padding: 10px 20px;
-  border-radius: 6px;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-weight: 500;
-  transition: background 0.3s ease;
-}
-
-.search-btn:hover {
-  background: #2980b9;
-}
-
-.reset-btn {
-  background: #6c757d;
-  color: white;
-  text-decoration: none;
-  padding: 10px 15px;
-  border-radius: 6px;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 0.9rem;
-  transition: background 0.3s ease;
-}
-
-.reset-btn:hover {
-  background: #5a6268;
-}
-
-/* Search Results Info */
-.search-info {
-  background: #e3f2fd;
-  color: #1976d2;
-  padding: 10px 15px;
-  border-radius: 6px;
-  margin-bottom: 15px;
-  font-size: 0.9rem;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.search-info i {
-  font-size: 1rem;
-}
-
-/* Kehadiran Status Styles */
-.kehadiran-status {
-  padding: 4px 10px;
-  border-radius: 12px;
-  font-size: 0.8rem;
-  font-weight: 500;
-}
-
-.kehadiran-status.hadir {
-  background: #d4edda;
-  color: #155724;
-}
-
-.kehadiran-status.belum {
-  background: #fff3cd;
-  color: #856404;
-}
-
-.kehadiran-status.tidak-hadir {
-  background: #f8d7da;
-  color: #721c24;
+  gap: 0.5rem;
 }
 
 /* === NOTULEN LIST === */
 .notulen-list {
   display: flex;
   flex-direction: column;
-  gap: 15px;
+  gap: 0.9rem;
 }
 
 .notulen-item {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  padding: 20px;
+  padding: 1.25rem;
   border: 1px solid #ecf0f1;
-  border-radius: 8px;
+  border-radius: 0.5rem;
   transition: all 0.3s ease;
 }
 
@@ -432,7 +283,7 @@ body {
 
 .notulen-main {
   flex: 1;
-  margin-right: 15px;
+  margin-right: 0.9rem;
 }
 
 .notulen-title {
@@ -445,7 +296,7 @@ body {
 .notulen-preview {
   color: #7f8c8d;
   font-size: 0.9rem;
-  margin-bottom: 15px;
+  margin-bottom: 0.9rem;
   line-height: 1.4;
 }
 
@@ -453,7 +304,7 @@ body {
 .notulen-meta {
   display: flex;
   align-items: center;
-  gap: 20px;
+  gap: 1.25rem;
   flex-wrap: wrap;
 }
 
@@ -463,21 +314,21 @@ body {
 .notulen-lampiran {
   display: flex;
   align-items: center;
-  gap: 5px;
+  gap: 0.3rem;
   color: #7f8c8d;
   font-size: 0.85rem;
 }
 
 .notulen-actions {
   display: flex;
-  gap: 8px;
+  gap: 0.5rem;
 }
 
 .action-btn {
-  width: 40px;
-  height: 40px;
+  width: 2.5rem;
+  height: 2.5rem;
   border: none;
-  border-radius: 6px;
+  border-radius: 0.3rem;
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -492,13 +343,6 @@ body {
 }
 .action-btn.view:hover {
   background: #2980b9;
-}
-
-.action-btn.konfirmasi {
-  background: #17a2b8;
-}
-.action-btn.konfirmasi:hover {
-  background: #138496;
 }
 
 .action-btn.download {
@@ -520,21 +364,21 @@ body {
   z-index: 2000;
   align-items: center;
   justify-content: center;
-  padding: 20px;
+  padding: 1.25rem;
 }
 
 .modal-container {
   background: white;
-  border-radius: 10px;
+  border-radius: 0.6rem;
   width: 100%;
-  max-width: 700px;
+  max-width: 43.75rem;
   max-height: 90vh;
   overflow-y: auto;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
 }
 
 .modal-header {
-  padding: 20px 25px;
+  padding: 1.25rem 1.5rem;
   border-bottom: 1px solid #ecf0f1;
   display: flex;
   justify-content: space-between;
@@ -554,8 +398,8 @@ body {
   font-size: 1.5rem;
   cursor: pointer;
   color: #7f8c8d;
-  width: 30px;
-  height: 30px;
+  width: 1.8rem;
+  height: 1.8rem;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -563,7 +407,7 @@ body {
 }
 
 .modal-body {
-  padding: 25px;
+  padding: 1.5rem;
 }
 
 /* === NOTULEN DETAIL STYLES === */
@@ -572,8 +416,8 @@ body {
 }
 
 .detail-item {
-  margin-bottom: 15px;
-  padding-bottom: 15px;
+  margin-bottom: 0.9rem;
+  padding-bottom: 0.9rem;
   border-bottom: 1px solid #ecf0f1;
 }
 
@@ -586,7 +430,7 @@ body {
   font-weight: 600;
   color: #7f8c8d;
   font-size: 0.9rem;
-  margin-bottom: 5px;
+  margin-bottom: 0.3rem;
 }
 
 .detail-value {
@@ -596,16 +440,16 @@ body {
 
 .detail-actions {
   display: flex;
-  gap: 10px;
-  margin-top: 20px;
-  padding-top: 20px;
+  gap: 0.6rem;
+  margin-top: 1.25rem;
+  padding-top: 1.25rem;
   border-top: 1px solid #ecf0f1;
 }
 
 .btn {
-  padding: 10px 20px;
+  padding: 0.6rem 1.25rem;
   border: none;
-  border-radius: 6px;
+  border-radius: 0.3rem;
   cursor: pointer;
   font-size: 0.9rem;
   font-weight: 500;
@@ -616,161 +460,167 @@ body {
 }
 
 .btn i {
-  margin-right: 8px;
+  margin-right: 0.5rem;
 }
 
 /* === EMPTY STATE === */
 .empty-state {
   text-align: center;
-  padding: 60px 20px;
+  padding: 3.75rem 1.25rem;
   color: #7f8c8d;
 }
 
 .empty-state i {
   font-size: 4rem;
-  margin-bottom: 20px;
+  margin-bottom: 1.25rem;
   color: #bdc3c7;
 }
 
 .empty-state h3 {
   font-size: 1.5rem;
-  margin-bottom: 10px;
+  margin-bottom: 0.6rem;
   color: #2c3e50;
 }
 
 .empty-state p {
   font-size: 1rem;
-  max-width: 400px;
+  max-width: 25rem;
   margin: 0 auto;
   line-height: 1.6;
 }
 
-/* === COLLAPSED SIDEBAR === */
-.sidebar.collapsed {
-  width: 80px;
-}
-
-.sidebar.collapsed ~ .main-content {
-  width: 80px;
-  opacity: 0.95;
-  transform: translateX(0);
-}
-
-.sidebar.collapsed .nav-label {
-  opacity: 0;
-  transform: translateX(-10px);
-}
-
-.sidebar.collapsed .logo-area img {
-  width: 46px;
-}
-
-/* === RESPONSIVE DESIGN === */
+/* MOBILE (NAVBAR MODE) */
 @media (max-width: 768px) {
+  /* ================= NAVBAR UTAMA ================= */
   .sidebar {
-    width: 200px;
+    width: 100% !important;
+    height: 4rem !important;
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    padding: 0 0.9rem !important;
+    position: fixed !important;
+    top: 0;
+    left: 0;
+    z-index: 1000;
+    overflow: visible !important;
+    background: #2c1a4d;
   }
 
-  .sidebar:not(.collapsed) {
-    width: 250px;
+  /* ================= HEADER ================= */
+  .sidebar-header {
+    display: flex !important;
+    align-items: center !important;
+    gap: 0.6rem !important;
   }
 
-  .main-content {
-    margin-left: 70px;
-    padding: 20px 15px;
+  .toggler {
+    display: flex !important;
+    order: -1 !important;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    position: relative;
+    z-index: 2000;
   }
 
-  .sidebar:not(.collapsed) ~ .main-content {
-    margin-left: 250px;
-  }
-
-  .stats-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .section-header {
+  .hamburger-icon {
+    display: flex;
     flex-direction: column;
-    align-items: flex-start;
-    gap: 15px;
+    gap: 0.25rem;
   }
 
-  .filter-info {
-    align-self: stretch;
-    justify-content: center;
+  .hamburger-icon span {
+    width: 1.3rem;
+    height: 0.18rem;
+    background: white;
+    border-radius: 2px;
   }
 
-  /* Responsive Search */
-  .search-form {
-    flex-direction: column;
-    align-items: stretch;
+  .dekstop-icon {
+    display: none !important;
   }
-  
-  .search-bar,
-  .date-time-filters {
+
+  /* ================= PROFILE (KANAN) ================= */
+  .sidebar-nav {
+    position: absolute !important;
+    right: 0.9rem !important;
+    top: 50% !important;
+    transform: translateY(-50%) !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    z-index: 1500;
+  }
+
+  .profile-user {
+    display: block !important;
+    margin: 0 !important;
+  }
+
+  .profile-avatar {
+    width: 2.3rem !important;
+    height: 2.3rem !important;
+    border-radius: 50% !important;
+    object-fit: cover !important;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+  }
+
+  .profile-info {
+    display: none !important;
+  }
+
+  /* ================= MENU PRIMARY ================= */
+  .primary-nav {
+    position: absolute;
+    top: 4rem;
+    left: 0;
     width: 100%;
-  }
-  
-  .date-time-filters {
-    justify-content: space-between;
-  }
-  
-  .search-btn,
-  .reset-btn {
-    justify-content: center;
+    background: #2c1a4d;
+    display: none;
+    z-index: 1500;
   }
 
-  .notulen-item {
-    flex-direction: column;
-    gap: 15px;
+  .sidebar-nav.active .primary-nav {
+    display: block !important;
   }
 
-  .notulen-meta {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 10px;
+  .primary-nav li {
+    padding: 0.8rem 1.25rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
   }
 
-  .notulen-actions {
-    width: 100%;
-    justify-content: center;
+  /* ================= SECONDARY NAV ================= */
+  .secondary-nav {
+    display: flex !important;
+    align-items: center !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    z-index: 2000;
   }
 
-  .action-btn {
-    flex: 1;
-    margin: 0 2px;
+  /* ================= LABEL CONTROL ================= */
+
+  /* SEMBUNYIKAN SEMUA LABEL SECARA DEFAULT */
+  .nav-label {
+    display: none !important;
   }
 
-  .modal-container {
-    width: 95%;
-    margin: 10px;
+  /* TAMPILKAN TEKS HANYA PRIMARY NAV */
+  .sidebar-nav.active .primary-nav .nav-label {
+    display: inline-block !important;
+    color: white;
+    margin-left: 0.25rem;
   }
-}
 
-@media (max-width: 480px) {
+  /* PAKSA SECONDARY NAV TETAP ICON SAJA */
+  .sidebar-nav.active .secondary-nav .nav-label {
+    display: none !important;
+  }
+
+  /* ================= MAIN CONTENT ================= */
   .main-content {
-    padding: 15px 10px;
-  }
-
-  .stat-card {
-    padding: 15px;
-  }
-
-  .content-section {
-    padding: 20px;
-  }
-
-  .notulen-item {
-    padding: 15px;
-  }
-
-  .notulen-meta {
-    gap: 8px;
-  }
-
-  .notulen-date,
-  .notulen-time,
-  .notulen-penanggung-jawab,
-  .notulen-lampiran {
-    font-size: 0.8rem;
+    margin-left: 0 !important;
+    margin-top: 4.6rem !important;
+    width: 100% !important;
   }
 }
