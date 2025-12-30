@@ -1,10 +1,10 @@
 @import url("https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap");
 
 * {
+  font-family: "Poppins", sans-serif;
   margin: 0;
   padding: 0;
   box-sizing: border-box;
-  font-family: "Poppins", sans-serif;
 }
 
 body {
@@ -12,7 +12,6 @@ body {
   background: linear-gradient(#4b6a9b, #d1b7e8);
 }
 
-/* === SIDEBAR === */
 .sidebar {
   width: 260px;
   height: calc(100vh - 32px);
@@ -21,13 +20,13 @@ body {
   display: flex;
   flex-direction: column;
   justify-content: space-between;
+  padding: 10px;
   position: fixed;
   left: 16px;
   top: 16px;
   color: #fff;
   box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
   transition: width 0.45s cubic-bezier(0.68, -0.55, 0.27, 1.55), opacity 0.3s ease, transform 0.45s ease;
-  overflow: hidden;
 }
 
 .sidebar-header {
@@ -40,34 +39,8 @@ body {
 .logo-area img {
   width: 50px;
   height: 50px;
+  transition: transform 0.3s ease, width 0.3s ease, opacity 0.3s ease;
 }
-
-.toggler {
-  background: #fff;
-  border: none;
-  color: #8348b6;
-  width: 36px;
-  height: 36px;
-  border-radius: 8px;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: transform 0.4s ease, background 0.5s ease;
-}
-
-.sidebar.collapsed .toggler {
-  transform: rotate(180deg);
-}
-
-.toggler:hover {
-  background: #e0e0e0;
-}
-
-.sidebar-header .toggler span {
-  font-size: 1.75rem;
-}
-
 
 /*==== NAVIGASI =====*/
 
@@ -77,6 +50,7 @@ body {
   flex-direction: column;
   justify-content: space-between;
   padding: 10px 0;
+  z-index: 1500;
 }
 
 .primary-nav,
@@ -97,13 +71,29 @@ body {
   padding: 12px 20px;
   color: #fff;
   text-decoration: none;
-  border-radius: 8px;
+  border-radius: 10px;
   transition: background 0.3s ease, transform 0.3s ease;
 }
 
 .nav-link:hover {
   background: rgba(255, 255, 255, 0.2);
   transform: translateX(5px);
+}
+
+/*==== ICON =====*/
+.nav-icon {
+  font-size: 18px;
+  width: 22px;
+  text-align: center;
+}
+
+/* LABEL */
+.nav-label {
+  font-size: 15px;
+  font-weight: 500;
+  opacity: 1;
+  transform: translateX(0);
+  transition: all 0.3s ease;
 }
 
 /* ================= PROFILE USER (FIXED) ================= */
@@ -489,113 +479,137 @@ body {
   line-height: 1.6;
 }
 
-/* === COLLAPSED SIDEBAR === */
-.sidebar.collapsed {
-  width: 80px;
-}
-
-.sidebar.collapsed ~ .main-content {
-  margin-left: 120px;
-}
-
-.sidebar.collapsed .nav-label {
-  display: none;
-}
-
-.sidebar.collapsed .logo-area img {
-  width: 46px;
-}
-
-/* === RESPONSIVE DESIGN === */
+/* MOBILE (NAVBAR MODE) */
 @media (max-width: 768px) {
+  /* ================= NAVBAR UTAMA ================= */
   .sidebar {
-    width: 70px;
-    height: 100vh;
+    width: 100% !important;
+    height: 65px !important;
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    padding: 0 15px !important;
+    position: fixed !important;
     top: 0;
     left: 0;
-    border-radius: 0;
+    z-index: 1000;
+    overflow: visible !important;
+    background: #2c1a4d;
   }
 
-  .sidebar:not(.collapsed) {
-    width: 250px;
+  /* ================= HEADER ================= */
+  .sidebar-header {
+    display: flex !important;
+    align-items: center !important;
+    gap: 10px !important;
   }
 
-  .main-content {
-    margin-left: 70px;
-    padding: 20px 15px;
+  .toggler {
+    display: flex !important;
+    order: -1 !important;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    position: relative;
+    z-index: 2000;
   }
 
-  .sidebar:not(.collapsed) ~ .main-content {
-    margin-left: 250px;
-  }
-
-  .stats-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .section-header {
+  .hamburger-icon {
+    display: flex;
     flex-direction: column;
-    align-items: flex-start;
-    gap: 15px;
+    gap: 4px;
   }
 
-  .filter-info {
-    align-self: stretch;
-    justify-content: center;
+  .hamburger-icon span {
+    width: 22px;
+    height: 3px;
+    background: white;
+    border-radius: 2px;
   }
 
-  .notulen-item {
-    flex-direction: column;
-    gap: 15px;
+  .dekstop-icon {
+    display: none !important;
   }
 
-  .notulen-meta {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 10px;
+  /* ================= PROFILE (KANAN) ================= */
+  .sidebar-nav {
+    position: absolute !important;
+    right: 15px !important;
+    top: 50% !important;
+    transform: translateY(-50%) !important;
+    margin: 0 !important;
+    padding: 0 !important;
   }
 
-  .notulen-actions {
+  .profile-user {
+    display: block !important;
+    margin: 0 !important;
+  }
+
+  .profile-avatar {
+    width: 38px !important;
+    height: 38px !important;
+    border-radius: 50% !important;
+    object-fit: cover !important;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+  }
+
+  .profile-info {
+    display: none !important;
+  }
+
+  /* ================= MENU PRIMARY ================= */
+  .primary-nav {
+    position: absolute;
+    top: 65px;
+    left: 0;
     width: 100%;
-    justify-content: center;
+    background: #2c1a4d;
+    display: none;
+    z-index: 1500;
   }
 
-  .action-btn {
-    flex: 1;
-    margin: 0 2px;
+  .sidebar-nav.active .primary-nav {
+    display: block !important;
   }
 
-  .modal-container {
-    width: 95%;
-    margin: 10px;
+  .primary-nav li {
+    padding: 14px 20px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
   }
-}
 
-@media (max-width: 480px) {
+  /* ================= SECONDARY NAV ================= */
+  .secondary-nav {
+    display: flex !important;
+    align-items: center !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    z-index: 2000;
+  }
+
+  /* ================= LABEL CONTROL ================= */
+
+  /* SEMBUNYIKAN SEMUA LABEL SECARA DEFAULT */
+  .nav-label {
+    display: none !important;
+  }
+
+  /* TAMPILKAN TEKS HANYA PRIMARY NAV */
+  .sidebar-nav.active .primary-nav .nav-label {
+    display: inline-block !important;
+    color: white;
+    margin-left: 10px;
+  }
+
+  /* PAKSA SECONDARY NAV TETAP ICON SAJA */
+  .sidebar-nav.active .secondary-nav .nav-label {
+    display: none !important;
+  }
+
+  /* ================= MAIN CONTENT ================= */
   .main-content {
-    padding: 15px 10px;
-  }
-
-  .stat-card {
-    padding: 15px;
-  }
-
-  .content-section {
-    padding: 20px;
-  }
-
-  .notulen-item {
-    padding: 15px;
-  }
-
-  .notulen-meta {
-    gap: 8px;
-  }
-
-  .notulen-date,
-  .notulen-time,
-  .notulen-penanggung-jawab,
-  .notulen-lampiran {
-    font-size: 0.8rem;
+    margin-left: 0 !important;
+    margin-top: 75px !important;
+    width: 100% !important;
   }
 }
