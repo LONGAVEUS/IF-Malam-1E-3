@@ -4,7 +4,17 @@ require_once 'SimpleXLSX.php';
 require_once 'koneksi.php';
 
 
+/* ================== PAGINATION ================== */
+$limit = 20;
+
+$page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
+$page = ($page < 1) ? 1 : $page;
+
+$offset = ($page - 1) * $limit;
+
+
 use Shuchkin\SimpleXLSX;
+
 
 // ================== DATA USER LOGIN ==================
 $user_id = $_SESSION['user_id'];
@@ -175,8 +185,12 @@ if (isset($_POST['hapus_user'])) {
 }
 
 /* ================== AMBIL DATA USER + PENCARIAN ================== */
+
+$is_search = false;
+
 if (isset($_POST['submit']) && !empty($_POST['cari'])) {
 
+    // MODE SEARCH (tanpa pagination)
     $cari = "%" . trim($_POST['cari']) . "%";
 
     $stmt = $conn->prepare("
@@ -187,25 +201,34 @@ if (isset($_POST['submit']) && !empty($_POST['cari'])) {
             jurusan LIKE ? OR
             angkatan LIKE ? OR
             role LIKE ?
-        ORDER BY user_id DESC
+        ORDER BY CAST(nim AS UNSIGNED) ASC
     ");
 
-    $stmt->bind_param(
-        "sssss",
-        $cari,
-        $cari,
-        $cari,
-        $cari,
-        $cari
-    );
-
+    $stmt->bind_param("sssss", $cari, $cari, $cari, $cari, $cari);
     $stmt->execute();
     $users = $stmt->get_result();
 
+    $is_search = true;
+
 } else {
 
-    $users = $conn->query("SELECT * FROM user ORDER BY CAST(nim AS UNSIGNED) ASC");
+    // MODE NORMAL (pagination aktif)
+    $users = $conn->query("
+        SELECT * FROM user
+        ORDER BY CAST(nim AS UNSIGNED) ASC
+        LIMIT $limit OFFSET $offset
+    ");
 }
+
+
+$totalPages = 1;
+
+if (!$is_search) {
+    $totalQuery = $conn->query("SELECT COUNT(*) AS total FROM user");
+    $totalData  = $totalQuery->fetch_assoc()['total'];
+    $totalPages = ceil($totalData / $limit);
+}
+
 
 ?>
 <!DOCTYPE html>
@@ -213,6 +236,8 @@ if (isset($_POST['submit']) && !empty($_POST['cari'])) {
 
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
     <title>User Management</title>
 
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -226,12 +251,17 @@ if (isset($_POST['submit']) && !empty($_POST['cari'])) {
         <div class="sidebar-header">
             <div class="logo-area">
                 <a href="#" class="header-logo">
-                    <!-- Ganti dengan path logo yang benar -->
-                    <img src="poltek1.png" alt="Politeknik Negeri Batam" />
+                    <img src="if.png" alt="Politeknik Negeri Batam">
                 </a>
             </div>
+
             <button class="toggler">
-                <span class="fas fa-chevron-left"></span>
+                <span class="dekstop-icon"></span>
+                <div class="hamburger-icon">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </div>
             </button>
         </div>
 
@@ -300,7 +330,7 @@ if (isset($_POST['submit']) && !empty($_POST['cari'])) {
 
     <!-- ================= MAIN CONTENT ================= -->
     <div class="main-content">
-        <h1>User Management</h1>
+        <h1>Daftar Pengguna</h1>
 
         <?php if (isset($_SESSION['success_msg'])): ?>
         <div id="auto-alert" class="alert alert-success">
@@ -396,6 +426,24 @@ if (isset($_POST['submit']) && !empty($_POST['cari'])) {
                 </tr>
                 <?php endwhile; ?>
             </table>
+            <?php if (!$is_search && $totalPages > 1): ?>
+            <div class="pagination">
+                <?php if ($page > 1): ?>
+                <a href="?page=<?= $page - 1 ?>">« Prev</a>
+                <?php endif; ?>
+
+                <?php for ($i = 1; $i <= $totalPages; $i++): ?>
+                <a href="?page=<?= $i ?>" class="<?= ($i == $page) ? 'active' : '' ?>">
+                    <?= $i ?>
+                </a>
+                <?php endfor; ?>
+
+                <?php if ($page < $totalPages): ?>
+                <a href="?page=<?= $page + 1 ?>">Next »</a>
+                <?php endif; ?>
+            </div>
+            <?php endif; ?>
+
         </div>
     </div>
 
@@ -475,32 +523,34 @@ if (isset($_POST['submit']) && !empty($_POST['cari'])) {
 
 
         document.addEventListener("DOMContentLoaded", function () {
-
-            const toggler = document.querySelector(".toggler");
             const sidebar = document.querySelector(".sidebar");
+            const toggler = document.querySelector(".toggler");
+            const sidebarNav = document.querySelector(".sidebar-nav");
 
-            if (!toggler || !sidebar) {
-                console.error("Elemen toggler atau sidebar tidak ditemukan!");
-                return;
-            }
+            if (!sidebar || !toggler || !sidebarNav) return;
 
-            toggler.addEventListener("click", function () {
+            toggler.addEventListener("click", function (e) {
+                e.stopPropagation();
 
-                // Toggle sidebar
-                sidebar.classList.toggle("collapsed");
+                /* ================= MOBILE ONLY ================= */
+                if (window.innerWidth <= 768) {
+                    sidebarNav.classList.toggle("active");
+                }
+            });
 
-                // Ambil icon chevron
-                const icon = toggler.querySelector("span");
+            /* ================= CLOSE DROPDOWN SAAT KLIK DI LUAR (MOBILE) ================= */
+            document.addEventListener("click", function (e) {
+                if (window.innerWidth <= 768) {
+                    if (!sidebar.contains(e.target)) {
+                        sidebarNav.classList.remove("active");
+                    }
+                }
+            });
 
-                if (!icon) return;
-
-                // Ubah arah icon
-                if (sidebar.classList.contains("collapsed")) {
-                    icon.classList.remove("fa-chevron-left");
-                    icon.classList.add("fa-chevron-right");
-                } else {
-                    icon.classList.remove("fa-chevron-right");
-                    icon.classList.add("fa-chevron-left");
+            /* ================= RESET SAAT RESIZE KE DESKTOP ================= */
+            window.addEventListener("resize", function () {
+                if (window.innerWidth > 768) {
+                    sidebarNav.classList.remove("active");
                 }
             });
         });
