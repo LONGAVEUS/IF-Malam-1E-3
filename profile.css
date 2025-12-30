@@ -13,59 +13,33 @@ body {
 }
 
 .sidebar {
-  width: 260px;
-  height: calc(100vh - 32px);
+  width: 16.25rem;
+  height: calc(100vh - 2rem);
   background: #330858;
-  border-radius: 16px;
+  border-radius: 1rem;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
   position: fixed;
-  left: 16px;
-  top: 16px;
+  padding: 0.625rem;
+  left: 1rem;
+  top: 1rem;
   color: #fff;
   box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
   transition: width 0.45s cubic-bezier(0.68, -0.55, 0.27, 1.55), opacity 0.3s ease, transform 0.45s ease;
-  overflow: hidden;
 }
 
 .sidebar-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 20px;
+  padding: 1.25rem;
 }
 
 .logo-area img {
-  width: 50px;
-  height: 50px;
+  width: 3.125rem;
+  height: 3.125rem;
   transition: transform 0.3s ease, width 0.3s ease, opacity 0.3s ease;
-}
-
-.toggler {
-  background: #fff;
-  border: none;
-  color: #8348b6;
-  width: 36px;
-  height: 36px;
-  border-radius: 8px;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: transform 0.4s ease, background 0.5s ease;
-}
-
-.sidebar.collapsed .toggler {
-  transform: rotate(180deg);
-}
-
-.toggler:hover {
-  background: #e0e0e0;
-}
-
-.sidebar-header .toggler span {
-  font-size: 1.75rem;
 }
 
 /*==== NAVIGASI =====*/
@@ -75,7 +49,7 @@ body {
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  padding: 10px 0;
+  padding: 0.625rem 0;
 }
 
 .primary-nav,
@@ -86,17 +60,17 @@ body {
 }
 
 .nav-item {
-  margin: 4px 0;
+  margin: 0.25rem 0;
 }
 
 .nav-link {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 12px 20px;
+  gap: 0.75rem;
+  padding: 0.75rem 1.25rem;
   color: #fff;
   text-decoration: none;
-  border-radius: 8px;
+  border-radius: 0.625rem;
   transition: background 0.3s ease, transform 0.3s ease;
 }
 
@@ -107,14 +81,14 @@ body {
 
 /*==== ICON =====*/
 .nav-icon {
-  font-size: 18px;
-  width: 22px;
+  font-size: 1.25rem;
+  width: 1.375rem;
   text-align: center;
 }
 
 /* LABEL */
 .nav-label {
-  font-size: 15px;
+  font-size: 0.9375rem;
   font-weight: 500;
   opacity: 1;
   transform: translateX(0);
@@ -124,52 +98,55 @@ body {
 /* SECONDARY NAV DI BAWAH */
 .secondary-nav {
   border-top: 1px solid rgba(255, 255, 255, 0.2);
-  padding-top: 15px;
+  padding-top: 0.9375rem;
   margin-top: auto;
 }
 
 /*main content */
 .main-content {
-  margin-left: 280px;
-  padding: 40px;
+  margin-left: 17.5rem;
+  padding: 2.5rem;
   color: white;
   transition: margin-left 0.4s cubic-bezier(0.68, -0.55, 0.27, 1.55);
   position: relative;
   z-index: 5;
-  width: calc(100vw - 280px);
+  width: calc(100vw - 17.5rem);
 }
 
 .sidebar.collapsed ~ .main-content {
-  margin-left: 120px;
-  width: calc(100vw - 120px);
+  margin-left: 7.5rem;
+  width: calc(100vw - 7.5rem);
 }
 
 .dashboard-header h1 {
-  font-size: 32px;
-  font-weight: 700px;
-  margin-bottom: 10px;
+  font-size: 2rem;
+  font-weight: 700;
+  margin-bottom: 1.25rem;
+  color: #fff;
+  border-bottom: 2px solid rgba(255, 255, 255, 0.1);
+  padding-bottom: 0.6rem;
 }
 
 .dashboard-header p {
-  font-size: 18px;
+  font-size: 1.125rem;
   font-weight: 400;
   color: #f0f0f0;
 }
-.sidebar.collapsed {
-  width: 80px;
+sidebar.collapsed {
+  width: 5rem;
   opacity: 0.95;
   transform: translateX(0);
 }
 
 .sidebar.collapsed .nav-label {
   opacity: 0;
-  transform: translateX(-10px);
+  transform: translateX(-0.625rem);
 }
 
 .sidebar.collapsed .logo-area img {
   transform: scale(0.9);
   opacity: 0.9;
-  width: 46px;
+  width: 2.8rem;
 }
 
 .page-header {
@@ -177,205 +154,397 @@ body {
   justify-content: space-between;
 }
 
-/* ========== RESPONSIVE ========== */
-@media (max-width: 768px) {
-  .sidebar {
-    width: 200px;
-  }
-
-  .nav-label {
-    display: none; /* sembunyikan teks di layar kecil */
-  }
-
-  .nav-icon {
-    font-size: 20px;
-  }
-}
-
-/* ======================================================= */
-/* 3. MAIN CONTENT & PAGE LAYOUT (Dashboard Profile) */
-/* ======================================================= */
-.main-content {
-  margin-left: 280px; /* Jarak dari sidebar */
-  padding: 40px;
-  color: white;
-  transition: margin-left 0.4s cubic-bezier(0.68, -0.55, 0.27, 1.55);
-  position: relative;
-  z-index: 5;
-  width: calc(100vw - 320px); /* Memastikan content tidak overlap */
-}
-
-.dashboard-header h1 {
-  font-size: 32px;
-  font-weight: 700;
-  margin-bottom: 20px;
-  color: #fff;
-  border-bottom: 2px solid rgba(255, 255, 255, 0.1);
-  padding-bottom: 10px;
-}
-
 /* ------------------------------------------------------- */
-/* 4. PROFILE CARD & FORMS */
+/* 5. PROFILE CARD & FORMS */
 /* ------------------------------------------------------- */
 .profile-container {
   display: flex;
   flex-direction: column;
-  gap: 30px; /* Jarak antar formulir */
-  max-width: 800px; /* Batasi lebar container profil */
-  margin-top: 20px;
+  gap: 1.8rem;
+  max-width: 50rem;
+  margin-top: 1.25rem;
+
+  margin-left: auto;
+  margin-right: auto;
 }
 
-/* Styling untuk setiap container formulir/section */
 .profile-section {
-  background-color: rgba(255, 255, 255, 0.1); /* Senada dengan card dashboard */
-  padding: 30px;
-  border-radius: 12px;
+  background-color: rgba(255, 255, 255, 0.1);
+  /* Senada dengan card dashboard */
+  padding: 1.875rem;
+  border-radius: 0.75rem;
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
 }
 
 .profile-section h4 {
   font-size: 1.5em;
-  margin-bottom: 20px;
+  margin-bottom: 1.25rem;
   color: #fff;
   border-bottom: 1px solid rgba(255, 255, 255, 0.2);
-  padding-bottom: 10px;
+  padding-bottom: 0.625rem;
 }
 
 /* Styling untuk Form */
 .profile-section form {
   display: flex;
   flex-direction: column;
-  gap: 15px;
+  gap: 0.9rem;
 }
 
 .profile-section label {
   font-weight: 500;
-  margin-top: 5px;
+  margin-top: 0.3rem;
 }
 
 .profile-section input[type="text"],
 .profile-section input[type="password"],
 .profile-section input[type="file"] {
   width: 100%;
-  padding: 12px;
+  padding: 0.75rem;
   border: 1px solid rgba(255, 255, 255, 0.3);
-  border-radius: 8px;
+  border-radius: 0.5rem;
   background: rgba(255, 255, 255, 0.1);
   color: #fff;
   transition: border-color 0.3s;
   box-sizing: border-box;
 }
 
+#file-upload {
+  display: none;
+}
+
+.custom-file-upload {
+  display: inline-block;
+  padding: 0.6rem 1.25rem;
+  background: rgba(255, 255, 255, 0.1);
+  border: 0.125rem dashed rgba(209, 183, 232, 0.5);
+  border-radius: 0.625rem;
+  color: #fff;
+  cursor: pointer;
+  font-size: 0.875rem;
+  transition: all 0.3s ease;
+  margin-bottom: 0.625rem;
+}
+
+.custom-file-upload:hover {
+  background: rgba(209, 183, 232, 0.2);
+  border-color: #d1b7e8;
+  transform: translateY(-2px);
+}
+
+/* 3. Container Wrapper */
+.upload-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 1.25rem;
+}
+
+/* 4. Teks nama file di bawah tombol */
+#file-name-display {
+  font-size: 0.75rem;
+  color: #f0f0f0;
+  opacity: 0.7;
+  font-style: italic;
+}
+
+/* 5. Perbaikan tombol submit (Ganti Foto) */
+.btn-save {
+  width: 100%;
+  padding: 0.75rem;
+  background: #8348b6;
+  border: none;
+  border-radius: 0.5rem;
+  color: white;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.3s;
+}
+
+/* Modal latar belakang */
+.image-zoom-modal {
+  display: none;
+  position: fixed;
+  z-index: 2000;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.9);
+  cursor: zoom-out;
+}
+
+/* Gambar di dalam modal */
+.modal-content-zoom {
+  margin: auto;
+  display: block;
+  max-width: 50%;
+  max-height: 50%;
+  position: relative;
+  top: 50%;
+  transform: translateY(-50%);
+  border: 5px solid #d1b7e8;
+  border-radius: 0.9rem;
+  animation: zoomAnim 0.3s;
+}
+
+/* Animasi zoom masuk */
+@keyframes zoomAnim {
+  from {
+    transform: translateY(-50%) scale(0);
+  }
+  to {
+    transform: translateY(-50%) scale(1);
+  }
+}
+
+/* Tombol close */
+.close-zoom {
+  position: absolute;
+  top: 1.25rem;
+  right: 2rem;
+  color: #f1f1f1;
+  font-size: 2.5rem;
+  font-weight: bold;
+  cursor: pointer;
+}
 .profile-section input:focus {
-  border-color: #d1b7e8; /* Warna fokus yang cerah */
+  border-color: #d1b7e8;
   outline: none;
   background: rgba(255, 255, 255, 0.2);
 }
 
 /* Styling Button */
 .profile-section button[type="submit"] {
-  padding: 10px 20px;
-  background-color: #8348b6; /* Warna Ungu Lebih Cerah */
+  padding: 0.625rem 1.25rem;
+  background-color: #8348b6;
+  /* Warna Ungu Lebih Cerah */
   color: white;
   border: none;
-  border-radius: 8px;
+  border-radius: 0.5rem;
   cursor: pointer;
   font-weight: 600;
   text-transform: uppercase;
   transition: background-color 0.3s ease, transform 0.1s ease;
-  margin-top: 10px;
-}
-
-.profile-section button[type="submit"]:hover {
-  background-color: #a066d4;
-  transform: translateY(-2px);
+  margin-top: 0.6rem;
 }
 
 /* Styling Foto Profil */
 .profile-picture {
   display: flex;
   justify-content: center;
-  margin-bottom: 20px;
+  margin-bottom: 1.25rem;
 }
 
 .profile-picture img {
-  border: 5px solid #d1b7e8; /* Border cerah */
+  width: 11.25rem !important;
+  height: 11.25rem !important;
+  border-radius: 50% !important;
+  object-fit: cover !important;
+  border: 5px solid #d1b7e8;
   box-shadow: 0 0 15px rgba(209, 183, 232, 0.5);
-  object-fit: cover;
+  display: block;
+  margin: 0 auto;
 }
 
 /* Untuk pesan error/sukses */
 .message {
-  padding: 10px;
-  border-radius: 5px;
-  margin-bottom: 15px;
+  padding: 0.6rem;
+  border-radius: 0.3rem;
+  margin-bottom: 0.9rem;
   text-align: center;
 }
+
 .error {
   background: #ff5555;
   color: white;
 }
+
 .success {
   background: #4caf50;
   color: white;
 }
 
-/* ================= PROFILE SIDEBAR ================= */
+/* ================= PROFILE USER (FIXED) ================= */
+
 .profile-user {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 14px 16px;
-  border-top: 1px solid #e5e7eb;
+  gap: 0.75rem;
+  padding: 1rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.2);
 }
 
+/* FOTO PROFIL ANTI LONJONG */
 .profile-avatar {
-  width: 42px;
-  height: 42px;
+  width: 2.6rem;
+  height: 2.6rem;
+  min-width: 2.6rem;
+  min-height: 2.6rem;
+  aspect-ratio: 1 / 1;
   border-radius: 50%;
   object-fit: cover;
-  border: 2px solid #e5e7eb;
+  background: #fff;
+  border: 2px solid rgba(255, 255, 255, 0.6);
 }
 
+/* TEXT PROFIL */
 .profile-info {
   display: flex;
   flex-direction: column;
 }
 
 .profile-name {
-  font-size: 14px;
+  font-size: 0.8rem;
   font-weight: 600;
   color: #f1f1f1;
 }
 
 .profile-role {
-  font-size: 12px;
+  font-size: 0.75rem;
   color: #ddd;
 }
 
-.sidebar.collapsed .nav-label {
-  opacity: 0;
-  transform: translateX(-10px);
-}
-
+/* PROFILE SAAT COLLAPSE */
 .sidebar.collapsed .profile-info {
   display: none;
 }
 
-.sidebar.collapsed ~ .main-content {
-  margin-left: 120px;
-  width: calc(100vw - 160px);
+.sidebar.collapsed .profile-user {
+  justify-content: center;
 }
 
+/* MOBILE (NAVBAR MODE) */
 @media (max-width: 768px) {
+  /* ================= NAVBAR UTAMA ================= */
   .sidebar {
-    width: 80px;
+    width: 100% !important;
+    height: 4rem !important;
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    padding: 0 0.9rem !important;
+    position: fixed !important;
+    top: 0;
+    left: 0;
+    z-index: 1000;
+    overflow: visible !important;
+    background: #2c1a4d;
   }
-  .main-content {
-    margin-left: 100px;
-    padding: 20px;
+
+  /* ================= HEADER ================= */
+  .sidebar-header {
+    display: flex !important;
+    align-items: center !important;
+    gap: 0.6rem !important;
   }
-  .nav-label {
+
+  .toggler {
+    display: flex !important;
+    order: -1 !important;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    position: relative;
+    z-index: 2000;
+  }
+
+  .hamburger-icon {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+  }
+
+  .hamburger-icon span {
+    width: 1.3rem;
+    height: 0.1875rem;
+    background: white;
+    border-radius: 0.125rem;
+  }
+
+  .dekstop-icon {
+    display: none !important;
+  }
+
+  /* ================= PROFILE (KANAN) ================= */
+  .sidebar-nav {
+    position: absolute !important;
+    right: 0.9rem !important;
+    top: 50% !important;
+    transform: translateY(-50%) !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  .profile-user {
+    display: block !important;
+    margin: 0 !important;
+  }
+
+  .profile-avatar {
+    width: 2.3rem !important;
+    height: 2.3rem !important;
+    border-radius: 50% !important;
+    object-fit: cover !important;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+  }
+
+  .profile-info {
+    display: none !important;
+  }
+
+  /* ================= MENU PRIMARY ================= */
+  .primary-nav {
+    position: absolute;
+    top: 4rem;
+    left: 0;
+    width: 100%;
+    background: #2c1a4d;
     display: none;
+    z-index: 1500;
+  }
+
+  .sidebar-nav.active .primary-nav {
+    display: block !important;
+  }
+
+  .primary-nav li {
+    padding: 0.8rem 1.25rem;
+    border-bottom: 1 solid rgba(255, 255, 255, 0.1);
+  }
+
+  /* ================= SECONDARY NAV ================= */
+  .secondary-nav {
+    display: flex !important;
+    align-items: center !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    z-index: 2000;
+  }
+
+  /* ================= LABEL CONTROL ================= */
+
+  /* SEMBUNYIKAN SEMUA LABEL SECARA DEFAULT */
+  .nav-label {
+    display: none !important;
+  }
+
+  /* TAMPILKAN TEKS HANYA PRIMARY NAV */
+  .sidebar-nav.active .primary-nav .nav-label {
+    display: inline-block !important;
+    color: white;
+    margin-left: 0.6rem;
+  }
+
+  /* PAKSA SECONDARY NAV TETAP ICON SAJA */
+  .sidebar-nav.active .secondary-nav .nav-label {
+    display: none !important;
+  }
+
+  /* ================= MAIN CONTENT ================= */
+  .main-content {
+    margin-left: 0 !important;
+    margin-top: 4.6rem !important;
+    width: 100% !important;
   }
 }
