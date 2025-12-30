@@ -56,15 +56,18 @@ $sql_notulen_hari_ini = "SELECT COUNT(id) AS total FROM notulen WHERE DATE(tangg
 $result_notulen_hari_ini = $conn->query($sql_notulen_hari_ini);
 $notulen_hari_ini = $result_notulen_hari_ini ? $result_notulen_hari_ini->fetch_assoc()['total'] : 0;
 
-// 4. Ambil Daftar 5 Pengguna Terbaru (dari tabel 'pengguna')
-$sql_users = "SELECT user_id, full_name, role FROM user WHERE is_active = 1 ORDER BY user_id DESC LIMIT 10";
-$result_users = $conn->query($sql_users);
+// 4. Ambil statistik jumlah pengguna per jurusan
+$sql_unit = "SELECT jurusan, COUNT(*) as total FROM user GROUP BY jurusan ORDER BY total DESC";
+$result_unit = $conn->query($sql_unit);
 ?>
 
 <!DOCTYPE html>
 <html lang="en">
 
 <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
   <title>Dashboard Admin</title>
   <!-- Font Awesome -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -78,13 +81,18 @@ $result_users = $conn->query($sql_users);
     <div class="sidebar-header">
       <div class="logo-area">
         <a href="#" class="header-logo">
-          <!-- Ganti dengan path logo yang benar -->
-          <img src="poltek1.png" alt="Politeknik Negeri Batam" />
+          <img src="if.png" alt="Politeknik Negeri Batam">
         </a>
       </div>
-      <button class="toggler">
-        <span class="fas fa-chevron-left"></span>
+
+      <button class="toggler" type="button">
+        <div class="hamburger-icon">
+          <span></span>
+          <span></span>
+          <span></span>
+        </div>
       </button>
+
     </div>
 
     <nav class="sidebar-nav">
@@ -174,17 +182,16 @@ $result_users = $conn->query($sql_users);
 
     <div class="users-section-grid">
       <div class="card user-list-card">
-        <h3>👥 Daftar Pengguna Terbaru</h3>
+        <h3><i class="fas fa-university"></i> Statistik Pengguna Per Unit</h3>
         <div class="user-list" id="user-data-list">
           <?php
-          if ($result_users && $result_users->num_rows > 0) {
-            while ($user = $result_users->fetch_assoc()) {
-              ?>
+          if ($result_unit && $result_unit->num_rows > 0) {
+            while ($row = $result_unit->fetch_assoc()) {
+              $nama_jurusan = !empty($row['jurusan']) ? $row['jurusan'] : 'Umum/Lainnya';
+            ?>
           <div class='user-item'>
-            <div class='user-name'><?php echo htmlspecialchars($user['full_name']); ?></div>
-            <div class='user-status <?php echo ($user['role'] == 'admin')  ?>'>
-              <?php echo htmlspecialchars($user['role']); ?>
-            </div>
+            <div class='user-name'><strong><?php echo htmlspecialchars($nama_jurusan); ?></strong></div>
+            <div class='user-status'><?php echo $row['total']; ?> User </div>
           </div>
           <?php
             }
@@ -198,7 +205,40 @@ $result_users = $conn->query($sql_users);
   </div>
 
   <!-- External JavaScript -->
-  <script src="admin.js"></script>
+  <script>
+    document.addEventListener("DOMContentLoaded", function () {
+      const sidebar = document.querySelector(".sidebar");
+      const toggler = document.querySelector(".toggler");
+      const sidebarNav = document.querySelector(".sidebar-nav");
+
+      if (!sidebar || !toggler || !sidebarNav) return;
+
+      toggler.addEventListener("click", function (e) {
+        e.stopPropagation();
+
+        /* ================= MOBILE ONLY ================= */
+        if (window.innerWidth <= 768) {
+          sidebarNav.classList.toggle("active");
+        }
+      });
+
+      /* ================= CLOSE DROPDOWN SAAT KLIK DI LUAR (MOBILE) ================= */
+      document.addEventListener("click", function (e) {
+        if (window.innerWidth <= 768) {
+          if (!sidebar.contains(e.target)) {
+            sidebarNav.classList.remove("active");
+          }
+        }
+      });
+
+      /* ================= RESET SAAT RESIZE KE DESKTOP ================= */
+      window.addEventListener("resize", function () {
+        if (window.innerWidth > 768) {
+          sidebarNav.classList.remove("active");
+        }
+      });
+    });
+  </script>
 
 
 </body>
