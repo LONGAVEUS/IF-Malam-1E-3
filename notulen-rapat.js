@@ -32,16 +32,33 @@ document.addEventListener('DOMContentLoaded', function() {
         loadAllUsers();
         setupEventListeners();
         setDefaultDateAndDay();
+        setupEditModal(); // Setup edit modal juga
     }
     
     function loadAllUsers() {
-        const userItems = document.querySelectorAll('.search-result-item');
-        allUsers = Array.from(userItems).map(item => ({
-            id: item.dataset.id,
-            name: item.dataset.name,
-            nim: item.dataset.nim,
-            role: item.dataset.role
-        }));
+        // Ambil dari kedua modal: create dan edit
+        const userItemsCreate = document.querySelectorAll('#searchResults .search-result-item');
+        const userItemsEdit = document.querySelectorAll('#editSearchResults .search-result-item');
+        
+        const allItems = [...userItemsCreate, ...userItemsEdit];
+        
+        // Gunakan Map untuk menghindari duplikat berdasarkan ID
+        const userMap = new Map();
+        
+        allItems.forEach(item => {
+            const id = item.dataset.id;
+            if (!userMap.has(id)) {
+                userMap.set(id, {
+                    id: item.dataset.id,
+                    name: item.dataset.name,
+                    nim: item.dataset.nim,
+                    role: item.dataset.role
+                });
+            }
+        });
+        
+        allUsers = Array.from(userMap.values());
+        console.log('Total users loaded:', allUsers.length);
     }
     
     function setupEventListeners() {
@@ -130,9 +147,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 formActionInput.value = button.dataset.action;
             }
         });
-        
-        // Setup edit modal setelah DOM siap
-        setTimeout(setupEditModal, 100);
     }
     
     // ================== FUNGSI CREATE MODAL ==================
@@ -308,178 +322,99 @@ document.addEventListener('DOMContentLoaded', function() {
         `).join('');
     }
     
-    // ================== FUNGSI EDIT MODAL BAHARU ==================
-    function setupEditModal() {
-        const editForm = document.getElementById('editNotulenForm');
-        const editPesertaSearch = document.getElementById('editPesertaSearch');
-        const editSearchResults = document.getElementById('editSearchResults');
-        const editSelectedPesertaList = document.getElementById('editSelectedPesertaList');
-        const cancelEditFormBtn = document.getElementById('cancelEditForm');
-        
-        if (!editForm || !editPesertaSearch) return;
-        
-        // Event listeners untuk edit modal
-        cancelEditFormBtn?.addEventListener('click', closeEditModal);
-        
-        // Peserta search untuk edit modal
-        editPesertaSearch.addEventListener('input', handleEditPesertaSearch);
-        editPesertaSearch.addEventListener('focus', showEditSearchResults);
-        
-        // Peserta selection untuk edit modal
-        editSearchResults?.addEventListener('click', handleEditPesertaSelection);
-        editSelectedPesertaList?.addEventListener('click', handleEditPesertaRemoval);
-        
-        // Form submission untuk edit
-        editForm.addEventListener('submit', handleEditFormSubmit);
-        
-        // Update hari berdasarkan tanggal di edit modal
-        const editTanggalInput = editForm.querySelector('input[name="tanggal"]');
-        if (editTanggalInput) {
-            editTanggalInput.addEventListener('change', function() {
-                const date = new Date(this.value);
-                const days = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
-                const dayName = days[date.getDay()];
-                
-                const editHariSelect = editForm.querySelector('select[name="hari"]');
-                if (editHariSelect) {
-                    editHariSelect.value = dayName;
-                }
-            });
-        }
-        
-        // Tutup dropdown search edit ketika klik di luar
-        document.addEventListener('click', function(event) {
-            const editSearchContainer = document.querySelectorAll('.peserta-search-container')[1];
-            if (editSearchContainer && !editSearchContainer.contains(event.target) && 
-                event.target !== editPesertaSearch) {
-                hideEditSearchResults();
+    // ================== FUNGSI EDIT MODAL ==================
+function setupEditModal() {
+    const editForm = document.getElementById('editNotulenForm');
+    const editPesertaSearch = document.getElementById('editPesertaSearch');
+    const editSearchResults = document.getElementById('editSearchResults');
+    const editSelectedPesertaList = document.getElementById('editSelectedPesertaList');
+    const editPesertaCount = document.getElementById('editPesertaCount');
+    const editPesertaIdsInput = document.getElementById('editPesertaIds');
+    const cancelEditFormBtn = document.getElementById('cancelEditForm');
+    
+    if (!editForm || !editPesertaSearch) {
+        console.log('Elemen edit modal tidak ditemukan, coba lagi nanti...');
+        setTimeout(setupEditModal, 100);
+        return;
+    }
+    
+    console.log('Setup edit modal berhasil');
+    
+    // Pastikan window.selectedPesertaEdit diinisialisasi
+    if (!window.selectedPesertaEdit) {
+        window.selectedPesertaEdit = [];
+    }
+    
+    // Event listeners untuk edit modal
+    cancelEditFormBtn?.addEventListener('click', closeEditModal);
+    
+    // Peserta search untuk edit modal - FIXED
+    editPesertaSearch.addEventListener('input', function(event) {
+        handleEditPesertaSearch(event);
+    });
+    
+    editPesertaSearch.addEventListener('click', function(event) {
+        event.stopPropagation(); // Mencegah event bubbling
+        showEditSearchResults();
+    });
+    
+    editPesertaSearch.addEventListener('focus', function(event) {
+        event.stopPropagation();
+        showEditSearchResults();
+    });
+    
+    // Peserta selection untuk edit modal
+    editSearchResults?.addEventListener('click', function(event) {
+        event.stopPropagation(); // Mencegah event bubbling
+        handleEditPesertaSelection(event);
+    });
+    
+    editSelectedPesertaList?.addEventListener('click', function(event) {
+        event.stopPropagation();
+        handleEditPesertaRemoval(event);
+    });
+    
+    // Form submission untuk edit
+    editForm.addEventListener('submit', handleEditFormSubmit);
+    
+    // Update hari berdasarkan tanggal di edit modal
+    const editTanggalInput = editForm.querySelector('input[name="tanggal"]');
+    if (editTanggalInput) {
+        editTanggalInput.addEventListener('change', function() {
+            const date = new Date(this.value);
+            const days = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
+            const dayName = days[date.getDay()];
+            
+            const editHariSelect = editForm.querySelector('select[name="hari"]');
+            if (editHariSelect) {
+                editHariSelect.value = dayName;
             }
         });
     }
     
-    // Fungsi openEditModal yang baru dan lebih baik
-    window.openEditModal = async function(notulenId) {
-        try {
-            console.log('Membuka modal edit untuk notulen ID:', notulenId);
-            showLoading();
-            
-            // Buka modal
-            const editModal = document.getElementById('editNotulenModal');
-            editModal.classList.add('active');
-            document.body.style.overflow = 'hidden';
-            
-            // Tampilkan loading
-            const modalBody = document.querySelector('#editNotulenModal .modal-body');
-            const originalContent = modalBody.innerHTML;
-            modalBody.innerHTML = `
-                <div class="loading">
-                    <i class="fas fa-spinner fa-spin"></i> Memuat data notulen...
-                </div>
-            `;
-            
-            const response = await fetch(`edit_notulen.php?id=${notulenId}`);
-            const result = await response.json();
-            
-            console.log('Response dari server:', result);
-            
-            if (!result.success) {
-                throw new Error(result.error || 'Gagal memuat data notulen');
-            }
-            
-            // Restore content
-            modalBody.innerHTML = originalContent;
-            
-            const data = result.data;
-            
-            // Tunggu DOM ready
-            await new Promise(resolve => setTimeout(resolve, 50));
-            
-            // Set nilai ke form - DENGAN PENGECEKAN
-            document.getElementById('editNotulenId').value = data.Id || '';
-            document.getElementById('editJudul').value = data.judul || '';
-            document.getElementById('editHari').value = data.hari || '';
-            document.getElementById('editTanggal').value = data.tanggal || '';
-            
-            // KRUSIAL: Set jam dengan pengecekan elemen dan data
-            const jamMulaiInput = document.getElementById('editJamMulai');
-            const jamSelesaiInput = document.getElementById('editJamSelesai');
-            
-            if (jamMulaiInput && data.jam_mulai) {
-                jamMulaiInput.value = data.jam_mulai;
-                console.log('✓ Jam Mulai diset:', data.jam_mulai);
-            } else {
-                console.error('✗ Gagal set Jam Mulai. Input:', jamMulaiInput, 'Data:', data.jam_mulai);
-            }
-            
-            if (jamSelesaiInput && data.jam_selesai) {
-                jamSelesaiInput.value = data.jam_selesai;
-                console.log('✓ Jam Selesai diset:', data.jam_selesai);
-            } else {
-                console.error('✗ Gagal set Jam Selesai. Input:', jamSelesaiInput, 'Data:', data.jam_selesai);
-            }
-            
-            document.getElementById('editTempat').value = data.Tempat || '';
-            document.getElementById('editNotulis').value = data.notulis || '';
-            
-            // KRUSIAL: Set jurusan dengan pengecekan
-            const jurusanInput = document.getElementById('editJurusan');
-            if (jurusanInput && data.jurusan) {
-                jurusanInput.value = data.jurusan;
-                console.log('✓ Jurusan diset:', data.jurusan);
-            } else {
-                console.error('✗ Gagal set Jurusan. Input:', jurusanInput, 'Data:', data.jurusan);
-            }
-            
-            document.getElementById('editPenanggungJawab').value = data.penanggung_jawab || '';
-            document.getElementById('editPembahasan').value = data.Pembahasan || '';
-            document.getElementById('editHasilAkhir').value = data.Hasil_akhir || '';
-            
-            // Set peserta
-            if (data.peserta_details && Array.isArray(data.peserta_details)) {
-                window.selectedPesertaEdit = data.peserta_details.map(p => ({
-                    id: String(p.id || p.user_id),
-                    name: p.name || p.full_name,
-                    nim: p.nim,
-                    role: p.role
-                }));
-            } else {
-                window.selectedPesertaEdit = [];
-            }
-            
-            updateEditSelectedPesertaList();
-            
-            setTimeout(() => {
-                updateEditSearchResults();
-            }, 100);
-            
-            // Tampilkan lampiran
-            if (data.lampiran_files && data.lampiran_files.length > 0) {
-                displayCurrentFilesEdit(data.lampiran_files);
-            } else {
-                document.getElementById('currentFiles').innerHTML = 
-                    '<div class="no-attachment">Tidak ada lampiran</div>';
-            }
-            
-            // Reset search
-            document.getElementById('editPesertaSearch').value = '';
-            
-            // Verifikasi final
-            setTimeout(() => {
-                console.log('=== VERIFIKASI FORM ===');
-                console.log('Jurusan:', document.getElementById('editJurusan').value);
-                console.log('Jam Mulai:', document.getElementById('editJamMulai').value);
-                console.log('Jam Selesai:', document.getElementById('editJamSelesai').value);
-            }, 200);
-            
-            hideLoading();
-            
-        } catch (error) {
-            console.error('Error:', error);
-            showToast('Terjadi kesalahan: ' + error.message, 'error');
-            closeEditModal();
-            hideLoading();
+    // TUTUP DROPDOWN HANYA JIKA KLIK DI LUAR SEARCH CONTAINER
+    document.addEventListener('click', function(event) {
+        const editSearchContainer = editPesertaSearch.closest('.peserta-search-container');
+        const isClickInsideEditSearch = editSearchContainer && editSearchContainer.contains(event.target);
+        const isClickOnSearchInput = event.target === editPesertaSearch;
+        
+        // Jika klik di luar search container, tutup dropdown
+        if (!isClickInsideEditSearch && !isClickOnSearchInput) {
+            hideEditSearchResults();
         }
-    };
+    });
+    
+    // TAMBAHKAN KEYDOWN EVENT UNTUK ESCAPE
+    editPesertaSearch.addEventListener('keydown', function(event) {
+        if (event.key === 'Escape') {
+            hideEditSearchResults();
+        }
+    });
+    
+    // Inisialisasi awal
+    updateEditSelectedPesertaList();
+    updateEditSearchResults();
+}
     
     function handleEditPesertaSearch(event) {
         const searchTerm = event.target.value.toLowerCase().trim();
@@ -509,6 +444,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const editSearchResults = document.getElementById('editSearchResults');
         if (editSearchResults) {
             editSearchResults.style.display = 'block';
+            updateEditSearchResults(); // Pastikan status tombol diperbarui
         }
     }
     
@@ -529,6 +465,11 @@ document.addEventListener('DOMContentLoaded', function() {
         const userNim = resultItem.dataset.nim;
         const userRole = resultItem.dataset.role;
         
+        // Pastikan window.selectedPesertaEdit ada
+        if (!window.selectedPesertaEdit) {
+            window.selectedPesertaEdit = [];
+        }
+        
         // Cek apakah peserta sudah dipilih
         if (!window.selectedPesertaEdit.some(p => p.id === userId)) {
             window.selectedPesertaEdit.push({
@@ -539,8 +480,10 @@ document.addEventListener('DOMContentLoaded', function() {
             });
             
             updateEditSelectedPesertaList();
+            updateEditSearchResults(); // Update status tombol di search results
         }
         
+        // Update tombol
         addButton.disabled = true;
         addButton.innerHTML = '<i class="fas fa-check"></i>';
         addButton.style.background = '#95a5a6';
@@ -553,15 +496,11 @@ document.addEventListener('DOMContentLoaded', function() {
         const pesertaItem = removeButton.closest('.peserta-item');
         const userId = pesertaItem.dataset.id;
         
-        window.selectedPesertaEdit = window.selectedPesertaEdit.filter(p => p.id !== userId);
-        updateEditSelectedPesertaList();
-        
-        const resultItem = document.querySelector(`#editSearchResults .search-result-item[data-id="${userId}"]`);
-        if (resultItem) {
-            const addButton = resultItem.querySelector('.result-add');
-            addButton.disabled = false;
-            addButton.innerHTML = '<i class="fas fa-plus"></i>';
-            addButton.style.background = '';
+        // Hapus dari selectedPesertaEdit
+        if (window.selectedPesertaEdit) {
+            window.selectedPesertaEdit = window.selectedPesertaEdit.filter(p => p.id !== userId);
+            updateEditSelectedPesertaList();
+            updateEditSearchResults(); // Update status tombol di search results
         }
     }
     
@@ -597,23 +536,130 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     function updateEditSearchResults() {
-        const resultItems = document.querySelectorAll('#editSearchResults .search-result-item');
+        const editSearchResults = document.getElementById('editSearchResults');
+        if (!editSearchResults || !window.selectedPesertaEdit) return;
+        
+        const resultItems = editSearchResults.querySelectorAll('.search-result-item');
         resultItems.forEach(item => {
             const userId = item.dataset.id;
             const addButton = item.querySelector('.result-add');
             const isSelected = window.selectedPesertaEdit.some(p => p.id == userId);
             
-            if (isSelected) {
-                addButton.disabled = true;
-                addButton.innerHTML = '<i class="fas fa-check"></i>';
-                addButton.style.background = '#95a5a6';
-            } else {
-                addButton.disabled = false;
-                addButton.innerHTML = '<i class="fas fa-plus"></i>';
-                addButton.style.background = '';
+            if (addButton) {
+                if (isSelected) {
+                    addButton.disabled = true;
+                    addButton.innerHTML = '<i class="fas fa-check"></i>';
+                    addButton.style.background = '#95a5a6';
+                } else {
+                    addButton.disabled = false;
+                    addButton.innerHTML = '<i class="fas fa-plus"></i>';
+                    addButton.style.background = '';
+                }
             }
         });
     }
+    
+    // Fungsi openEditModal
+    window.openEditModal = async function(notulenId) {
+        try {
+            console.log('Membuka modal edit untuk notulen ID:', notulenId);
+            showLoading();
+            
+            // Buka modal
+            const editModal = document.getElementById('editNotulenModal');
+            editModal.classList.add('active');
+            document.body.style.overflow = 'hidden';
+            
+            // Tampilkan loading
+            const modalBody = document.querySelector('#editNotulenModal .modal-body');
+            const originalContent = modalBody.innerHTML;
+            modalBody.innerHTML = `
+                <div class="loading">
+                    <i class="fas fa-spinner fa-spin"></i> Memuat data notulen...
+                </div>
+            `;
+            
+            const response = await fetch(`edit_notulen.php?id=${notulenId}`);
+            const result = await response.json();
+            
+            console.log('Response dari server:', result);
+            
+            if (!result.success) {
+                throw new Error(result.error || 'Gagal memuat data notulen');
+            }
+            
+            // Restore content
+            modalBody.innerHTML = originalContent;
+            
+            const data = result.data;
+            
+            // Tunggu DOM ready dan setup ulang event listeners
+            await new Promise(resolve => setTimeout(resolve, 100));
+            
+            // Setup ulang event listeners untuk modal edit
+            setupEditModal();
+            
+            // Set nilai ke form
+            document.getElementById('editNotulenId').value = data.Id || '';
+            document.getElementById('editJudul').value = data.judul || '';
+            document.getElementById('editHari').value = data.hari || '';
+            document.getElementById('editTanggal').value = data.tanggal || '';
+            
+            // Set jam
+            const jamMulaiInput = document.getElementById('editJamMulai');
+            const jamSelesaiInput = document.getElementById('editJamSelesai');
+            
+            if (jamMulaiInput && data.jam_mulai) {
+                jamMulaiInput.value = data.jam_mulai;
+            }
+            
+            if (jamSelesaiInput && data.jam_selesai) {
+                jamSelesaiInput.value = data.jam_selesai;
+            }
+            
+            document.getElementById('editTempat').value = data.Tempat || '';
+            document.getElementById('editNotulis').value = data.notulis || '';
+            document.getElementById('editJurusan').value = data.jurusan || '';
+            document.getElementById('editPenanggungJawab').value = data.penanggung_jawab || '';
+            document.getElementById('editPembahasan').value = data.Pembahasan || '';
+            document.getElementById('editHasilAkhir').value = data.Hasil_akhir || '';
+            
+            // Set peserta
+            if (data.peserta_details && Array.isArray(data.peserta_details)) {
+                window.selectedPesertaEdit = data.peserta_details.map(p => ({
+                    id: String(p.id || p.user_id),
+                    name: p.name || p.full_name,
+                    nim: p.nim,
+                    role: p.role
+                }));
+            } else {
+                window.selectedPesertaEdit = [];
+            }
+            
+            // Update tampilan peserta
+            updateEditSelectedPesertaList();
+            updateEditSearchResults();
+            
+            // Tampilkan lampiran
+            if (data.lampiran_files && data.lampiran_files.length > 0) {
+                displayCurrentFilesEdit(data.lampiran_files);
+            } else {
+                document.getElementById('currentFiles').innerHTML = 
+                    '<div class="no-attachment">Tidak ada lampiran</div>';
+            }
+            
+            // Reset search
+            document.getElementById('editPesertaSearch').value = '';
+            
+            hideLoading();
+            
+        } catch (error) {
+            console.error('Error:', error);
+            showToast('Terjadi kesalahan: ' + error.message, 'error');
+            closeEditModal();
+            hideLoading();
+        }
+    };
     
     function displayCurrentFilesEdit(files) {
         const container = document.getElementById('currentFiles');
@@ -814,7 +860,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
     
-    // Fungsi toast notification (untuk digunakan di dalam file ini juga)
+    // Fungsi toast notification
     function showToast(message, type = 'info') {
         // Hapus toast yang sudah ada
         const existingToasts = document.querySelectorAll('.toast-notification');
