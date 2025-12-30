@@ -1,160 +1,115 @@
-// Tamu Portal - JavaScript Eksternal
 document.addEventListener("DOMContentLoaded", function () {
-  console.log("Portal Tamu loaded successfully!");
+  /* ================= ELEMENT ================= */
+  const sidebar = document.querySelector(".sidebar");
+  const toggler = document.querySelector(".toggler");
+  const sidebarNav = document.querySelector(".sidebar-nav");
 
-  // Elements
-  const sidebar = document.getElementById("sidebar");
-  const sidebarToggler = document.getElementById("sidebarToggler");
   const modal = document.getElementById("detailModal");
   const closeBtn = document.getElementById("closeModal");
   const modalContent = document.getElementById("modalContent");
   const modalTitle = document.getElementById("modalTitle");
 
-  // Initialize
-  initTamuPortal();
-
-  function initTamuPortal() {
-    const sidebarState = localStorage.getItem("sidebarCollapsed");
-    if (sidebarState === "true") {
-      sidebar.classList.add("collapsed");
-      updateTogglerIcon();
-    }
-
-    setupEventListeners();
+  if (!sidebar || !toggler || !sidebarNav) {
+    console.warn("Sidebar / Toggler tidak ditemukan");
+    return;
   }
 
-  function setupEventListeners() {
-    // Sidebar toggler
-    if (sidebarToggler && sidebar) {
-      sidebarToggler.addEventListener("click", () => {
-        sidebar.classList.toggle("collapsed");
-        updateTogglerIcon();
-        localStorage.setItem("sidebarCollapsed", sidebar.classList.contains("collapsed"));
-      });
+  /* ================= MOBILE HAMBURGER ================= */
+  toggler.addEventListener("click", function (e) {
+    e.stopPropagation();
+
+    if (window.innerWidth <= 768) {
+      sidebarNav.classList.toggle("active");
     }
+  });
 
-    // Modal event listeners
-    if (closeBtn) {
-      closeBtn.addEventListener("click", hideModal);
+  /* === TUTUP DROPDOWN JIKA KLIK DI LUAR (MOBILE) === */
+  document.addEventListener("click", function (e) {
+    if (window.innerWidth <= 768 && !sidebar.contains(e.target)) {
+      sidebarNav.classList.remove("active");
     }
+  });
 
-    window.addEventListener("click", function (event) {
-      if (event.target === modal) {
-        hideModal();
-      }
-    });
+  /* === RESET SAAT RESIZE KE DESKTOP === */
+  window.addEventListener("resize", function () {
+    if (window.innerWidth > 768) {
+      sidebarNav.classList.remove("active");
+    }
+  });
 
-    // Keyboard shortcuts
-    document.addEventListener("keydown", function (event) {
-      if (event.key === "Escape" && modal.style.display === "flex") {
-        hideModal();
-      }
-    });
+  /* ================= MODAL ================= */
+  if (closeBtn) {
+    closeBtn.addEventListener("click", hideModal);
   }
 
-  function updateTogglerIcon() {
-    const icon = sidebarToggler.querySelector("span");
-    if (sidebar.classList.contains("collapsed")) {
-      icon.classList.remove("fa-chevron-left");
-      icon.classList.add("fa-chevron-right");
-    } else {
-      icon.classList.remove("fa-chevron-right");
-      icon.classList.add("fa-chevron-left");
+  window.addEventListener("click", function (e) {
+    if (e.target === modal) {
+      hideModal();
     }
-  }
+  });
 
-  function showNotulenDetail(notulenId) {
-    console.log("Menampilkan detail notulen ID:", notulenId);
+  document.addEventListener("keydown", function (e) {
+    if (e.key === "Escape" && modal.style.display === "flex") {
+      hideModal();
+    }
+  });
+
+  /* ================= NOTULEN DETAIL ================= */
+  window.showNotulenDetail = function (id) {
     modalTitle.textContent = "Detail Notulen";
-    modalContent.innerHTML = '<div class="loading"><i class="fas fa-spinner fa-spin"></i> Memuat detail notulen...</div>';
+    modalContent.innerHTML = '<div class="loading"><i class="fas fa-spinner fa-spin"></i> Memuat...</div>';
 
     showModal();
 
-    fetch(`get_notulen_detail.php?id=${notulenId}`)
-      .then((response) => {
-        if (!response.ok) {
-          throw new Error("Network response was not ok");
-        }
-        return response.json();
-      })
-      .then((notulen) => {
-        console.log("Data notulen:", notulen);
-        if (notulen.error) {
-          modalContent.innerHTML = `<div class="error-message">${notulen.error}</div>`;
+    fetch(`get_notulen_detail.php?id=${id}`)
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.error) {
+          modalContent.innerHTML = `<p>${data.error}</p>`;
           return;
         }
 
-        const tanggal = new Date(notulen.tanggal).toLocaleDateString("id-ID", {
+        const tanggal = new Date(data.tanggal).toLocaleDateString("id-ID", {
           weekday: "long",
           year: "numeric",
           month: "long",
           day: "numeric",
         });
 
-        const waktu = new Date(notulen.tanggal).toLocaleTimeString("id-ID", {
+        const waktu = new Date(data.tanggal).toLocaleTimeString("id-ID", {
           hour: "2-digit",
           minute: "2-digit",
         });
 
-        let html = `
-                    <div class="notulen-detail">
-                        <div class="detail-item">
-                            <div class="detail-label">Judul Rapat</div>
-                            <div class="detail-value">${escapeHtml(notulen.judul)}</div>
-                        </div>
-                        <div class="detail-item">
-                            <div class="detail-label">Tanggal & Waktu</div>
-                            <div class="detail-value">${tanggal} - ${waktu}</div>
-                        </div>
-                        <div class="detail-item">
-                            <div class="detail-label">Penanggung Jawab</div>
-                            <div class="detail-value">${escapeHtml(notulen.penanggung_jawab)}</div>
-                        </div>
-                        <div class="detail-item">
-                            <div class="detail-label">Isi Notulen</div>
-                            <div class="detail-value" style="white-space: pre-line;">${escapeHtml(notulen.isi)}</div>
-                        </div>
-                `;
-
-        if (notulen.lampiran) {
-          const namaFileAsli = notulen.nama_file_asli || notulen.lampiran;
-          html += `
-                        <div class="detail-item">
-                            <div class="detail-label">Lampiran</div>
-                            <div class="detail-value">
-                                <a href="view.php?file=${encodeURIComponent(notulen.lampiran)}" target="_blank" class="file-link">
-                                    <i class="fas fa-paperclip"></i> ${escapeHtml(namaFileAsli)}
-                                </a>
-                            </div>
-                        </div>
-                    `;
-        }
-
-        html += `
-                        <div class="detail-actions">
-                            <a href="view.php?file=${encodeURIComponent(notulen.lampiran)}" target="_blank" class="btn btn-download" ${
-          !notulen.lampiran ? 'style="display:none;"' : ""
-        }>
-                                <i class="fas fa-download"></i> Unduh Lampiran
-                            </a>
-                        </div>
-                    </div>
-                `;
-
-        modalContent.innerHTML = html;
-      })
-      .catch((error) => {
-        console.error("Error:", error);
         modalContent.innerHTML = `
-                    <div class="error-message">
-                        <i class="fas fa-exclamation-triangle"></i>
-                        <p>Terjadi kesalahan saat memuat detail notulen.</p>
-                        <p>Error: ${error.message}</p>
-                    </div>
-                `;
+          <div class="notulen-detail">
+            <div class="detail-item">
+              <div class="detail-label">Judul</div>
+              <div class="detail-value">${escapeHtml(data.judul)}</div>
+            </div>
+            <div class="detail-item">
+              <div class="detail-label">Tanggal & Waktu</div>
+              <div class="detail-value">${tanggal} - ${waktu}</div>
+            </div>
+            <div class="detail-item">
+              <div class="detail-label">Penanggung Jawab</div>
+              <div class="detail-value">${escapeHtml(data.penanggung_jawab)}</div>
+            </div>
+            <div class="detail-item">
+              <div class="detail-label">Isi Notulen</div>
+              <div class="detail-value" style="white-space: pre-line;">
+                ${escapeHtml(data.isi)}
+              </div>
+            </div>
+          </div>
+        `;
+      })
+      .catch(() => {
+        modalContent.innerHTML = "<p>Gagal memuat data</p>";
       });
-  }
+  };
 
+  /* ================= HELPER ================= */
   function showModal() {
     modal.style.display = "flex";
     document.body.style.overflow = "hidden";
@@ -165,59 +120,8 @@ document.addEventListener("DOMContentLoaded", function () {
     document.body.style.overflow = "auto";
   }
 
-  function escapeHtml(unsafe) {
-    if (!unsafe) return "";
-    return unsafe.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
+  function escapeHtml(str) {
+    if (!str) return "";
+    return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
   }
-
-  // Function to confirm attendance
-  function konfirmasiKehadiran(notulenId) {
-    if (confirm('Apakah Anda benar-benar hadir dalam rapat ini?')) {
-      showLoading();
-      fetch('konfirmasi_kehadiran.php', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/x-www-form-urlencoded',
-        },
-        body: 'notulen_id=' + notulenId
-      })
-      .then(response => response.json())
-      .then(data => {
-        hideLoading();
-        if (data.success) {
-          alert('Kehadiran berhasil dikonfirmasi!');
-          location.reload();
-        } else {
-          alert('Gagal mengkonfirmasi kehadiran: ' + data.message);
-        }
-      })
-      .catch(error => {
-        hideLoading();
-        console.error('Error:', error);
-        alert('Terjadi kesalahan saat mengkonfirmasi kehadiran');
-      });
-    }
-  }
-
-  // Function to show attachments
-  function showLampiran(notulenId) {
-    window.open('view_lampiran.php?notulen_id=' + notulenId, '_blank');
-  }
-
-  // Loading indicator functions
-  function showLoading() {
-    document.body.style.cursor = 'wait';
-  }
-
-  function hideLoading() {
-    document.body.style.cursor = 'default';
-  }
-
-  // Expose functions to global scope
-  window.showNotulenDetail = showNotulenDetail;
-  window.hideModal = hideModal;
-  window.konfirmasiKehadiran = konfirmasiKehadiran;
-  window.showLampiran = showLampiran;
-  window.showLoading = showLoading;
-  window.hideLoading = hideLoading;
 });
