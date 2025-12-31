@@ -2,123 +2,78 @@
 session_start();
 require_once 'koneksi.php';
 
-// Proteksi login
-if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
+/* ================== CEK LOGIN ================== */
+if (!isset($_SESSION['logged_in'])) {
     header("Location: login.php");
     exit();
 }
 
-// Proteksi role tamu
-if ($_SESSION['role'] !== 'tamu') {
-    header("Location: login.php");
-    exit();
-}
 
 /* ================== DATA USER LOGIN ================== */
 $user_id = $_SESSION['user_id'];
 
 $stmtUser = $conn->prepare("
-    SELECT full_name, role, photo
+    SELECT full_name, email, role, photo, jurusan 
     FROM user
     WHERE user_id = ?
 ");
 $stmtUser->bind_param("i", $user_id);
 $stmtUser->execute();
 $userLogin = $stmtUser->get_result()->fetch_assoc();
-$stmtUser->close();
+$stmtUser->close(); 
 
 /* ================== FOTO PROFIL ================== */
-$fotoProfil = (!empty($userLogin['photo']) && file_exists($userLogin['photo']))
-    ? $userLogin['photo']
+$foto_sekarang = $_SESSION['photo'] ?? $userLogin['photo'];
+
+$path_valid = (!empty($foto_sekarang) && file_exists($foto_sekarang))
+    ? $foto_sekarang
     : 'uploads/profile_photos/default_profile.png';
+
+$current_photo_url = $path_valid . "?t=" . time();
 
 /* ================== SESSION DATA ================== */
 $role = $_SESSION['role'];
-$username = $_SESSION['username'];
-$photo = $_SESSION['photo'] ?? "default_profile.png";
-
-$current_photo_url = (!empty($_SESSION['photo']))
-    ? $_SESSION['photo']
-    : "uploads/profile_photos/default_profile.png";
-
-// ================== LOGOUT ==================
-if (isset($_GET['action']) && $_GET['action'] === 'logout') {
-    session_destroy();
-    header("Location: login.php");
-    exit();
-}
-
-
-$user_id = $_SESSION['user_id'];
-
-// Query untuk mengambil notulen yang sudah dikirim (status sent/final) dan user termasuk sebagai peserta
-$sql_notulens = "SELECT DISTINCT n.*, k.status as status_kehadiran, k.waktu_konfirmasi 
-                FROM notulen n
-                INNER JOIN peserta_notulen pn ON n.id = pn.notulen_id
-                LEFT JOIN kehadiran k ON n.id = k.notulen_id AND k.user_id = ?
-                WHERE pn.user_id = ? AND n.status IN ('sent', 'final')
-                ORDER BY n.tanggal DESC";
-$stmt_notulens = $conn->prepare($sql_notulens);
-$stmt_notulens->bind_param("ii", $user_id, $user_id);
-$stmt_notulens->execute();
-$result_notulens = $stmt_notulens->get_result();
-
-// Statistik dashboard
-$sql_notulen_count = "SELECT COUNT(DISTINCT n.id) AS total 
-                     FROM notulen n
-                     INNER JOIN peserta_notulen pn ON n.id = pn.notulen_id
-                     WHERE pn.user_id = ? AND n.status IN ('sent', 'final')";
-$stmt_count = $conn->prepare($sql_notulen_count);
-$stmt_count->bind_param("i", $user_id);
-$stmt_count->execute();
-$result_notulen_count = $stmt_count->get_result();
-$total_notulen = $result_notulen_count ? $result_notulen_count->fetch_assoc()['total'] : 0;
-
-// Hitung notulen hari ini
-$today = date('Y-m-d');
-$sql_notulen_hari_ini = "SELECT COUNT(DISTINCT n.id) AS total 
-                        FROM notulen n
-                        INNER JOIN peserta_notulen pn ON n.id = pn.notulen_id
-                        WHERE pn.user_id = ? AND DATE(n.tanggal) = ? AND n.status IN ('sent', 'final')";
-$stmt_hari_ini = $conn->prepare($sql_notulen_hari_ini);
-$stmt_hari_ini->bind_param("is", $user_id, $today);
-$stmt_hari_ini->execute();
-$result_notulen_hari_ini = $stmt_hari_ini->get_result();
-$notulen_hari_ini = $result_notulen_hari_ini ? $result_notulen_hari_ini->fetch_assoc()['total'] : 0;
-
-// Hitung notulen bulan ini
-$current_month = date('Y-m');
-$sql_notulen_bulan_ini = "SELECT COUNT(DISTINCT n.id) AS total 
-                         FROM notulen n
-                         INNER JOIN peserta_notulen pn ON n.id = pn.notulen_id
-                         WHERE pn.user_id = ? AND DATE_FORMAT(n.tanggal, '%Y-%m') = ? AND n.status IN ('sent', 'final')";
-$stmt_bulan_ini = $conn->prepare($sql_notulen_bulan_ini);
-$stmt_bulan_ini->bind_param("is", $user_id, $current_month);
-$stmt_bulan_ini->execute();
-$result_notulen_bulan_ini = $stmt_bulan_ini->get_result();
-$notulen_bulan_ini = $result_notulen_bulan_ini ? $result_notulen_bulan_ini->fetch_assoc()['total'] : 0;
+$username = $_SESSION['username'] ?? '';
+/* ================== DASHBOARD ROLE ================== */
+$dashboard = ($role === 'admin') ? 'admin.php'
+           : (($role === 'notulis') ? 'Notulis.php'
+           : 'tamu.php');
 ?>
-
 <!DOCTYPE html>
-<html lang="id">
+<html lang="en">
 
 <head>
-    <title>Portal Tamu - Notulen Rapat</title>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Profile</title>
+
+    <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="tamu-style.css">
+
+    <!-- External CSS -->
+    <link rel="stylesheet" href="profile.css">
 </head>
 
 <body>
+    <?php if (isset($_SESSION['success_msg'])): ?>
+    <div id="auto-alert" class="alert alert-success">
+        <i class="fas fa-check-circle alert-icon"></i>
+        <span><?php echo $_SESSION['success_msg']; ?></span>
+    </div>
+    <?php unset($_SESSION['success_msg']); ?>
+    <?php endif; ?>
+
+    <!-- ================= SIDEBAR ================= -->
     <div class="sidebar">
+
         <div class="sidebar-header">
             <div class="logo-area">
                 <a href="#" class="header-logo">
-                    <!-- Ganti dengan path logo yang benar -->
-                    <img src="if.png" alt="Politeknik Negeri Batam" />
+                    <img src="if.png" alt="Politeknik Negeri Batam">
                 </a>
             </div>
+
             <button class="toggler">
                 <span class="dekstop-icon"></span>
                 <div class="hamburger-icon">
@@ -130,40 +85,95 @@ $notulen_bulan_ini = $result_notulen_bulan_ini ? $result_notulen_bulan_ini->fetc
         </div>
 
         <nav class="sidebar-nav">
-            <!-- Primary top nav -->
+
+            <!-- ===== PRIMARY NAV ===== -->
             <ul class="nav-list primary-nav">
-                <li class="nav-item">
-                    <a href="tamu.php" class="nav-link">
+
+                <li>
+                    <a href="<?= $dashboard ?>" class="nav-link">
                         <i class="fas fa-th-large nav-icon"></i>
                         <span class="nav-label">Dashboard</span>
                     </a>
                 </li>
-                <li class="nav-item">
+
+                <?php if ($role === 'admin'): ?>
+
+                <li>
+                    <a href="jadwal_rapat.php" class="nav-link">
+                        <i class="fas fa-calendar-alt nav-icon"></i>
+                        <span class="nav-label">Jadwal Rapat</span>
+                    </a>
+                </li>
+
+                <li>
+                    <a href="notulen_list_admin.php" class="nav-link">
+                        <i class="fas fa-file-alt nav-icon"></i>
+                        <span class="nav-label">Notulen Rapat</span>
+                    </a>
+                </li>
+
+                <li>
+                    <a href="user_management.php" class="nav-link">
+                        <i class="fas fa-users nav-icon"></i>
+                        <span class="nav-label">Daftar Pengguna</span>
+                    </a>
+                </li>
+
+                <?php elseif ($role === 'notulis'): ?>
+
+                <li>
+                    <a href="notulis.php" class="nav-link">
+                        <i class="fas fa-file-alt nav-icon"></i>
+                        <span class="nav-label">Notulen Rapat</span>
+                    </a>
+                </li>
+
+                <li>
+                    <a href="jadwal_rapat.php" class="nav-link">
+                        <i class="fas fa-calendar-alt nav-icon"></i>
+                        <span class="nav-label">Jadwal Rapat</span>
+                    </a>
+                </li>
+
+                <li>
+                    <a href="#" class="nav-link">
+                        <i class="fas fa-bell nav-icon"></i>
+                        <span class="nav-label">Notifikasi</span>
+                    </a>
+                </li>
+
+                <?php elseif ($role === 'tamu'): ?>
+
+                <li>
+                    <a href="tamu.php" class="nav-link">
+                        <i class="fas fa-file-alt nav-icon"></i>
+                        <span class="nav-label">Notulen Rapat</span>
+                    </a>
+                </li>
+
+                <li>
                     <a href="jadwal_rapat_tamu.php" class="nav-link">
                         <i class="fas fa-calendar-alt nav-icon"></i>
                         <span class="nav-label">Jadwal Rapat</span>
                     </a>
                 </li>
 
-                <li class="nav-item">
-                    <a href="tamu.php" class="nav-link">
-                        <i class="fas fa-file-alt nav-icon"></i>
-                        <span class="nav-label">Notulen Rapat</span>
-                    </a>
-                </li>
+                <?php endif; ?>
+
             </ul>
 
-            <!-- Secondary bottom nav -->
+            <!-- ===== SECONDARY NAV ===== -->
             <ul class="nav-list secondary-nav">
-                <li class="nav-item">
-                    <a href="profile.php" class="nav-link">
+
+                <li>
+                    <a href="profile.php" class="nav-link active">
                         <i class="fas fa-user-circle nav-icon"></i>
                         <span class="nav-label">Profil Saya</span>
                     </a>
                 </li>
-                <li class="nav-item">
-                    <!-- Logout menggunakan PHP - tidak perlu file terpisah -->
-                    <a href="admin.php?action=logout" class="nav-link" onclick="return confirm('Yakin ingin logout?');">
+
+                <li>
+                    <a href="login.php?action=logout" class="nav-link" onclick="return confirm('Yakin ingin logout?');">
                         <i class="fas fa-sign-out-alt nav-icon"></i>
                         <span class="nav-label">Keluar</span>
                     </a>
@@ -171,7 +181,7 @@ $notulen_bulan_ini = $result_notulen_bulan_ini ? $result_notulen_bulan_ini->fetc
 
                 <!-- PROFIL LOGIN -->
                 <li class="nav-item profile-user">
-                    <img src="<?= $fotoProfil; ?>" class="profile-avatar">
+                    <img src="<?php echo $current_photo_url; ?>?v=<?php echo time(); ?>" class="profile-avatar">
 
                     <div class="profile-info">
                         <span class="profile-name">
@@ -182,204 +192,188 @@ $notulen_bulan_ini = $result_notulen_bulan_ini ? $result_notulen_bulan_ini->fetc
                         </span>
                     </div>
                 </li>
+
             </ul>
+
         </nav>
     </div>
 
-    <!-- Main Content -->
-    <div class="main-content" id="mainContent">
+    <!-- ================= MAIN CONTENT ================= -->
+    <div class="main-content">
+
         <div class="dashboard-header">
-            <h1>Dashboard Tamu</h1>
-            <p>Selamat Datang,
-                <strong><?php echo htmlspecialchars($_SESSION['full_name'] ?? $_SESSION['username']); ?></strong>
-                (<?php echo htmlspecialchars($_SESSION['role']); ?>)</p>
+            <h1>Profile</h1>
         </div>
 
-        <div class="user-stats-grid">
-            <div class="user-count-box">
-                <div class="stat-icon"><i class="fas fa-file-alt"></i></div>
-                <div class="count-number"><?php echo $total_notulen; ?></div>
-                <div class="count-label">Notulen tersedia</div>
-            </div>
-            <div class="user-count-box daily-notes">
-                <div class="stat-icon"><i class="fas fa-calendar-day"></i></div>
-                <div class="count-number"><?php echo $notulen_hari_ini; ?></div>
-                <div class="count-label">Notulen Hari Ini</div>
-            </div>
-            <div class="user-count-box monthly-notes">
-                <div class="stat-icon"><i class="fas fa-calendar-week"></i></div>
-                <div class="count-number"><?php echo $notulen_bulan_ini; ?></div>
-                <div class="count-label">Notulen Bulan Ini</div>
-            </div>
-        </div>
+        <div class="profile-container">
 
-        <div class="content-section">
-            <div class="section-header">
-                <h2><i class="fas fa-file-alt"></i> Notulen Rapat yang Tersedia</h2>
-                <div class="filter-info">
-                    <i class="fas fa-info-circle"></i> Hanya menampilkan notulen yang sudah dikirim
+            <!-- GANTI FOTO -->
+            <form id="photoForm" action="process_profile.php" method="POST" enctype="multipart/form-data">
+                <input type="hidden" name="action" value="upload_photo">
+
+                <h4>Ganti Foto Profil</h4>
+
+                <div class="profile-picture">
+                    <img src="<?= $current_photo_url ?>" alt="Foto Profil" onclick="openModal(this.src)"
+                        style="cursor: zoom-in;">
                 </div>
-            </div>
 
-            <div class="notulen-list" id="notulenList">
-                <?php
-                if ($result_notulens && $result_notulens->num_rows > 0) {
-                    while ($notulen = $result_notulens->fetch_assoc()) {
-                        $tanggal_formatted = date('d M Y H:i', strtotime($notulen['tanggal']));
-                        $isi_pendek = strlen($notulen['isi']) > 150 ? substr($notulen['isi'], 0, 150) . '...' : $notulen['isi'];
-                        
-                        // Tentukan status kehadiran
-                        $kehadiran_status = '';
-                        $kehadiran_class = '';
-                        $can_confirm = false;
-                        
-                        if ($notulen['status'] === 'sent') {
-                            if ($notulen['status_kehadiran'] === 'hadir') {
-                                $kehadiran_status = 'Sudah Konfirmasi Hadir';
-                                $kehadiran_class = 'hadir';
-                            } else {
-                                $kehadiran_status = 'Belum Konfirmasi';
-                                $kehadiran_class = 'belum';
-                                $can_confirm = true;
-                            }
-                        } elseif ($notulen['status'] === 'final') {
-                            if ($notulen['status_kehadiran'] === 'hadir') {
-                                $kehadiran_status = 'Hadir';
-                                $kehadiran_class = 'hadir';
-                            } else {
-                                $kehadiran_status = 'Tidak Hadir';
-                                $kehadiran_class = 'tidak-hadir';
-                            }
-                        }
-                        ?>
-                <div class="notulen-item" data-id="<?php echo $notulen['id']; ?>"
-                    data-status="<?php echo $notulen['status']; ?>">
-                    <div class="notulen-main">
-                        <div class="notulen-header">
-                            <h3 class="notulen-title"><?php echo htmlspecialchars($notulen['judul']); ?></h3>
-                            <span class="notulen-status status-<?php echo $notulen['status']; ?>">
-                                <?php echo ucfirst($notulen['status']); ?>
-                            </span>
-                        </div>
-                        <p class="notulen-preview"><?php echo htmlspecialchars($isi_pendek); ?></p>
-                        <div class="notulen-meta">
-                            <span class="notulen-date"><i class="fas fa-calendar"></i>
-                                <?php echo $tanggal_formatted; ?></span>
-                            <span class="notulen-penanggung-jawab"><i class="fas fa-user"></i>
-                                <?php echo htmlspecialchars($notulen['penanggung_jawab']); ?>
-                            </span>
-                            <span class="kehadiran-status <?php echo $kehadiran_class; ?>">
-                                <i class="fas fa-user-check"></i> <?php echo $kehadiran_status; ?>
-                            </span>
-                            <?php if (!empty($notulen['lampiran'])): 
-                                        $files = json_decode($notulen['lampiran'], true);
-                                        if (is_array($files)): ?>
-                            <span class="notulen-lampiran">
-                                <i class="fas fa-paperclip"></i>
-                                <a href="#" onclick="showLampiran(<?php echo $notulen['id']; ?>)"
-                                    title="Lihat Lampiran">
-                                    <?php echo count($files); ?> lampiran
-                                </a>
-                            </span>
-                            <?php endif; ?>
-                            <?php endif; ?>
-                        </div>
-                    </div>
-                    <div class="notulen-actions">
-                        <button class="action-btn view" title="Lihat Detail"
-                            onclick="showNotulenDetail(<?php echo $notulen['id']; ?>)">
-                            <i class="fas fa-eye"></i>
-                        </button>
-
-                        <?php if ($can_confirm): ?>
-                        <button class="action-btn konfirmasi" title="Konfirmasi Kehadiran"
-                            onclick="konfirmasiKehadiran(<?php echo $notulen['id']; ?>)">
-                            <i class="fas fa-check"></i>
-                        </button>
-                        <?php endif; ?>
-
-                        <?php if ($notulen['status'] === 'final'): ?>
-                        <a href="generate_pdf.php?id=<?php echo $notulen['id']; ?>&download=1"
-                            class="action-btn download" title="Download Notulen (PDF)" target="_blank">
-                            <i class="fas fa-file-pdf"></i>
-                        </a>
-                        <?php endif; ?>
-                    </div>
+                <div id="imageModal" class="image-zoom-modal" onclick="closeModal()">
+                    <span class="close-zoom">&times;</span>
+                    <img class="modal-content-zoom" id="imgFull">
                 </div>
-                <?php
-                    }
-                } else {
-                    echo '<div class="empty-state">
-                            <i class="fas fa-file-alt"></i>
-                            <h3>Tidak ada notulen tersedia</h3>
-                            <p>Belum ada notulen rapat yang diterbitkan untuk Anda.</p>
-                          </div>';
-                }
-                ?>
+
+                <div class="upload-wrapper">
+                    <label for="file-upload" class="custom-file-upload">
+                        <i class="fas fa-camera"></i> Ganti Foto
+                    </label>
+                    <input id="file-upload" type="file" name="new_file_profile_pic" accept="image/*"
+                        onchange="updateFileName()">
+                </div>
+            </form>
+
+
+            <!-- GANTI NAMA -->
+            <div class="profile-section">
+
+                <form action="process_profile.php" method="POST">
+                    <input type="hidden" name="action" value="update_profile">
+                    <h4>Ganti Nama Lengkap</h4>
+
+                    <label for="full_name">Nama Lengkap Baru</label>
+                    <input type="text" id="full_name" name="new_full_name" required
+                        value="<?= htmlspecialchars($userLogin['full_name'] ?? '') ?>">
+
+                    <h4>Email</h4>
+                    <input type="email" id="email" name="email" required
+                        value="<?= htmlspecialchars($userLogin['email'] ?? '') ?>">
+
+                    <!-- INFO ROLE -->
+                    <h4>Role</h4>
+                    <input type="text" value="<?= htmlspecialchars($userLogin['role'] ?? '') ?>" disabled>
+
+                    <!-- INFO JURUSAN -->
+                    <h4>Jurusan</h4>
+                    <input type="text" value="<?= htmlspecialchars($userLogin['jurusan'] ?? '') ?>" disabled>
+
+
+                    <!-- GANTI PASSWORD -->
+
+                    <h4>Ganti Password</h4>
+
+                    <label>Password Lama</label>
+                    <input type="password" name="old_password">
+
+                    <label>Password Baru</label>
+                    <input type="password" name="new_password">
+
+                    <label>Konfirmasi Password Baru</label>
+                    <input type="password" name="confirm_password">
+
+                    <!-- SUBMIT -->
+                    <button type="submit" name="save_profile_btn">Simpan Perubahan</button>
+                </form>
             </div>
+
+
         </div>
     </div>
 
-    <!-- Modal Detail Notulen -->
-    <div class="modal-overlay" id="detailModal">
-        <div class="modal-container wide-modal">
-            <div class="modal-header">
-                <h2 id="modalTitle">Detail Notulen</h2>
-                <button class="modal-close" id="closeModal">&times;</button>
-            </div>
-            <div class="modal-body">
-                <div id="modalContent">
-                    <!-- Konten akan diisi oleh JavaScript -->
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <script src="tamu-script.js"></script>
     <script>
-        function konfirmasiKehadiran(notulenId) {
-            if (confirm('Apakah Anda benar-benar hadir dalam rapat ini?')) {
-                showLoading();
-                fetch('konfirmasi_kehadiran.php', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/x-www-form-urlencoded',
-                        },
-                        body: 'notulen_id=' + notulenId
-                    })
-                    .then(response => response.json())
-                    .then(data => {
-                        hideLoading();
-                        if (data.success) {
-                            alert('Kehadiran berhasil dikonfirmasi!');
-                            location.reload();
-                        } else {
-                            alert('Gagal mengkonfirmasi kehadiran: ' + data.message);
+        function updateFileName() {
+            const input = document.getElementById('file-upload');
+            const preview = document.querySelector(".profile-picture img");
+            const display = document.getElementById('file-name-display');
+
+            if (input && input.files && input.files[0]) {
+                if (input.files[0].size > 2 * 1024 * 1024) {
+                    alert("Ukuran file terlalu besar! Maksimal 2MB.");
+                    input.value = "";
+                    return;
+                }
+
+                if (display) display.style.opacity = "1";
+
+                const reader = new FileReader();
+                reader.onload = function (e) {
+                    if (preview) preview.src = e.target.result;
+
+                    setTimeout(() => {
+                        const form = document.getElementById('photoForm');
+                        if (form) {
+                            console.log("Mengirim foto...");
+                            form.requestSubmit();
                         }
-                    })
-                    .catch(error => {
-                        hideLoading();
-                        console.error('Error:', error);
-                        alert('Terjadi kesalahan saat mengkonfirmasi kehadiran');
-                    });
+                    }, 600);
+                };
+                reader.readAsDataURL(input.files[0]);
+
+            } else {
+                if (display) display.textContent = "Belum ada file dipilih";
             }
         }
 
-        function showLampiran(notulenId) {
-            window.open('view_lampiran.php?notulen_id=' + notulenId, '_blank');
+        function openModal(src) {
+            const modal = document.getElementById("imageModal");
+            const modalImg = document.getElementById("imgFull");
+            modal.style.display = "block";
+            modalImg.src = src;
         }
 
-        function showLoading() {
-            // Implement loading indicator
+        function closeModal() {
+            document.getElementById("imageModal").style.display = "none";
         }
 
-        function hideLoading() {
-            // Implement hide loading indicator
-        }
+        document.addEventListener("DOMContentLoaded", function () {
+            const sidebar = document.querySelector(".sidebar");
+            const toggler = document.querySelector(".toggler");
+            const sidebarNav = document.querySelector(".sidebar-nav");
+
+            if (!sidebar || !toggler || !sidebarNav) return;
+
+            /* ================= TOGGLE MENU (MOBILE) ================= */
+            toggler.addEventListener("click", function (e) {
+                e.stopPropagation();
+                if (window.innerWidth <= 768) {
+                    sidebarNav.classList.toggle("active");
+                }
+            });
+
+            /* ================= CLOSE DROPDOWN SAAT KLIK DI LUAR ================= */
+            document.addEventListener("click", function (e) {
+                if (window.innerWidth <= 768) {
+                    if (!sidebar.contains(e.target)) {
+                        sidebarNav.classList.remove("active");
+                    }
+                }
+            });
+
+            /* ================= RESET SAAT RESIZE ================= */
+            window.addEventListener("resize", function () {
+                if (window.innerWidth > 768) {
+                    sidebarNav.classList.remove("active");
+                }
+            });
+        });
+        document.addEventListener("DOMContentLoaded", function () {
+            const alertElement = document.getElementById('auto-alert');
+
+            if (alertElement) {
+                setTimeout(function () {
+                    alertElement.style.transition = "opacity 0.6s ease";
+                    alertElement.style.opacity = "0";
+
+                    setTimeout(function () {
+                        alertElement.remove();
+                    }, 600);
+                }, 3000);
+            }
+        });
     </script>
 </body>
 
 </html>
+
 <?php
 if (isset($conn)) {
     $conn->close();
