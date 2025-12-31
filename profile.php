@@ -13,29 +13,27 @@ if (!isset($_SESSION['logged_in'])) {
 $user_id = $_SESSION['user_id'];
 
 $stmtUser = $conn->prepare("
-    SELECT full_name, role, photo, jurusan 
+    SELECT full_name, email, role, photo, jurusan 
     FROM user
     WHERE user_id = ?
 ");
 $stmtUser->bind_param("i", $user_id);
 $stmtUser->execute();
 $userLogin = $stmtUser->get_result()->fetch_assoc();
-$stmtUser->close();
+$stmtUser->close(); 
 
 /* ================== FOTO PROFIL ================== */
-$fotoProfil = (!empty($userLogin['photo']) && file_exists($userLogin['photo']))
-    ? $userLogin['photo']
+$foto_sekarang = $_SESSION['photo'] ?? $userLogin['photo'];
+
+$path_valid = (!empty($foto_sekarang) && file_exists($foto_sekarang))
+    ? $foto_sekarang
     : 'uploads/profile_photos/default_profile.png';
+
+$current_photo_url = $path_valid . "?t=" . time();
 
 /* ================== SESSION DATA ================== */
 $role = $_SESSION['role'];
-$username = $_SESSION['username'];
-$photo = $_SESSION['photo'] ?? "default_profile.png";
-
-$current_photo_url = (!empty($_SESSION['photo']))
-    ? $_SESSION['photo']
-    : "uploads/profile_photos/default_profile.png";
-
+$username = $_SESSION['username'] ?? '';
 /* ================== DASHBOARD ROLE ================== */
 $dashboard = ($role === 'admin') ? 'admin.php'
            : (($role === 'notulis') ? 'Notulis.php'
@@ -58,6 +56,13 @@ $dashboard = ($role === 'admin') ? 'admin.php'
 </head>
 
 <body>
+    <?php if (isset($_SESSION['success_msg'])): ?>
+    <div id="auto-alert" class="alert alert-success">
+        <i class="fas fa-check-circle alert-icon"></i>
+        <span><?php echo $_SESSION['success_msg']; ?></span>
+    </div>
+    <?php unset($_SESSION['success_msg']); ?>
+    <?php endif; ?>
 
     <!-- ================= SIDEBAR ================= -->
     <div class="sidebar">
@@ -176,7 +181,7 @@ $dashboard = ($role === 'admin') ? 'admin.php'
 
                 <!-- PROFIL LOGIN -->
                 <li class="nav-item profile-user">
-                    <img src="<?= $fotoProfil; ?>" class="profile-avatar">
+                    <img src="<?php echo $current_photo_url; ?>?v=<?php echo time(); ?>" class="profile-avatar">
 
                     <div class="profile-info">
                         <span class="profile-name">
@@ -203,75 +208,73 @@ $dashboard = ($role === 'admin') ? 'admin.php'
         <div class="profile-container">
 
             <!-- GANTI FOTO -->
-            <div class="profile-section">
-                <form action="proses_photo.php" method="POST" enctype="multipart/form-data">
-                    <h4>Ganti Foto Profil</h4>
+            <form id="photoForm" action="process_profile.php" method="POST" enctype="multipart/form-data">
+                <input type="hidden" name="action" value="upload_photo">
 
-                    <div class="profile-picture">
-                        <img src="<?= $current_photo_url ?>" alt="Foto Profil" id="priofile-img-zoom"
-                            onclick="openModal(this.src)" style="cursor: zoom-in;">
-                    </div>
+                <h4>Ganti Foto Profil</h4>
 
-                    <div id="imageModal" class="image-zoom-modal" onclick="closeModal()">
-                        <span class="close-zoom">&times;</span>
-                        <img class="modal-content-zoom" id="imgFull">
-                    </div>
+                <div class="profile-picture">
+                    <img src="<?= $current_photo_url ?>" alt="Foto Profil" onclick="openModal(this.src)"
+                        style="cursor: zoom-in;">
+                </div>
 
-                    <div class="upload-wrapper">
-                        <label for="file-upload" class="custom-file-upload">
-                            <i class="fas fa-camera"></i> Ganti Foto
-                        </label>
-                        <input id="file-upload" type="file" name="new_file_profile_pic" accept="image/*"
-                            onchange="updateFileName()">
-                        <span id="file-name-display"></span>
-                    </div>
-                </form>
-            </div>
+                <div id="imageModal" class="image-zoom-modal" onclick="closeModal()">
+                    <span class="close-zoom">&times;</span>
+                    <img class="modal-content-zoom" id="imgFull">
+                </div>
+
+                <div class="upload-wrapper">
+                    <label for="file-upload" class="custom-file-upload">
+                        <i class="fas fa-camera"></i> Ganti Foto
+                    </label>
+                    <input id="file-upload" type="file" name="new_file_profile_pic" accept="image/*"
+                        onchange="updateFileName()">
+                </div>
+            </form>
+
 
             <!-- GANTI NAMA -->
             <div class="profile-section">
-                <form action="process_name.php" method="POST">
+
+                <form action="process_profile.php" method="POST">
+                    <input type="hidden" name="action" value="update_profile">
                     <h4>Ganti Nama Lengkap</h4>
 
                     <label for="full_name">Nama Lengkap Baru</label>
                     <input type="text" id="full_name" name="new_full_name" required
-                        value="<?= htmlspecialchars($_SESSION['username'] ?? '') ?>">
+                        value="<?= htmlspecialchars($userLogin['full_name'] ?? '') ?>">
 
-                    <button type="submit" name="update_name_btn">Simpan Nama</button>
-                </form>
-            </div>
+                    <h4>Email</h4>
+                    <input type="email" id="email" name="email" required
+                        value="<?= htmlspecialchars($userLogin['email'] ?? '') ?>">
 
-            <!-- INFO ROLE -->
-            <div class="profile-section">
-                <h4>Role</h4>
+                    <!-- INFO ROLE -->
+                    <h4>Role</h4>
+                    <input type="text" value="<?= htmlspecialchars($userLogin['role'] ?? '') ?>" disabled>
 
-                <input type="text" value="<?= htmlspecialchars($_SESSION['role'] ?? '') ?>" disabled>
-            </div>
+                    <!-- INFO JURUSAN -->
+                    <h4>Jurusan</h4>
+                    <input type="text" value="<?= htmlspecialchars($userLogin['jurusan'] ?? '') ?>" disabled>
 
-            <div class="profile-section">
-                <h4>Jurusan</h4>
-                <input type="text" value="<?= htmlspecialchars($userLogin['jurusan'] ?? 'Belum Diatur') ?>" disabled>
-            </div>
 
-            <!-- GANTI PASSWORD -->
-            <div class="profile-section">
-                <form action="process_password.php" method="POST">
+                    <!-- GANTI PASSWORD -->
+
                     <h4>Ganti Password</h4>
 
                     <label>Password Lama</label>
-                    <input type="password" name="old_password" required>
+                    <input type="password" name="old_password">
 
                     <label>Password Baru</label>
-                    <input type="password" name="new_password" required>
+                    <input type="password" name="new_password">
 
                     <label>Konfirmasi Password Baru</label>
-                    <input type="password" name="confirm_password" required>
+                    <input type="password" name="confirm_password">
 
-                    <button type="submit" name="update_password_btn">
-                        Ganti Password
-                    </button>
+                    <!-- SUBMIT -->
+                    <button type="submit" name="save_profile_btn">Simpan Perubahan</button>
                 </form>
             </div>
+
 
         </div>
     </div>
@@ -279,19 +282,29 @@ $dashboard = ($role === 'admin') ? 'admin.php'
     <script>
         function updateFileName() {
             const input = document.getElementById('file-upload');
-            const display = document.getElementById('file-name-display');
             const preview = document.querySelector(".profile-picture img");
+            const display = document.getElementById('file-name-display');
 
-            if (input && input.files.length > 0) {
-                display.style.opacity = "1";
+            if (input && input.files && input.files[0]) {
+                if (input.files[0].size > 2 * 1024 * 1024) {
+                    alert("Ukuran file terlalu besar! Maksimal 2MB.");
+                    input.value = "";
+                    return;
+                }
+
+                if (display) display.style.opacity = "1";
 
                 const reader = new FileReader();
                 reader.onload = function (e) {
                     if (preview) preview.src = e.target.result;
 
                     setTimeout(() => {
-                        document.getElementById('profile-form').submit();
-                    }, 500);
+                        const form = document.getElementById('photoForm');
+                        if (form) {
+                            console.log("Mengirim foto...");
+                            form.requestSubmit();
+                        }
+                    }, 600);
                 };
                 reader.readAsDataURL(input.files[0]);
 
@@ -342,14 +355,21 @@ $dashboard = ($role === 'admin') ? 'admin.php'
                 }
             });
         });
+        document.addEventListener("DOMContentLoaded", function () {
+            const alertElement = document.getElementById('auto-alert');
+
+            if (alertElement) {
+                setTimeout(function () {
+                    alertElement.style.transition = "opacity 0.6s ease";
+                    alertElement.style.opacity = "0";
+
+                    setTimeout(function () {
+                        alertElement.remove();
+                    }, 600);
+                }, 3000);
+            }
+        });
     </script>
-
-
-
-
-
-
-
 </body>
 
 </html>
