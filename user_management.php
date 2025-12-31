@@ -57,20 +57,22 @@ if (isset($_POST['add_user'])) {
     $jurusan    = $_POST['jurusan'];
     $angkatan   = $_POST['angkatan'];
     $password   = $_POST['password'];
+    $email      = null;
     $role       = $_POST['role'];
     $is_active  = 1;
     $photo      = "uploads/profile_photos/default_profile.png";
 
     $stmt = $conn->prepare("
        INSERT INTO user 
-       (nim, password, role, jurusan, angkatan, full_name, is_active, creat_at, photo)
-       VALUES (?, ?, ?, ?, ?, ?, ?, NOW(), ?)
+       (nim, password, email, role, jurusan, angkatan, full_name, is_active, creat_at, photo)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW(), ?)
     ");
 
     $stmt->bind_param(
-        "ssssisis",
+        "sssssisis",
         $nim,
         $password,
+        $email,
         $role,
         $jurusan,
         $angkatan,
