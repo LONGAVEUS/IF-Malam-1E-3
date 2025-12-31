@@ -22,9 +22,14 @@ $userLogin = $stmtUser->get_result()->fetch_assoc();
 $stmtUser->close();
 
 /* ================== FOTO PROFIL ================== */
-$fotoProfil = (!empty($userLogin['photo']) && file_exists($userLogin['photo']))
-    ? $userLogin['photo']
+$foto_sekarang = $_SESSION['photo'] ?? $userLogin['photo'];
+
+$path_valid = (!empty($foto_sekarang) && file_exists($foto_sekarang))
+    ? $foto_sekarang
     : 'uploads/profile_photos/default_profile.png';
+
+$current_photo_url = $path_valid . "?t=" . time();
+
 
 /* ================== SESSION DATA ================== */
 $role = $_SESSION['role'];
@@ -257,18 +262,23 @@ $result_notulens = $conn->query($sql_notulens);
       <div class="logo-area">
         <a href="#" class="header-logo">
           <!-- Ganti dengan path logo yang benar -->
-          <img src="poltek1.png" alt="Politeknik Negeri Batam" />
+          <img src="if.png" alt="Politeknik Negeri Batam" />
         </a>
       </div>
       <button class="toggler">
-        <span class="fas fa-chevron-left"></span>
+        <span class="dekstop-icon"></span>
+        <div class="hamburger-icon">
+          <span></span>
+          <span></span>
+          <span></span>
+        </div>
       </button>
     </div>
 
     <nav class="sidebar-nav">
       <ul class="nav-list primary-nav">
         <li class="nav-item">
-          <a href="admin.php" class="nav-link active">
+          <a href="admin.php" class="nav-link">
             <i class="fas fa-th-large nav-icon"></i>
             <span class="nav-label">Dashboard</span>
           </a>
@@ -305,7 +315,7 @@ $result_notulens = $conn->query($sql_notulens);
 
         <!-- PROFIL LOGIN -->
         <li class="nav-item profile-user">
-          <img src="<?= $fotoProfil; ?>" class="profile-avatar">
+          <img src="<?php echo $current_photo_url; ?>?v=<?php echo time(); ?>" class="profile-avatar">
 
           <div class="profile-info">
             <span class="profile-name">
@@ -471,7 +481,151 @@ $result_notulens = $conn->query($sql_notulens);
     </div>
   </div>
 
-  <script src="notulis-script.js"></script>
+  <script>
+    document.addEventListener("DOMContentLoaded", function () {
+      /* ================= ELEMEN SELECTOR ================= */
+      const sidebar = document.querySelector(".sidebar");
+      const toggler = document.querySelector(".toggler");
+      const sidebarNav = document.querySelector(".sidebar-nav");
+
+      const modal = document.getElementById("notulenModal");
+      const tambahBtn = document.getElementById("tambahNotulenBtn");
+      const closeBtn = document.getElementById("closeModal");
+      const cancelBtn = document.getElementById("cancelBtn");
+      const notulenForm = document.getElementById("notulenForm");
+      const fileInput = document.getElementById("lampiran");
+
+      const modalTitle = document.getElementById("modalTitle");
+      const formAction = document.getElementById("formAction");
+      const notulenId = document.getElementById("notulenId");
+      const submitBtn = document.getElementById("submitBtn");
+      const currentFile = document.getElementById("currentFile");
+
+      // Validasi awal agar tidak error jika elemen tidak ditemukan
+      if (!sidebar || !toggler || !sidebarNav) return;
+
+      /* ================= EVENT SIDEBAR ================= */
+      toggler.addEventListener("click", function (e) {
+        e.stopPropagation();
+        if (window.innerWidth <= 768) {
+          sidebarNav.classList.toggle("active");
+        }
+      });
+
+      document.addEventListener("click", function (e) {
+        if (window.innerWidth <= 768 && !sidebar.contains(e.target)) {
+          sidebarNav.classList.remove("active");
+        }
+      });
+
+      window.addEventListener("resize", function () {
+        if (window.innerWidth > 768) {
+          sidebarNav.classList.remove("active");
+        }
+      });
+
+      /* ================= EVENT MODAL ================= */
+      if (tambahBtn) {
+        tambahBtn.addEventListener("click", function () {
+          resetModal();
+          showModal();
+        });
+      }
+
+      if (closeBtn) closeBtn.addEventListener("click", hideModal);
+      if (cancelBtn) cancelBtn.addEventListener("click", hideModal);
+
+      window.addEventListener("click", function (e) {
+        if (e.target === modal) hideModal();
+      });
+
+      document.addEventListener("keydown", function (e) {
+        if (e.key === "Escape" && modal?.style.display === "flex") {
+          hideModal();
+        }
+      });
+
+      if (notulenForm) notulenForm.addEventListener("submit", handleFormSubmit);
+      if (fileInput) fileInput.addEventListener("change", validateFile);
+
+      /* ================= HELPER FUNCTIONS ================= */
+      function showModal() {
+        if (modal) {
+          modal.style.display = "flex";
+          document.body.style.overflow = "hidden";
+        }
+      }
+
+      function hideModal() {
+        if (modal) {
+          modal.style.display = "none";
+          document.body.style.overflow = "auto";
+        }
+      }
+
+      function resetModal() {
+        notulenForm?.reset();
+        if (fileInput) fileInput.value = "";
+        if (currentFile) currentFile.style.display = "none";
+
+        if (formAction) {
+          formAction.name = "simpan_notulen";
+          formAction.value = "1";
+        }
+
+        if (notulenId) notulenId.value = "";
+        if (modalTitle) modalTitle.textContent = "Tambah Notulen";
+        if (submitBtn) submitBtn.textContent = "Simpan Notulen";
+
+        setDefaultDate();
+      }
+
+      function setDefaultDate() {
+        const dateInput = document.getElementById("tanggalRapat");
+        if (dateInput && !notulenId?.value) {
+          dateInput.value = new Date().toISOString().split("T")[0];
+        }
+      }
+
+      function handleFormSubmit(e) {
+        e.preventDefault();
+        const judul = document.getElementById("judulRapat")?.value.trim();
+        const tanggal = document.getElementById("tanggalRapat")?.value;
+        const isi = document.getElementById("isiNotulen")?.value.trim();
+
+        if (!judul || !tanggal || !isi) {
+          showNotification("Lengkapi semua field wajib!", "error");
+          return;
+        }
+        notulenForm.submit();
+      }
+
+      function validateFile() {
+        const file = fileInput.files[0];
+        if (!file) return;
+
+        const allowed = ["pdf", "doc", "docx", "jpg", "jpeg", "png", "txt"];
+        const ext = file.name.split(".").pop().toLowerCase();
+
+        if (!allowed.includes(ext) || file.size > 5 * 1024 * 1024) {
+          showNotification("File tidak valid (Format salah atau ukuran > 5MB)", "error");
+          fileInput.value = "";
+        }
+      }
+
+      function showNotification(msg, type = "info") {
+        const notif = document.createElement("div");
+        notif.className = `notification ${type}`;
+        notif.textContent = msg;
+        document.body.appendChild(notif);
+
+        setTimeout(() => {
+          notif.style.opacity = "0";
+          setTimeout(() => notif.remove(), 500);
+        }, 3000);
+      }
+    });
+  </script>
 </body>
 
 </html>
