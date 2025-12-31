@@ -27,11 +27,13 @@ $stmtUser->execute();
 $userLogin = $stmtUser->get_result()->fetch_assoc();
 $stmtUser->close();
 
-// Foto profil fallback
-$fotoProfil = (!empty($userLogin['photo']) && file_exists($userLogin['photo']))
-    ? $userLogin['photo']
+$foto_sekarang = $_SESSION['photo'] ?? $userLogin['photo'];
+
+$path_valid = (!empty($foto_sekarang) && file_exists($foto_sekarang))
+    ? $foto_sekarang
     : 'uploads/profile_photos/default_profile.png';
 
+$current_photo_url = $path_valid . "?t=" . time();
 // ================== LOGOUT ==================
 if (isset($_GET['action']) && $_GET['action'] === 'logout') {
     session_destroy();
@@ -142,7 +144,7 @@ $result_unit = $conn->query($sql_unit);
 
         <!-- PROFIL LOGIN -->
         <li class="nav-item profile-user">
-          <img src="<?= $fotoProfil; ?>" class="profile-avatar">
+          <img src="<?php echo $current_photo_url; ?>?v=<?php echo time(); ?>" class="profile-avatar">
 
           <div class="profile-info">
             <span class="profile-name">
