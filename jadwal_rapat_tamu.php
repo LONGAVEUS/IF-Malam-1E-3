@@ -1,5 +1,87 @@
 <?php
+session_start();
 require_once 'koneksi.php';
+
+/* ==================================================
+   1. CEK LOGIN
+================================================== */
+if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
+    header("Location: login.php");
+    exit();
+}
+
+/* ==================================================
+   2. HANDLE LOGOUT
+================================================== */
+if (isset($_GET['action']) && $_GET['action'] === 'logout') {
+    $_SESSION = [];
+
+    if (ini_get("session.use_cookies")) {
+        $params = session_get_cookie_params();
+        setcookie(
+            session_name(),
+            '',
+            time() - 42000,
+            $params["path"],
+            $params["domain"],
+            $params["secure"],
+            $params["httponly"]
+        );
+    }
+
+    session_destroy();
+    header("Location: login.php");
+    exit();
+}
+
+/* ==================================================
+   3. AMBIL DATA USER LOGIN
+================================================== */
+$user_id = $_SESSION['user_id'];
+
+$stmtUser = $conn->prepare("
+    SELECT full_name, role, photo
+    FROM user
+    WHERE user_id = ?
+");
+$stmtUser->bind_param("i", $user_id);
+$stmtUser->execute();
+$userLogin = $stmtUser->get_result()->fetch_assoc();
+$stmtUser->close();
+
+/* ==================================================
+   4. VALIDASI USER
+================================================== */
+if (!$userLogin) {
+    // Jika user tidak ditemukan
+    session_destroy();
+    header("Location: login.php");
+    exit();
+}
+
+$role = $userLogin['role'];
+
+/* ==================================================
+   5. FOTO PROFIL (FALLBACK)
+================================================== */
+$foto_sekarang = $_SESSION['photo'] ?? $userLogin['photo'];
+
+$path_valid = (!empty($foto_sekarang) && file_exists($foto_sekarang))
+    ? $foto_sekarang
+    : 'uploads/profile_photos/default_profile.png';
+
+$current_photo_url = $path_valid . "?t=" . time();
+
+
+/* ==================================================
+   6. DASHBOARD BERDASARKAN ROLE
+================================================== */
+$dashboard = match ($role) {
+    'admin'   => 'admin.php',
+    'notulis' => 'notulis.php',
+    default   => 'tamu.php',
+};
+
 
 // Ambil parameter bulan dan tahun dari URL, default ke bulan dan tahun saat ini
 $bulan = isset($_GET['bulan']) ? intval($_GET['bulan']) : date('n');
@@ -26,12 +108,12 @@ if ($bulan_selanjutnya > 12) {
     $tahun_selanjutnya = $tahun + 1;
 }
 
-// Ambil semua notulen untuk bulan dan tahun yang dipilih (hanya yang status sent)
+// Ambil semua notulen untuk bulan dan tahun yang dipilih
 $tanggal_awal = date('Y-m-01', strtotime("$tahun-$bulan-01"));
 $tanggal_akhir = date('Y-m-t', strtotime("$tahun-$bulan-01"));
 
-$sql_notulen = "SELECT id, judul, tanggal, penanggung_jawab, status FROM notulen 
-                WHERE DATE(tanggal) BETWEEN ? AND ? AND status = 'sent'
+$sql_notulen = "SELECT id, judul, tanggal, penanggung_jawab, status FROM isinotulen 
+                WHERE DATE(tanggal) BETWEEN ? AND ? 
                 ORDER BY tanggal ASC";
 $stmt = $conn->prepare($sql_notulen);
 $stmt->bind_param("ss", $tanggal_awal, $tanggal_akhir);
@@ -64,13 +146,14 @@ $hari_pertama = date('N', strtotime("$tahun-$bulan-01")); // 1=Senin, 7=Minggu
 
 // Sesuaikan untuk kalender (Minggu = 0, Senin = 1, ..., Sabtu = 6)
 $offset = $hari_pertama - 1;
+
 ?>
 
 <!DOCTYPE html>
 <html lang="id">
 
 <head>
-  <title>Jadwal Rapat - Portal Tamu</title>
+  <title>Jadwal Rapat</title>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -78,8 +161,9 @@ $offset = $hari_pertama - 1;
 </head>
 
 <body>
-  <!-- Sidebar -->
-  <div class="sidebar" id="sidebar">
+  <!-- ================= SIDEBAR ================= -->
+  <div class="sidebar">
+
     <div class="sidebar-header">
       <div class="logo-area">
         <a href="#" class="header-logo">
@@ -98,82 +182,142 @@ $offset = $hari_pertama - 1;
     </div>
 
     <nav class="sidebar-nav">
+
+      <!-- ===== PRIMARY NAV ===== -->
       <ul class="nav-list primary-nav">
+
         <li class="nav-item">
-          <a href="tamu.php" class="nav-link">
+          <a href="<?= $dashboard ?>" class="nav-link">
             <i class="fas fa-th-large nav-icon"></i>
             <span class="nav-label">Dashboard</span>
           </a>
         </li>
+
+        <?php if ($role === 'admin'): ?>
+
         <li class="nav-item">
-          <a href="jadwal_rapat_tamu.php" class="nav-link active">
+          <a href="jadwal_rapat.php" class="nav-link">
             <i class="fas fa-calendar-alt nav-icon"></i>
             <span class="nav-label">Jadwal Rapat</span>
           </a>
         </li>
+
+        <li class="nav-item">
+          <a href="notulen_list_admin.php" class="nav-link">
+            <i class="fas fa-file-alt nav-icon"></i>
+            <span class="nav-label">Notulen Rapat</span>
+          </a>
+        </li>
+
+        <li class="nav-item">
+          <a href="user_management.php" class="nav-link">
+            <i class="fas fa-users nav-icon"></i>
+            <span class="nav-label">Daftar Pengguna</span>
+          </a>
+        </li>
+
+        <?php elseif ($role === 'notulis'): ?>
+
+        <li class="nav-item">
+          <a href="notulis.php" class="nav-link">
+            <i class="fas fa-file-alt nav-icon"></i>
+            <span class="nav-label">Notulen Rapat</span>
+          </a>
+        </li>
+
+        <li class="nav-item">
+          <a href="jadwal_rapat.php" class="nav-link">
+            <i class="fas fa-calendar-alt nav-icon"></i>
+            <span class="nav-label">Jadwal Rapat</span>
+          </a>
+        </li>
+
+        <li class="nav-item">
+          <a href="#" class="nav-link">
+            <i class="fas fa-bell nav-icon"></i>
+            <span class="nav-label">Notifikasi</span>
+          </a>
+        </li>
+
+        <?php elseif ($role === 'tamu'): ?>
+
+        <li class="nav-item">
+          <a href="jadwal_rapat_tamu.php" class="nav-link">
+            <i class="fas fa-calendar-alt nav-icon"></i>
+            <span class="nav-label">Jadwal Rapat</span>
+          </a>
+        </li>
+
         <li class="nav-item">
           <a href="tamu.php" class="nav-link">
             <i class="fas fa-file-alt nav-icon"></i>
             <span class="nav-label">Notulen Rapat</span>
           </a>
         </li>
+
+
+        <?php endif; ?>
+
       </ul>
 
+      <!-- ===== SECONDARY NAV ===== -->
       <ul class="nav-list secondary-nav">
+
         <li class="nav-item">
-          <a href="#" class="nav-link">
+          <a href="profile.php" class="nav-link active">
             <i class="fas fa-user-circle nav-icon"></i>
             <span class="nav-label">Profil Saya</span>
           </a>
         </li>
+
         <li class="nav-item">
-          <a href="login.php" class="nav-link">
-            <i class="fas fa-sign-in-alt nav-icon"></i>
+          <a href="login.php?action=logout" class="nav-link" onclick="return confirm('Yakin ingin logout?');">
+            <i class="fas fa-sign-out-alt nav-icon"></i>
             <span class="nav-label">Keluar</span>
           </a>
         </li>
 
         <!-- PROFIL LOGIN -->
         <li class="nav-item profile-user">
-          <img src="<?= $fotoProfil ?>" class="profile-avatar">
+          <img src="<?php echo $current_photo_url; ?>?v=<?php echo time(); ?>" class="profile-avatar">
 
           <div class="profile-info">
             <span class="profile-name">
-              <?= htmlspecialchars($userLogin['full_name']) ?>
+              <?= htmlspecialchars($userLogin['full_name']); ?>
             </span>
             <span class="profile-role">
-              <?= ucfirst($userLogin['role']) ?>
+              <?= ucfirst($userLogin['role']); ?>
             </span>
           </div>
         </li>
 
       </ul>
+
     </nav>
   </div>
-
   <!-- Main Content -->
   <div class="main-content" id="mainContent">
     <div class="dashboard-header">
-      <h1>Jadwal Rapat - Portal Tamu</h1>
-      <p>Berikut adalah jadwal rapat yang sudah direncanakan. Anda dapat melihat detail notulen setelah rapat selesai.
-      </p>
+      <h1>Jadwal Rapat</h1>
+      <p>Selamat Datang, <strong><?php echo htmlspecialchars($_SESSION['username']); ?></strong>
+        (<?php echo htmlspecialchars($_SESSION['role']); ?>)</p>
     </div>
 
     <div class="calendar-container">
       <div class="calendar-header">
         <div class="calendar-navigation">
-          <a href="jadwal_rapat_tamu.php?bulan=<?php echo $bulan_sebelumnya; ?>&tahun=<?php echo $tahun_sebelumnya; ?>"
+          <a href="jadwal_rapat.php?bulan=<?php echo $bulan_sebelumnya; ?>&tahun=<?php echo $tahun_sebelumnya; ?>"
             class="nav-btn">
             <i class="fas fa-chevron-left"></i> Bulan Sebelumnya
           </a>
           <h2><?php echo getNamaBulan($bulan) . ' ' . $tahun; ?></h2>
-          <a href="jadwal_rapat_tamu.php?bulan=<?php echo $bulan_selanjutnya; ?>&tahun=<?php echo $tahun_selanjutnya; ?>"
+          <a href="jadwal_rapat.php?bulan=<?php echo $bulan_selanjutnya; ?>&tahun=<?php echo $tahun_selanjutnya; ?>"
             class="nav-btn">
             Bulan Selanjutnya <i class="fas fa-chevron-right"></i>
           </a>
         </div>
         <div class="calendar-actions">
-          <a href="jadwal_rapat_tamu.php" class="btn btn-today">Hari Ini</a>
+          <a href="jadwal_rapat.php" class="btn btn-today">Hari Ini</a>
         </div>
       </div>
 
@@ -207,7 +351,7 @@ $offset = $hari_pertama - 1;
               if (isset($notulen_per_hari[$hari])) {
                   echo '<div class="day-events">';
                   foreach ($notulen_per_hari[$hari] as $notulen) {
-                      $status_class = 'sent'; // Untuk tamu, hanya menampilkan yang sent
+                      $status_class = $notulen['status'] === 'draft' ? 'draft' : 'sent';
                       echo '<div class="event-item ' . $status_class . '" data-id="' . $notulen['id'] . '">';
                       echo '<div class="event-title">' . htmlspecialchars($notulen['judul']) . '</div>';
                       echo '<div class="event-time">' . date('H:i', strtotime($notulen['tanggal'])) . '</div>';
@@ -228,17 +372,6 @@ $offset = $hari_pertama - 1;
               }
           }
           ?>
-        </div>
-      </div>
-
-      <div class="calendar-legend">
-        <div class="legend-item">
-          <span class="legend-color" style="background-color: #fff3cd;"></span>
-          <span class="legend-text">Hari Ini</span>
-        </div>
-        <div class="legend-item">
-          <span class="legend-color" style="background-color: #27ae60;"></span>
-          <span class="legend-text">Rapat Terjadwal</span>
         </div>
       </div>
     </div>
@@ -587,3 +720,4 @@ $offset = $hari_pertama - 1;
 if (isset($conn)) {
     $conn->close();
 }
+?>
