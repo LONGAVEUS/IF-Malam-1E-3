@@ -170,7 +170,6 @@ sidebar.collapsed {
 
 .profile-section {
   background-color: rgba(255, 255, 255, 0.1);
-  /* Senada dengan card dashboard */
   padding: 1.875rem;
   border-radius: 0.75rem;
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
@@ -198,7 +197,9 @@ sidebar.collapsed {
 
 .profile-section input[type="text"],
 .profile-section input[type="password"],
-.profile-section input[type="file"] {
+.profile-section input[type="file"],
+.profile-section input[type="email"],
+.profile-section input[type="jurusan"] {
   width: 100%;
   padding: 0.75rem;
   border: 1px solid rgba(255, 255, 255, 0.3);
@@ -316,6 +317,7 @@ sidebar.collapsed {
 
 /* Styling Button */
 .profile-section button[type="submit"] {
+  width: 100%;
   padding: 0.625rem 1.25rem;
   background-color: #8348b6;
   /* Warna Ungu Lebih Cerah */
@@ -327,6 +329,60 @@ sidebar.collapsed {
   text-transform: uppercase;
   transition: background-color 0.3s ease, transform 0.1s ease;
   margin-top: 0.6rem;
+}
+
+.alert {
+  padding: 0.9rem 1.25rem;
+  border-radius: 0.6rem;
+  margin-bottom: 1.25rem;
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  font-weight: 500;
+  animation: slideDown 0.5s ease-out;
+
+  position: fixed;
+  top: 1.5rem;
+  left: calc(17.5rem + 1rem);
+  right: 1rem;
+  width: auto;
+  max-width: 800px;
+  margin: 0 auto;
+
+  z-index: 9999;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.alert-success {
+  background-color: #d4edda;
+  color: #155724;
+  border: 1px solid #c3e6cb;
+}
+
+.alert-icon {
+  font-size: 20px;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 /* Styling Foto Profil */
