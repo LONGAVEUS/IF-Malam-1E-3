@@ -2,18 +2,19 @@
 session_start();
 require_once 'koneksi.php';
 
-if (!isset($_SESSION['logged_in'])) {
+/* ================= CEK LOGIN ================= */
+if (!isset($_SESSION['logged_in'], $_SESSION['nim'])) {
     header("Location: login.php");
     exit();
 }
 
-if (!isset($_POST['save_profile_btn'])) {
-    header("Location: profile.php");
-    exit();
-}
 
 $nim = $_SESSION['nim'];
+$target_dir = "uploads/profile_photos/";
 
+
+
+/* ================= AMBIL DATA FORM ================= */
 $new_name = trim($_POST['new_full_name'] ?? '');
 $email    = trim($_POST['email'] ?? '');
 $old_pass = $_POST['old_password'] ?? '';
@@ -36,12 +37,12 @@ if ($new_name !== '' && $email !== '') {
     $stmt->execute();
     $stmt->close();
 
-    $_SESSION['full_name'] = $new_name;
+    $_SESSION['username'] = $new_name;
     $_SESSION['email']    = $email;
 }
 
 /* ================= UPDATE PASSWORD (OPSIONAL) ================= */
-if ($old_pass || $new_pass || $confirm) {
+if ($old_pass !== '' || $new_pass !== '' || $confirm !== '') {
 
     if ($new_pass !== $confirm) {
         $_SESSION['error'] = "Konfirmasi password tidak cocok";
@@ -72,8 +73,29 @@ if ($old_pass || $new_pass || $confirm) {
     $stmt->close();
 }
 
+/* ================= UPLOAD FOTO PROFIL ================= */
+if (isset($_FILES['new_file_profile_pic']) && $_FILES['new_file_profile_pic']['error'] === 0) {
+    $target_dir = "uploads/profile_photos/";
+    if (!is_dir($target_dir)) {
+        mkdir($target_dir, 0777, true);
+    }
+
+    $file_extension = pathinfo($_FILES['new_file_profile_pic']['name'], PATHINFO_EXTENSION);
+    $nama_file_baru = "profile_" . $user_id . "_" . time() . "." . $file_extension;
+    $target_file = "uploads/profile_photos/" . $nama_file_baru;
+
+    if (move_uploaded_file($_FILES['new_file_profile_pic']['tmp_name'], $target_file)) {
+       // 1. Update ke Database
+       $stmt = $conn->prepare("UPDATE user SET photo = ? WHERE user_id = ?");
+       $stmt->bind_param("si", $target_file, $user_id);
+       $stmt->execute();
+
+       // 2. UPDATE SESSION 
+       $_SESSION['photo'] = $target_file; 
+    }
+}
+
 /* ================= SUCCESS ================= */
 $_SESSION['success_msg'] = "Perubahan berhasil disimpan";
 header("Location: profile.php");
 exit();
-
