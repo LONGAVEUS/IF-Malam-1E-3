@@ -314,7 +314,7 @@ if (!$is_search) {
                 </li>
                 <!-- PROFIL LOGIN -->
                 <li class="nav-item profile-user">
-                    <img src="<?= $fotoProfil; ?>" class="profile-avatar">
+                    <img src="<?php echo $current_photo_url; ?>?v=<?php echo time(); ?>" class="profile-avatar">
 
                     <div class="profile-info">
                         <span class="profile-name">
