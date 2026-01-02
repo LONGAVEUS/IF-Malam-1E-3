@@ -1,0 +1,953 @@
+<!-- 
+Nama file: landing_page.html
+Deskripsi: Memberikan informasi singkat dan jelas tentang perangkat lunak yang kami kerjakan
+Dibuat oleh: Arnol Hutagalung - NIM: 3312511130
+Tanggal: 21 Desember 2025
+-->
+
+<!DOCTYPE html>
+<html lang="id">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NotulenPro - Sistem Pencatatan Notulen Digital</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* === VARIABEL WARNA === */
+        :root {
+            --primary: #1a365d;
+            /* Biru navy */
+            --secondary: #0ea5e9;
+            /* Biru cerah */
+            --accent: #10b981;
+            /* Hijau */
+            --light: #f8fafc;
+            /* Abu-abu sangat terang */
+            --dark: #0f172a;
+            /* Biru gelap */
+            --gradient-primary: linear-gradient(to right, #082451, #8e2de2);
+            --gradient-secondary: linear-gradient(to right, #082451, #8e2de2);
+            --shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
+            --transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+        }
+
+        /* === RESET & BASE === */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            color: #334155;
+            line-height: 1.6;
+            overflow-x: hidden;
+            background-color: #ffffff;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        /* === TYPOGRAPHY === */
+        h1,
+        h2,
+        h3,
+        h4 {
+            font-weight: 700;
+            line-height: 1.2;
+            margin-bottom: 1rem;
+            color: var(--dark);
+        }
+
+        p {
+            margin-bottom: 1.5rem;
+            color: #475569;
+        }
+
+        /* === HEADER === */
+        header {
+            background-color: rgba(255, 255, 255, 0.95);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+            position: fixed;
+            width: 100%;
+            top: 0;
+            z-index: 1000;
+            padding: 18px 0;
+            backdrop-filter: blur(10px);
+        }
+
+        .header-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .logo-icon {
+            font-size: 2.2rem;
+            color: var(--secondary);
+            background: var(--gradient-primary);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+
+        .logo-text {
+            font-size: 1.8rem;
+            font-weight: 800;
+            color: var(--primary);
+        }
+
+        .logo-text span {
+            background: var(--gradient-primary);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+
+        nav ul {
+            display: flex;
+            list-style: none;
+            gap: 32px;
+        }
+
+        nav a {
+            text-decoration: none;
+            color: #475569;
+            font-weight: 500;
+            font-size: 1rem;
+            transition: var(--transition);
+            position: relative;
+            padding: 8px 0;
+        }
+
+        nav a:hover {
+            color: var(--secondary);
+        }
+
+        nav a.active {
+            color: var(--secondary);
+            font-weight: 600;
+        }
+
+        nav a.active:after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 3px;
+            background: var(--gradient-primary);
+            border-radius: 3px;
+        }
+
+        .cta-button {
+            background: var(--gradient-primary);
+            color: white;
+            border: none;
+            padding: 12px 28px;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: var(--transition);
+            text-decoration: none;
+            display: inline-block;
+            box-shadow: 0 4px 12px rgba(14, 165, 233, 0.25);
+        }
+
+        .cta-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(14, 165, 233, 0.35);
+        }
+
+        /* === HERO SECTION === */
+        .hero {
+            padding: 160px 0 100px;
+            background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .hero:before {
+            content: '';
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 60%;
+            height: 100%;
+            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 800" opacity="0.05"><path d="M0,0H1200V800H0Z" fill="%231e40af"/><circle cx="900" cy="200" r="150" fill="%230ea5e9"/><circle cx="1000" cy="500" r="100" fill="%2310b981"/></svg>');
+            background-size: cover;
+        }
+
+        .hero-content {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 60px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .hero-text {
+            flex: 1;
+            max-width: 600px;
+        }
+
+        .hero-text h1 {
+            font-size: 3.2rem;
+            margin-bottom: 24px;
+            line-height: 1.1;
+        }
+
+        .hero-text p {
+            font-size: 1.2rem;
+            margin-bottom: 36px;
+            color: #475569;
+        }
+
+        .hero-buttons {
+            display: flex;
+            gap: 16px;
+            flex-wrap: wrap;
+        }
+
+        .secondary-button {
+            background: white;
+            color: var(--primary);
+            border: 2px solid #e2e8f0;
+            padding: 12px 28px;
+            border-radius: 8px;
+            font-weight: 600;
+            text-decoration: none;
+            transition: var(--transition);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+        }
+
+        .secondary-button:hover {
+            border-color: var(--secondary);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .hero-image {
+            flex: 1;
+            position: relative;
+        }
+
+        .dashboard-preview {
+            width: 100%;
+            border-radius: 16px;
+            box-shadow: var(--shadow);
+            overflow: hidden;
+            background: white;
+            padding: 24px;
+            transform: perspective(1200px) rotateY(-8deg) rotateX(5deg);
+            transition: var(--transition);
+            border: 1px solid #e2e8f0;
+        }
+
+        .dashboard-preview:hover {
+            transform: perspective(1200px) rotateY(0) rotateX(0);
+        }
+
+        .dashboard-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 24px;
+        }
+
+        .dashboard-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+        }
+
+        .red {
+            background-color: #f87171;
+        }
+
+        .yellow {
+            background-color: #fbbf24;
+        }
+
+        .green {
+            background-color: #10b981;
+        }
+
+        .dashboard-title {
+            flex-grow: 1;
+            text-align: center;
+            font-weight: 600;
+            color: var(--primary);
+        }
+
+        .dashboard-content {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 16px;
+        }
+
+        .dashboard-item {
+            height: 70px;
+            border-radius: 10px;
+            background: linear-gradient(90deg, #f1f5f9, #e2e8f0);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--primary);
+            font-weight: 600;
+            transition: var(--transition);
+        }
+
+        .dashboard-item:hover {
+            transform: translateY(-2px);
+            background: linear-gradient(90deg, #e2e8f0, #cbd5e1);
+        }
+
+        /* === BENEFITS SECTION === */
+        .benefits {
+            padding: 100px 0;
+            background-color: white;
+        }
+
+        .section-title {
+            text-align: center;
+            font-size: 2.5rem;
+            margin-bottom: 20px;
+        }
+
+        .section-subtitle {
+            text-align: center;
+            color: #64748b;
+            max-width: 700px;
+            margin: 0 auto 60px;
+            font-size: 1.1rem;
+            line-height: 1.7;
+        }
+
+        .benefits-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 32px;
+        }
+
+        .benefit-card {
+            background: white;
+            border-radius: 16px;
+            padding: 40px 32px;
+            box-shadow: var(--shadow);
+            transition: var(--transition);
+            border: 1px solid #f1f5f9;
+            text-align: center;
+        }
+
+        .benefit-card:hover {
+            transform: translateY(-8px);
+            border-color: #e2e8f0;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+        }
+
+        .benefit-icon {
+            width: 70px;
+            height: 70px;
+            border-radius: 16px;
+            background: var(--gradient-primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 24px;
+            font-size: 2rem;
+            color: white;
+        }
+
+        .benefit-title {
+            font-size: 1.5rem;
+            margin-bottom: 16px;
+            color: var(--dark);
+        }
+
+        .benefit-desc {
+            color: #64748b;
+            line-height: 1.7;
+        }
+
+        /* === FEATURES SECTION === */
+        .features {
+            padding: 100px 0;
+            background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+        }
+
+        .features-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 40px;
+        }
+
+        .feature-card {
+            background: white;
+            border-radius: 16px;
+            padding: 40px 32px;
+            box-shadow: var(--shadow);
+            transition: var(--transition);
+            border: 1px solid #f1f5f9;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-5px);
+            border-color: #e2e8f0;
+        }
+
+        .feature-icon {
+            font-size: 2.5rem;
+            margin-bottom: 24px;
+            background: var(--gradient-primary);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+
+        .feature-title {
+            font-size: 1.5rem;
+            margin-bottom: 16px;
+        }
+
+        .feature-desc {
+            color: #64748b;
+            line-height: 1.7;
+        }
+
+        /* === HOW IT WORKS === */
+        .how-it-works {
+            padding: 100px 0;
+            background-color: white;
+        }
+
+        .steps {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 40px;
+            margin-top: 60px;
+            position: relative;
+        }
+
+        .step {
+            text-align: center;
+            width: 220px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .step-number {
+            width: 60px;
+            height: 60px;
+            background: var(--gradient-primary);
+            color: white;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.8rem;
+            font-weight: 700;
+            margin: 0 auto 24px;
+            box-shadow: 0 8px 20px rgba(14, 165, 233, 0.25);
+        }
+
+        .step-title {
+            font-size: 1.3rem;
+            margin-bottom: 12px;
+        }
+
+        .step-desc {
+            color: #64748b;
+            line-height: 1.6;
+        }
+
+        /* === CTA SECTION === */
+        .cta-section {
+            padding: 100px 0;
+            background: var(--gradient-primary);
+            color: white;
+            text-align: center;
+            border-radius: 0;
+        }
+
+        .cta-section h2 {
+            font-size: 2.8rem;
+            margin-bottom: 24px;
+            color: white;
+        }
+
+        .cta-section p {
+            font-size: 1.2rem;
+            max-width: 700px;
+            margin: 0 auto 40px;
+            color: rgba(255, 255, 255, 0.9);
+        }
+
+        .cta-button.light {
+            background: white;
+            color: var(--primary);
+            margin-left: 16px;
+        }
+
+        .cta-button.light:hover {
+            background: #f8fafc;
+            transform: translateY(-2px);
+        }
+
+        /* === FOOTER === */
+        footer {
+            background-color: var(--dark);
+            color: #cbd5e1;
+            padding: 80px 0 40px;
+        }
+
+        .footer-content {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 60px;
+            margin-bottom: 60px;
+        }
+
+        .footer-logo {
+            font-size: 2rem;
+            font-weight: 800;
+            margin-bottom: 20px;
+            color: white;
+        }
+
+        .footer-logo span {
+            background: var(--gradient-primary);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+
+        .footer-about p {
+            color: #94a3b8;
+            margin-bottom: 24px;
+            line-height: 1.7;
+        }
+
+        .footer-links h3,
+        .footer-contact h3 {
+            font-size: 1.3rem;
+            margin-bottom: 24px;
+            color: white;
+        }
+
+        .footer-links ul {
+            list-style: none;
+        }
+
+        .footer-links li {
+            margin-bottom: 12px;
+        }
+
+        .footer-links a {
+            color: #94a3b8;
+            text-decoration: none;
+            transition: var(--transition);
+            display: inline-block;
+        }
+
+        .footer-links a:hover {
+            color: var(--secondary);
+            transform: translateX(5px);
+        }
+
+        .footer-contact p {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 16px;
+            color: #94a3b8;
+        }
+
+        .footer-contact i {
+            color: var(--secondary);
+            width: 20px;
+        }
+
+        .copyright {
+            text-align: center;
+            padding-top: 40px;
+            border-top: 1px solid #334155;
+            color: #94a3b8;
+            font-size: 0.9rem;
+        }
+
+        /* === RESPONSIVE === */
+        @media (max-width: 992px) {
+            .hero-content {
+                flex-direction: column;
+                text-align: center;
+                gap: 50px;
+            }
+
+            .hero-text h1 {
+                font-size: 2.8rem;
+            }
+
+            .hero:before {
+                width: 100%;
+                opacity: 0.03;
+            }
+
+            nav ul {
+                gap: 20px;
+            }
+
+            .dashboard-preview {
+                max-width: 500px;
+                margin: 0 auto;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .hero {
+                padding: 140px 0 80px;
+            }
+
+            .hero-text h1 {
+                font-size: 2.3rem;
+            }
+
+            .hero-buttons {
+                justify-content: center;
+            }
+
+            .section-title {
+                font-size: 2rem;
+            }
+
+            nav ul {
+                display: none;
+            }
+
+            .mobile-menu-btn {
+                display: block;
+                background: none;
+                border: none;
+                font-size: 1.5rem;
+                color: var(--primary);
+                cursor: pointer;
+            }
+        }
+
+        /* === ANIMATIONS === */
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .fade-in {
+            opacity: 0;
+            animation: fadeIn 0.8s ease forwards;
+        }
+
+        .delay-1 {
+            animation-delay: 0.2s;
+        }
+
+        .delay-2 {
+            animation-delay: 0.4s;
+        }
+
+        .delay-3 {
+            animation-delay: 0.6s;
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Header -->
+    <header>
+        <div class="container header-container">
+            <div class="logo">
+                <div class="logo-icon"><i class="fas fa-clipboard-list"></i></div>
+                <div class="logo-text">Notulen<span>Pro</span></div>
+            </div>
+            <nav>
+                <ul>
+                    <li><a href="#home" class="active">Beranda</a></li>
+                    <li><a href="#benefits">Manfaat</a></li>
+                    <li><a href="#features">Fitur</a></li>
+                    <li><a href="#how">Cara Kerja</a></li>
+                </ul>
+            </nav>
+            <a href="login.php" class="cta-button fade-in">Login</a>
+        </div>
+    </header>
+
+    <!-- Hero Section -->
+    <section class="hero" id="home">
+        <div class="container">
+            <div class="hero-content">
+                <div class="hero-text fade-in">
+                    <h1>Transformasi Rapat Digital dengan <span
+                            style="background: var(--gradient-primary); -webkit-background-clip: text; background-clip: text; color: transparent;">NotulenPro</span>
+                    </h1>
+                    <p>Sistem pencatatan notulen digital yang membantu organisasi Anda mencatat, mengelola, dan
+                        mendistribusikan notulen rapat dengan lebih efisien dan profesional.</p>
+                    <div class="hero-buttons">
+                        <a href="login.php" class="cta-button">Mulai Sekarang</a>
+                        <a href="#benefits" class="secondary-button">Pelajari Manfaat</a>
+                    </div>
+                </div>
+                <div class="hero-image fade-in delay-1">
+                    <div class="dashboard-preview">
+                        <div class="dashboard-header">
+                            <div class="dashboard-dot red"></div>
+                            <div class="dashboard-dot yellow"></div>
+                            <div class="dashboard-dot green"></div>
+                            <div class="dashboard-title">Dashboard NotulenPro</div>
+                        </div>
+                        <div class="dashboard-content">
+                            <div class="dashboard-item">Notulen Aktif</div>
+                            <div class="dashboard-item">Agenda Rapat</div>
+                            <div class="dashboard-item">Peserta</div>
+                            <div class="dashboard-item">Tindak Lanjut</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Benefits Section -->
+    <section class="benefits" id="benefits">
+        <div class="container">
+            <h2 class="section-title fade-in">Manfaat Menggunakan NotulenPro</h2>
+            <p class="section-subtitle fade-in delay-1">Tingkatkan produktivitas dan profesionalisme rapat organisasi
+                Anda dengan solusi digital terpadu</p>
+            <div class="benefits-grid">
+                <div class="benefit-card fade-in">
+                    <div class="benefit-icon"><i class="fas fa-clock"></i></div>
+                    <div class="benefit-title">Menghemat Waktu</div>
+                    <div class="benefit-desc">Proses pencatatan dan distribusi notulen menjadi lebih cepat, menghemat
+                        hingga 70% waktu administrasi rapat.</div>
+                </div>
+                <div class="benefit-card fade-in delay-1">
+                    <div class="benefit-icon"><i class="fas fa-chart-line"></i></div>
+                    <div class="benefit-title">Tingkatkan Produktivitas</div>
+                    <div class="benefit-desc">Fokus pada diskusi produktif, bukan pencatatan manual. Notulen otomatis
+                        tersusun rapi dan siap didistribusikan.</div>
+                </div>
+
+    </section>
+
+    <!-- Features Section -->
+    <section class="features" id="features">
+        <div class="container">
+            <h2 class="section-title fade-in">Fitur Unggulan NotulenPro</h2>
+            <p class="section-subtitle fade-in delay-1">Dirancang khusus untuk memenuhi kebutuhan pencatatan notulen di
+                lingkungan akademik dan organisasi</p>
+            <div class="features-container">
+                <div class="feature-card fade-in">
+                    <div class="feature-icon"><i class="fas fa-edit"></i></div>
+                    <div class="feature-title">Editor Notulen Cerdas</div>
+                    <div class="feature-desc">Editor dengan template siap pakai, format otomatis, dan integrasi agenda
+                        rapat untuk pencatatan yang lebih cepat dan akurat.</div>
+                </div>
+                <div class="feature-card fade-in delay-1">
+                    <div class="feature-icon"><i class="fas fa-users"></i></div>
+                    <div class="feature-title">Manajemen Peserta</div>
+                    <div class="feature-desc">Kelola daftar peserta, pembicara, dan peran dalam rapat. Kirim undangan
+                        otomatis dan lacak kehadiran.</div>
+                </div>
+                <div class="feature-card fade-in delay-2">
+                    <div class="feature-icon"><i class="fas fa-file-export"></i></div>
+                    <div class="feature-title">Ekspor Format</div>
+                    <div class="feature-desc">Ekspor notulen dalam berbagai format PDF dengan template profesional siap
+                        cetak atau distribusi.</div>
+                </div>
+                <div class="feature-card fade-in delay-3">
+                    <div class="feature-icon"><i class="fas fa-bell"></i></div>
+                    <div class="feature-title">Pengingat Tindak Lanjut</div>
+                    <div class="feature-desc">Sistem pengingat otomatis untuk tindak lanjut rapat, memastikan tidak ada
+                        tugas yang terlupakan.</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- How It Works -->
+    <section class="how-it-works" id="how">
+        <div class="container">
+            <h2 class="section-title fade-in">Cara Kerja Sederhana</h2>
+            <p class="section-subtitle fade-in delay-1">Hanya dengan 4 langkah mudah, rapat Anda menjadi lebih
+                terstruktur dan produktif</p>
+            <div class="steps">
+                <div class="step fade-in">
+                    <div class="step-number">1</div>
+                    <div class="step-title">Buat Agenda Rapat</div>
+                    <div class="step-desc">Tentukan topik, peserta, waktu, dan tujuan rapat dalam platform</div>
+                </div>
+                <div class="step fade-in delay-1">
+                    <div class="step-number">2</div>
+                    <div class="step-title">Catat Selama Rapat</div>
+                    <div class="step-desc">Gunakan editor real-time untuk mencatat poin penting, keputusan, dan tugas
+                    </div>
+                </div>
+                <div class="step fade-in delay-2">
+                    <div class="step-number">3</div>
+                    <div class="step-title">Review & Distribusi</div>
+                    <div class="step-desc">Review notulen, tambahkan catatan, dan distribusikan ke peserta</div>
+                </div>
+                <div class="step fade-in delay-3">
+                    <div class="step-number">4</div>
+                    <div class="step-title">Tindak Lanjut</div>
+                    <div class="step-desc">Pantau progress tugas dan siapkan agenda rapat berikutnya</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- CTA Section -->
+    <section class="cta-section">
+        <div class="container">
+            <h2 class="fade-in">Siap Mengoptimalkan Rapat Organisasi Anda?</h2>
+            <p class="fade-in delay-1">Bergabunglah dengan organisasi lain yang telah meningkatkan produktivitas rapat
+                mereka dengan NotulenPro. Mulai gratis tanpa biaya apapun.</p>
+            <div class="fade-in delay-2">
+                <a href="login.php" class="cta-button">Coba Sekarang</a>
+                <a href="#features" class="cta-button light">Lihat Semua Fitur</a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer>
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-about">
+                    <div class="footer-logo">Notulen<span>Pro</span></div>
+                    <p>Sistem pencatatan notulen digital yang dirancang khusus untuk lingkungan akademik dan organisasi
+                        profesional. Tingkatkan efisiensi dan produktivitas rapat Anda.</p>
+                    <a href="login.php" class="cta-button" style="padding: 10px 24px; font-size: 0.9rem;">Login</a>
+                </div>
+                <div class="footer-links">
+                    <h3>Tautan Cepat</h3>
+                    <ul>
+                        <li><a href="#home">Beranda</a></li>
+                        <li><a href="#benefits">Manfaat</a></li>
+                        <li><a href="#features">Fitur</a></li>
+                        <li><a href="#how">Cara Kerja</a></li>
+                        <li><a href="login.php">Masuk Sistem</a></li>
+                    </ul>
+                </div>
+                <div class="footer-contact">
+                    <h3>Hubungi Kami</h3>
+                    <p><i class="fas fa-envelope"></i> andikamaster13@gmail.com</p>
+                    <p><i class="fas fa-phone"></i> +62 821-7282-2142</p>
+                    <p><i class="fas fa-map-marker-alt"></i> Batam, Indonesia</p>
+                </div>
+            </div>
+            <div class="copyright">
+                &copy; 2023 NotulenPro - Sistem Pencatatan Notulen Digital. Hak cipta dilindungi undang-undang.
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // Animasi saat scroll
+        function animateOnScroll() {
+            const fadeElements = document.querySelectorAll('.fade-in');
+
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.style.opacity = '1';
+                        entry.target.style.transform = 'translateY(0)';
+                    }
+                });
+            }, {
+                threshold: 0.1
+            });
+
+            fadeElements.forEach(el => {
+                el.style.opacity = '0';
+                el.style.transform = 'translateY(30px)';
+                el.style.transition = 'opacity 0.8s ease, transform 0.8s ease';
+                observer.observe(el);
+            });
+        }
+
+        // Smooth scroll untuk navigasi
+        document.querySelectorAll('nav a, .footer-links a').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                if (this.getAttribute('href').startsWith('#')) {
+                    e.preventDefault();
+                    const targetId = this.getAttribute('href');
+                    if (targetId === '#') return;
+
+                    const targetElement = document.querySelector(targetId);
+                    if (targetElement) {
+                        window.scrollTo({
+                            top: targetElement.offsetTop - 80,
+                            behavior: 'smooth'
+                        });
+                    }
+                }
+            });
+        });
+
+        // Update active navigation link on scroll
+        function updateActiveNavLink() {
+            const sections = document.querySelectorAll('section[id]');
+            const navLinks = document.querySelectorAll('nav a');
+
+            let currentSection = '';
+
+            sections.forEach(section => {
+                const sectionTop = section.offsetTop - 100;
+                const sectionHeight = section.clientHeight;
+                if (scrollY >= sectionTop && scrollY < sectionTop + sectionHeight) {
+                    currentSection = section.getAttribute('id');
+                }
+            });
+
+            navLinks.forEach(link => {
+                link.classList.remove('active');
+                if (link.getAttribute('href') === `#${currentSection}`) {
+                    link.classList.add('active');
+                }
+            });
+        }
+
+        // Inisialisasi saat halaman dimuat
+        document.addEventListener('DOMContentLoaded', function () {
+            animateOnScroll();
+            window.addEventListener('scroll', updateActiveNavLink);
+            updateActiveNavLink(); // Set initial active link
+        });
+    </script>
+</body>
+
+</html>
