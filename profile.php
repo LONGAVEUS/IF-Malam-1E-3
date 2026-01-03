@@ -10,25 +10,21 @@ if (!isset($_SESSION['logged_in'])) {
 
 
 /* ================== DATA USER LOGIN ================== */
-$user_id = $_SESSION['user_id'];
+$nim = $_SESSION['nim'];
 
 $stmtUser = $conn->prepare("
     SELECT full_name, email, role, photo, jurusan 
     FROM user
-    WHERE user_id = ?
+    WHERE nim = ?
 ");
-$stmtUser->bind_param("i", $user_id);
+$stmtUser->bind_param("s", $nim);
 $stmtUser->execute();
 $userLogin = $stmtUser->get_result()->fetch_assoc();
 $stmtUser->close(); 
 
 /* ================== FOTO PROFIL ================== */
-$foto_sekarang = $_SESSION['photo'] ?? $userLogin['photo'];
-
-$path_valid = (!empty($foto_sekarang) && file_exists($foto_sekarang))
-    ? $foto_sekarang
-    : 'uploads/profile_photos/default_profile.png';
-
+$foto_sekarang = $userLogin['photo'];
+$path_valid = (!empty($userLogin['photo'])) ? $userLogin['photo'] : 'uploads/profile_photos/default_profile.png';
 $current_photo_url = $path_valid . "?t=" . time();
 
 /* ================== SESSION DATA ================== */
