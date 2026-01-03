@@ -1,6 +1,6 @@
 <?php
 session_start();
-require_once 'koneksi.php'; 
+require_once 'koneksi.php';
 
 // Proteksi login
 if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
@@ -12,7 +12,7 @@ if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
 $user_id = $_SESSION['user_id'];
 
 $stmtUser = $conn->prepare("
-    SELECT full_name, role, photo
+    SELECT full_name, role, photo, email, jurusan
     FROM user
     WHERE user_id = ?
 ");
@@ -30,15 +30,10 @@ $path_valid = (!empty($foto_sekarang) && file_exists($foto_sekarang))
 
 $current_photo_url = $path_valid . "?t=" . time();
 
-
 /* ================== SESSION DATA ================== */
 $role = $_SESSION['role'];
 $username = $_SESSION['username'];
-$photo = $_SESSION['photo'] ?? "default_profile.png";
-
-$current_photo_url = (!empty($_SESSION['photo']))
-    ? $_SESSION['photo']
-    : "uploads/profile_photos/default_profile.png";
+$full_name = $_SESSION['full_name'] ?? 'User';
 
 // ================== LOGOUT ==================
 if (isset($_GET['action']) && $_GET['action'] === 'logout') {
@@ -47,201 +42,126 @@ if (isset($_GET['action']) && $_GET['action'] === 'logout') {
     exit();
 }
 
+/* ================== TENTUKAN HALAMAN AKTIF ================== */
+$current_page = basename($_SERVER['PHP_SELF']); // Mendapatkan nama file saat ini
 
-
-// Handle form submission untuk menyimpan notulen dengan lampiran
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    if (isset($_POST['simpan_notulen'])) {
-        // Tambah notulen baru
-        $judul = $_POST['judul'];
-        $tanggal = $_POST['tanggal'];
-        $isi = $_POST['isi'];
-        $penanggung_jawab = $_POST['penanggung_jawab'] ?? 'Belum ditentukan';
-        $status = 'draft';
-        $lampiran = null;
-
-        // Handle file upload
-        if (isset($_FILES['lampiran']) && $_FILES['lampiran']['error'] === UPLOAD_ERR_OK) {
-            $lampiran = handleFileUpload($_FILES['lampiran']);
-            if (isset($_SESSION['error_message'])) {
-                header("Location: admin.php");
-                exit();
-            }
-        }
-
-        // Simpan ke database
-        $sql = "INSERT INTO notulen (judul, hari, tanggal, Tempat, penanggung_jawab, notulis, Pembahasan, Hasil_akhir, status, lampiran, created_by_user_id) 
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
-        $stmt = $conn->prepare("
-    INSERT INTO notulen 
-    (judul, hari, tanggal, Tempat, penanggung_jawab, notulis, Pembahasan, Hasil_akhir, status, lamptran, created_by_user_id) 
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
-  );
-
-$stmt->bind_param("ssssssssssi", $judul, $hari, $tanggal, $tempat, $penanggung_jawab, $notulis_name, $isi,  $status, $lamptan,  
-);
-        
-        if ($stmt->execute()) {
-            $_SESSION['success_message'] = "Notulen berhasil disimpan!";
-            header("Location: notulis.php");
-            exit();
-        } else {
-            $_SESSION['error_message'] = "Error: " . $stmt->error;
-        }
-        $stmt->close();
-    }
-    elseif (isset($_POST['update_notulen'])) {
-        // Update notulen yang sudah ada
-        $id = intval($_POST['id']);
-        $judul = $_POST['judul'];
-        $tanggal = $_POST['tanggal'];
-        $isi = $_POST['isi'];
-        $penanggung_jawab = $_POST['penanggung_jawab'] ?? 'Belum ditentukan';
-        $lampiran = null;
-
-        // Handle file upload jika ada file baru
-        if (isset($_FILES['lampiran']) && $_FILES['lampiran']['error'] === UPLOAD_ERR_OK) {
-            // Hapus file lama jika ada
-            $sql_select = "SELECT lampiran FROM notulen WHERE id = ?";
-            $stmt_select = $conn->prepare($sql_select);
-            $stmt_select->bind_param("i", $id);
-            $stmt_select->execute();
-            $result = $stmt_select->get_result();
-            
-            if ($result->num_rows > 0) {
-                $notulen_lama = $result->fetch_assoc();
-                if ($notulen_lama['lampiran']) {
-                    $filepath = 'uploads/' . $notulen_lama['lampiran'];
-                    if (file_exists($filepath)) {
-                        unlink($filepath);
-                    }
-                }
-            }
-            $stmt_select->close();
-
-            // Upload file baru
-            $lampiran = handleFileUpload($_FILES['lampiran']);
-            if (isset($_SESSION['error_message'])) {
-                header("Location: notulis.php");
-                exit();
-            }
-
-            // Update dengan lampiran baru
-            $sql = "UPDATE notulen SET judul=?, tanggal=?, isi=?, penanggung_jawab=?, lampiran=? WHERE id=?";
-            $stmt = $conn->prepare($sql);
-            $stmt->bind_param("sssssi", $judul, $tanggal, $isi, $penanggung_jawab, $lampiran, $id);
-        } else {
-            // Update tanpa mengubah lampiran
-            $sql = "UPDATE notulen SET judul=?, tanggal=?, isi=?, penanggung_jawab=? WHERE id=?";
-            $stmt = $conn->prepare($sql);
-            $stmt->bind_param("ssssi", $judul, $tanggal, $isi, $penanggung_jawab, $id);
-        }
-
-        if ($stmt->execute()) {
-            $_SESSION['success_message'] = "Notulen berhasil diupdate!";
-            header("Location: notulis.php");
-            exit();
-        } else {
-            $_SESSION['error_message'] = "Error: " . $stmt->error;
-        }
-        $stmt->close();
-    }
+// Fungsi untuk menentukan apakah menu aktif
+function isMenuActive($page_name) {
+    global $current_page;
+    
+    $page_mapping = [
+        'dashboard' => 'notulis.php',
+        'notulen' => 'notulen_rapat.php',
+        'jadwal' => 'jadwal_rapat.php',
+        'profile' => 'profile.php'
+    ];
+    
+    return isset($page_mapping[$page_name]) && $current_page === $page_mapping[$page_name];
 }
 
-// Handle hapus notulen
-if (isset($_GET['hapus'])) {
-    $id = intval($_GET['hapus']);
-    
-    // Hapus file lampiran jika ada
-    $sql_select = "SELECT lampiran FROM notulen WHERE id = ?";
-    $stmt_select = $conn->prepare($sql_select);
-    $stmt_select->bind_param("i", $id);
-    $stmt_select->execute();
-    $result = $stmt_select->get_result();
-    
-    if ($result->num_rows > 0) {
-        $notulen = $result->fetch_assoc();
-        if ($notulen['lampiran']) {
-            $filepath = 'uploads/' . $notulen['lampiran'];
-            if (file_exists($filepath)) {
-                unlink($filepath);
-            }
-        }
-    }
-    $stmt_select->close();
+/* ================== FILTER PARAMETERS ================== */
+$search_filter = isset($_GET['search']) ? trim($_GET['search']) : '';
+$start_date_filter = isset($_GET['start_date']) ? $_GET['start_date'] : '';
+$end_date_filter = isset($_GET['end_date']) ? $_GET['end_date'] : '';
 
-    $sql = "DELETE FROM notulen WHERE id = ?";
-    $stmt = $conn->prepare($sql);
-    $stmt->bind_param("i", $id);
-    
-    if ($stmt->execute()) {
-        $_SESSION['success_message'] = "Notulen berhasil dihapus!";
-    } else {
-        $_SESSION['error_message'] = "Error menghapus notulen: " . $stmt->error;
-    }
-    $stmt->close();
-    header("Location: notulis.php");
+/* ================== PAGINATION ================== */
+$limit = 5; // Notulen per halaman
+$page = isset($_GET['page']) ? max(1, intval($_GET['page'])) : 1;
+$offset = ($page - 1) * $limit;
+
+// Query dasar untuk count dan data
+// Notulis melihat notulen yang dibuatnya DAN yang diundang sebagai peserta
+$sql_base = "SELECT DISTINCT n.*, k.status as status_kehadiran, k.waktu_konfirmasi 
+            FROM notulen n
+            LEFT JOIN peserta_notulen pn ON n.id = pn.notulen_id
+            LEFT JOIN kehadiran k ON n.id = k.notulen_id AND k.user_id = ?
+            WHERE (n.created_by_user_id = ? OR pn.user_id = ?) 
+            AND n.status IN ('sent', 'final')";
+
+// Tambahkan filter jika ada
+$where_conditions = [];
+$params = [$user_id, $user_id, $user_id];
+$param_types = "iii";
+
+if (!empty($search_filter)) {
+    $sql_base .= " AND (n.judul LIKE ? OR n.tempat LIKE ? OR n.penanggung_jawab LIKE ?)";
+    $search_term = "%" . $search_filter . "%";
+    $params[] = $search_term;
+    $params[] = $search_term;
+    $params[] = $search_term;
+    $param_types .= "sss";
+}
+
+if (!empty($start_date_filter)) {
+    $sql_base .= " AND n.tanggal >= ?";
+    $params[] = $start_date_filter;
+    $param_types .= "s";
+}
+
+if (!empty($end_date_filter)) {
+    $sql_base .= " AND n.tanggal <= ?";
+    $params[] = $end_date_filter;
+    $param_types .= "s";
+}
+
+// Hitung total notulen untuk pagination
+$sql_count = $sql_base;
+$stmt_count = $conn->prepare($sql_count);
+
+// Bind parameters untuk count
+if (!empty($params)) {
+    $stmt_count->bind_param($param_types, ...$params);
+}
+$stmt_count->execute();
+$result_count = $stmt_count->get_result();
+$total_notulens = $result_count->num_rows;
+$stmt_count->close();
+
+// Hitung total halaman
+$total_pages = ceil($total_notulens / $limit);
+
+// Validasi page number
+if ($page > $total_pages && $total_pages > 0) {
+    header("Location: notulis.php?page=" . $total_pages);
     exit();
 }
 
-// Fungsi untuk handle upload file
-function handleFileUpload($file) {
-    if ($file['error'] === UPLOAD_ERR_OK) {
-        $uploadDir = 'uploads/';
-        if (!is_dir($uploadDir)) {
-            mkdir($uploadDir, 0777, true);
-        }
+// Query untuk data dengan pagination
+$sql_data = $sql_base . " ORDER BY n.tanggal DESC LIMIT ? OFFSET ?";
+$params[] = $limit;
+$params[] = $offset;
+$param_types .= "ii";
 
-        $fileTmpPath = $file['tmp_name'];
-        $fileName = $file['name'];
-        $fileSize = $file['size'];
-        $fileType = $file['type'];
-        $notulis_name = $userLogin['full_name'] ?? $_SESSION['username'];
+$stmt_data = $conn->prepare($sql_data);
+$stmt_data->bind_param($param_types, ...$params);
+$stmt_data->execute();
+$result_data = $stmt_data->get_result();
 
-        // Validasi ekstensi file
-        $allowedExtensions = ['pdf', 'doc', 'docx', 'jpg', 'jpeg', 'png', 'txt'];
-        $fileExtension = strtolower(pathinfo($fileName, PATHINFO_EXTENSION));
-
-        if (in_array($fileExtension, $allowedExtensions)) {
-            // Validasi ukuran file (5MB)
-            if ($fileSize <= 5 * 1024 * 1024) {
-                // Generate nama file unik untuk menghindari konflik
-                $newFileName = uniqid() . '_' . $fileName;
-                $destPath = $uploadDir . $newFileName;
-
-                if (move_uploaded_file($fileTmpPath, $destPath)) {
-                    return $newFileName;
-                } else {
-                    $_SESSION['error_message'] = "Terjadi kesalahan saat mengunggah file.";
-                }
-            } else {
-                $_SESSION['error_message'] = "Ukuran file melebihi 5MB.";
-            }
-        } else {
-            $_SESSION['error_message'] = "Format file tidak diizinkan. Hanya PDF, DOC, DOCX, JPG, JPEG, PNG, TXT.";
-        }
-    }
-    return null;
-}
-
-// Query untuk statistik dashboard
-$sql_notulen_count = "SELECT COUNT(id) AS total FROM notulen";
-$result_notulen_count = $conn->query($sql_notulen_count);
-$total_notulen = $result_notulen_count ? $result_notulen_count->fetch_assoc()['total'] : 0;
-
+// Hitung statistik untuk notulis
 $today = date('Y-m-d');
-$sql_notulen_hari_ini = "SELECT COUNT(id) AS total FROM notulen WHERE DATE(tanggal) = '$today'";
-$result_notulen_hari_ini = $conn->query($sql_notulen_hari_ini);
-$notulen_hari_ini = $result_notulen_hari_ini ? $result_notulen_hari_ini->fetch_assoc()['total'] : 0;
-
 $current_month = date('Y-m');
-$sql_notulen_bulan_ini = "SELECT COUNT(id) AS total FROM notulen WHERE DATE_FORMAT(tanggal, '%Y-%m') = '$current_month'";
-$result_notulen_bulan_ini = $conn->query($sql_notulen_bulan_ini);
-$notulen_bulan_ini = $result_notulen_bulan_ini ? $result_notulen_bulan_ini->fetch_assoc()['total'] : 0;
 
-// Ambil daftar notulen terbaru
-$sql_notulens = "SELECT id, judul, tanggal, Pembahasan as isi, penanggung_jawab, status, lampiran as lampiran FROM notulen ORDER BY tanggal DESC, id DESC LIMIT 5";
-$result_notulens = $conn->query($sql_notulens);
+// Statistik berdasarkan notulen yang dibuat oleh notulis ini
+$sql_stats = "SELECT 
+    COUNT(id) as total_all,
+    SUM(CASE WHEN DATE(tanggal) = '$today' THEN 1 ELSE 0 END) as today_count,
+    SUM(CASE WHEN DATE_FORMAT(tanggal, '%Y-%m') = '$current_month' THEN 1 ELSE 0 END) as month_count,
+    SUM(CASE WHEN status = 'final' THEN 1 ELSE 0 END) as final_count,
+    SUM(CASE WHEN status = 'sent' THEN 1 ELSE 0 END) as sent_count
+    FROM notulen 
+    WHERE created_by_user_id = ?";
+
+$stmt_stats = $conn->prepare($sql_stats);
+$stmt_stats->bind_param("i", $user_id);
+$stmt_stats->execute();
+$stats = $stmt_stats->get_result()->fetch_assoc();
+$stmt_stats->close();
+
+$total_notulen_all = $stats['total_all'] ?? 0;
+$notulen_hari_ini = $stats['today_count'] ?? 0;
+$notulen_bulan_ini = $stats['month_count'] ?? 0;
+$notulen_final = $stats['final_count'] ?? 0;
+$notulen_terkirim = $stats['sent_count'] ?? 0;
 ?>
 
 <!DOCTYPE html>
@@ -256,85 +176,80 @@ $result_notulens = $conn->query($sql_notulens);
 </head>
 
 <body>
-  <!-- Sidebar -->
-  <div class="sidebar">
-    <div class="sidebar-header">
-      <div class="logo-area">
-        <a href="#" class="header-logo">
-          <!-- Ganti dengan path logo yang benar -->
-          <img src="if.png" alt="Politeknik Negeri Batam" />
-        </a>
-      </div>
-      <button class="toggler">
-        <span class="dekstop-icon"></span>
-        <div class="hamburger-icon">
-          <span></span>
-          <span></span>
-          <span></span>
-        </div>
-      </button>
+  <!-- Sidebar Notulis -->
+<div class="sidebar">
+  <div class="sidebar-header">
+    <div class="logo-area">
+      <a href="#" class="header-logo">
+        <img src="if.png" alt="Politeknik Negeri Batam" />
+      </a>
     </div>
-
-    <nav class="sidebar-nav">
-      <ul class="nav-list primary-nav">
-        <li class="nav-item">
-          <a href="admin.php" class="nav-link">
-            <i class="fas fa-th-large nav-icon"></i>
-            <span class="nav-label">Dashboard</span>
-          </a>
-        </li>
-        <li class="nav-item">
-          <a href="notulen_rapat.php" class="nav-link">
-            <i class="fas fa-file-alt nav-icon"></i>
-            <span class="nav-label">Notulen Rapat</span>
-          </a>
-        </li>
-        <li class="nav-item">
-          <a href="jadwal_rapat.php" class="nav-link">
-            <i class="fas fa-calendar-alt nav-icon"></i>
-            <span class="nav-label">Jadwal Rapat</span>
-          </a>
-        </li>
-      </ul>
-
-      <!-- Secondary bottom nav -->
-      <ul class="nav-list secondary-nav">
-        <li class="nav-item">
-          <a href="profile.php" class="nav-link">
-            <i class="fas fa-user-circle nav-icon"></i>
-            <span class="nav-label">Profil Saya</span>
-          </a>
-        </li>
-        <li class="nav-item">
-          <!-- Logout menggunakan PHP - tidak perlu file terpisah -->
-          <a href="admin.php?action=logout" class="nav-link" onclick="return confirm('Yakin ingin logout?');">
-            <i class="fas fa-sign-out-alt nav-icon"></i>
-            <span class="nav-label">Keluar</span>
-          </a>
-        </li>
-
-        <!-- PROFIL LOGIN -->
-        <li class="nav-item profile-user">
-          <img src="<?php echo $current_photo_url; ?>?v=<?php echo time(); ?>" class="profile-avatar">
-
-          <div class="profile-info">
-            <span class="profile-name">
-              <?= htmlspecialchars($userLogin['full_name']); ?>
-            </span>
-            <span class="profile-role">
-              <?= ucfirst($userLogin['role']); ?>
-            </span>
-          </div>
-        </li>
-      </ul>
-    </nav>
+    <button class="toggler" type="button">
+      <div class="hamburger-icon">
+        <span></span>
+        <span></span>
+        <span></span>
+      </div>
+    </button>
   </div>
 
+  <nav class="sidebar-nav">
+    <ul class="nav-list primary-nav">
+      <li class="nav-item">
+        <a href="notulis.php" class="nav-link <?php echo isMenuActive('dashboard') ? 'active' : ''; ?>">
+          <i class="fas fa-th-large nav-icon"></i>
+          <span class="nav-label">Dashboard</span>
+        </a>
+      </li>
+      <li class="nav-item">
+        <a href="notulen_rapat.php" class="nav-link <?php echo isMenuActive('notulen') ? 'active' : ''; ?>">
+          <i class="fas fa-file-alt nav-icon"></i>
+          <span class="nav-label">Notulen Rapat</span>
+        </a>
+      </li>
+      <li class="nav-item">
+        <a href="jadwal_rapat.php" class="nav-link <?php echo isMenuActive('jadwal') ? 'active' : ''; ?>">
+          <i class="fas fa-calendar-alt nav-icon"></i>
+          <span class="nav-label">Jadwal Rapat</span>
+        </a>
+      </li>
+    </ul>
+
+    <!-- Secondary bottom nav -->
+    <ul class="nav-list secondary-nav">
+      <li class="nav-item">
+        <a href="profile.php" class="nav-link <?php echo isMenuActive('profile') ? 'active' : ''; ?>">
+          <i class="fas fa-user-circle nav-icon"></i>
+          <span class="nav-label">Profil Saya</span>
+        </a>
+      </li>
+      <li class="nav-item">
+        <a href="notulis.php?action=logout" class="nav-link" onclick="return confirm('Yakin ingin logout?');">
+          <i class="fas fa-sign-out-alt nav-icon"></i>
+          <span class="nav-label">Keluar</span>
+        </a>
+      </li>
+
+      <!-- PROFIL LOGIN -->
+      <li class="nav-item profile-user">
+        <img src="<?php echo $current_photo_url; ?>?v=<?php echo time(); ?>" class="profile-avatar">
+
+        <div class="profile-info">
+          <span class="profile-name">
+            <?= htmlspecialchars($userLogin['full_name']); ?>
+          </span>
+          <span class="profile-role">
+            <?= ucfirst($userLogin['role']); ?>
+          </span>
+        </div>
+      </li>
+    </ul>
+  </nav>
+</div>
 
   <!-- Main Content -->
   <div class="main-content" id="mainContent">
     <?php if (isset($_SESSION['success_message'])): ?>
-    <!--notifikasi-->
     <div class="notification success">
       <?php echo $_SESSION['success_message']; unset($_SESSION['success_message']); ?>
     </div>
@@ -355,281 +270,279 @@ $result_notulens = $conn->query($sql_notulens);
     <div class="user-stats-grid">
       <div class="user-count-box">
         <div class="stat-icon"><i class="fas fa-file-alt"></i></div>
-        <div class="count-number"><?php echo $total_notulen; ?></div>
+        <div class="count-number"><?php echo $total_notulen_all; ?></div>
         <div class="count-label">Total Notulen</div>
       </div>
       <div class="user-count-box daily-notes">
-        <div class="stat-icon"><i class="fas fa-calendar-day"></i></div>
-        <div class="count-number"><?php echo $total_notulen; ?></div>
-        <div class="count-label">Notulen Hari Ini</div>
+        <div class="stat-icon"><i class="fas fa-check-circle"></i></div>
+        <div class="count-number"><?php echo $notulen_final; ?></div>
+        <div class="count-label">Notulen Final</div>
       </div>
       <div class="user-count-box monthly-notes">
         <div class="stat-icon"><i class="fas fa-calendar-week"></i></div>
-        <div class="count-number"><?php echo $total_notulen; ?></div>
+        <div class="count-number"><?php echo $notulen_bulan_ini; ?></div>
         <div class="count-label">Notulen Bulan Ini</div>
+      </div>
+      <div class="user-count-box">
+        <div class="stat-icon"><i class="fas fa-paper-plane"></i></div>
+        <div class="count-number"><?php echo $notulen_terkirim; ?></div>
+        <div class="count-label">Notulen Terkirim</div>
       </div>
     </div>
 
     <div class="content-section">
-      <div class="notulen-list" id="notulenList">
-        <?php
-        if ($result_notulens && $result_notulens->num_rows > 0) {
-          while ($notulen = $result_notulens->fetch_assoc()) {
-            $tanggal_formatted = date('d M Y', strtotime($notulen['tanggal']));
-            $isi_pendek = strlen($notulen['isi']) > 100 ? substr($notulen['isi'], 0, 100) . '...' : $notulen['isi'];
-            $status_class = $notulen['status'] === 'draft' ? 'draft' : 'sent';
-            $status_text = $notulen['status'] === 'draft' ? 'Draft' : 'Terkirim';
-            
-            // Tampilkan nama file asli (tanpa uniqid)
-            $nama_file_asli = $notulen['lampiran'] ? substr($notulen['lampiran'], strpos($notulen['lampiran'], '_') + 1) : '';
-            ?>
-        <div class="notulen-item" data-id="<?php echo $notulen['id']; ?>">
-          <div class="notulen-main">
-            <h3 class="notulen-title"><?php echo htmlspecialchars($notulen['judul']); ?></h3>
-            <p class="notulen-preview"><?php echo htmlspecialchars($isi_pendek); ?></p>
-            <div class="notulen-meta">
-              <span class="notulen-date"><i class="fas fa-calendar"></i> <?php echo $tanggal_formatted; ?></span>
-              <span class="notulen-penanggung-jawab"><i class="fas fa-user"></i>
-                <?php echo htmlspecialchars($notulen['penanggung_jawab']); ?></span>
-              <span class="notulen-status <?php echo $status_class; ?>"><?php echo $status_text; ?></span>
-              <?php if (!empty($notulen['lampiran'])): ?>
-              <span class="notulen-lampiran">
-                <i class="fas fa-paperclip"></i>
-                <a href="view.php?file=<?php echo urlencode($notulen['lampiran']); ?>" target="_blank"
-                  title="<?php echo htmlspecialchars($nama_file_asli); ?>">
-                  Lampiran
-                </a>
-              </span>
-              <?php endif; ?>
-            </div>
-          </div>
-          <div class="notulen-actions">
-            <button class="action-btn edit" title="Edit Notulen" data-id="<?php echo $notulen['id']; ?>">
-              <i class="fas fa-edit"></i>
-            </button>
-            <a href="notulis.php?hapus=<?php echo $notulen['id']; ?>" class="action-btn delete" title="Hapus Notulen"
-              onclick="return confirm('Apakah Anda yakin ingin menghapus notulen ini?')">
-              <i class="fas fa-trash"></i>
-            </a>
-            <button class="action-btn send" title="Kirim ke Peserta" data-id="<?php echo $notulen['id']; ?>">
-              <i class="fas fa-paper-plane"></i>
-            </button>
-            <?php if (!empty($notulen['lampiran'])): ?>
-            <a href="view.php?file=<?php echo urlencode($notulen['lampiran']); ?>" class="action-btn download"
-              target="_blank" title="Lihat Lampiran">
-              <i class="fas fa-eye"></i>
-            </a>
-            <?php endif; ?>
-          </div>
+      <div class="section-header">
+        <h2><i class="fas fa-file-alt"></i> Notulen Rapat</h2>
+        <div class="filter-info">
+          <i class="fas fa-info-circle"></i> Menampilkan notulen yang sudah dikirim
         </div>
-        <?php
-          }
-        } else {
-          echo '<div class="empty-state">
-                  <i class="fas fa-file-alt"></i>
-                  <h3>Tidak ada notulen</h3>
-                  <p>Belum ada notulen yang dibuat. Klik tombol "Tambah Notulen" untuk membuat yang pertama.</p>
-                </div>';
-        }
-        ?>
       </div>
+
+      <!-- Search dan Filter -->
+      <div class="search-bar">
+        <div class="search-row">
+          <div class="search-box">
+            <i class="fas fa-search"></i>
+            <input type="text" id="searchInput" placeholder="Cari Judul, Tempat, atau Penanggung Jawab..." 
+                   value="<?php echo htmlspecialchars($search_filter); ?>">
+          </div>
+          
+          <div class="date-filter">
+            <input type="date" id="startDate" placeholder="Tanggal Mulai" 
+                   value="<?php echo htmlspecialchars($start_date_filter); ?>">
+            <span> - </span>
+            <input type="date" id="endDate" placeholder="Tanggal Selesai"
+                   value="<?php echo htmlspecialchars($end_date_filter); ?>">
+          </div>
+          
+          <button id="clearBtn" class="clear-btn">
+            <i class="fas fa-times"></i> Clear
+          </button>
+        </div>
+      </div>
+
+      <div class="notulen-list" id="notulenList">
+        <?php if ($result_data && $result_data->num_rows > 0): ?>
+            <?php while ($notulen = $result_data->fetch_assoc()): ?>
+                <?php
+                $tanggal_formatted = date('d M Y', strtotime($notulen['tanggal']));
+                $hari = date('l', strtotime($notulen['tanggal']));
+                
+                $hari_indonesia = [
+                    'Monday' => 'Senin', 'Tuesday' => 'Selasa', 'Wednesday' => 'Rabu',
+                    'Thursday' => 'Kamis', 'Friday' => 'Jumat', 'Saturday' => 'Sabtu',
+                    'Sunday' => 'Minggu'
+                ];
+                $hari = $hari_indonesia[$hari] ?? $hari;
+                
+                // Hanya cek apakah user dapat mengkonfirmasi (untuk modal)
+                $can_confirm = ($notulen['status'] === 'sent' && $notulen['status_kehadiran'] !== 'hadir');
+                
+                $sql_peserta = "SELECT COUNT(*) as total FROM peserta_notulen WHERE notulen_id = ?";
+                $stmt_peserta = $conn->prepare($sql_peserta);
+                $stmt_peserta->bind_param("i", $notulen['id']);
+                $stmt_peserta->execute();
+                $total_peserta = $stmt_peserta->get_result()->fetch_assoc()['total'];
+                $stmt_peserta->close();
+                
+                $sql_hadir = "SELECT COUNT(*) as hadir FROM kehadiran WHERE notulen_id = ? AND status = 'hadir'";
+                $stmt_hadir = $conn->prepare($sql_hadir);
+                $stmt_hadir->bind_param("i", $notulen['id']);
+                $stmt_hadir->execute();
+                $total_hadir = $stmt_hadir->get_result()->fetch_assoc()['hadir'];
+                $stmt_hadir->close();
+                
+                $has_lampiran = false;
+                  $lampiran_count = 0;
+                  if (!empty($notulen['lampiran'])) {
+                      $lampiran = json_decode($notulen['lampiran'], true);
+                      if (is_array($lampiran) && count($lampiran) > 0) {
+                          $has_lampiran = true;
+                          $lampiran_count = count($lampiran);
+                      }
+                  }
+                ?>
+                
+                <div class="notulen-item" data-notulen-id="<?php echo $notulen['id']; ?>">
+                    <div class="notulen-main">
+                        <div class="notulen-header">
+                            <h3 class="notulen-title"><?php echo htmlspecialchars($notulen['judul']); ?></h3>
+                            <div class="status-container">
+                                <span class="notulen-status status-<?php echo $notulen['status']; ?>">
+                                    <?php echo ucfirst($notulen['status']); ?>
+                                </span>
+                            </div>
+                        </div>
+                        
+                        <div class="notulen-meta">
+                            <span class="notulen-meta-item">
+                                <i class="fas fa-calendar"></i> <?php echo $hari . ', ' . $tanggal_formatted; ?>
+                            </span>
+                            <span class="notulen-meta-item">
+                                <i class="fas fa-clock"></i> <?php echo $notulen['jam_mulai'] . ' - ' . $notulen['jam_selesai']; ?>
+                            </span>
+                            <span class="notulen-meta-item">
+                                <i class="fas fa-map-marker-alt"></i> <?php echo htmlspecialchars($notulen['tempat']); ?>
+                            </span>
+                            <span class="notulen-meta-item">
+                                <i class="fas fa-user-tie"></i> <?php echo htmlspecialchars($notulen['penanggung_jawab']); ?>
+                            </span>
+                            <span class="notulen-meta-item">
+                                <i class="fas fa-graduation-cap"></i> <?php echo htmlspecialchars($notulen['jurusan']); ?>
+                            </span>
+                            <span class="notulen-meta-item">
+                                <i class="fas fa-users"></i> <?php echo $total_peserta; ?> peserta
+                            </span>
+                            
+                            <?php if ($has_lampiran): ?>
+                                <a href="#" 
+                                  class="lampiran-badge" 
+                                  onclick="showLampiran(<?php echo $notulen['id']; ?>)"
+                                  title="Lihat Lampiran">
+                                    <i class="fas fa-paperclip"></i> Lampiran (<?php echo $lampiran_count; ?>)
+                                </a>
+                            <?php endif; ?>
+                        </div>
+                    </div>
+                    
+                    <div class="notulen-actions">
+                        <button type="button" class="action-btn view" title="Lihat Detail" 
+                                data-notulen-id="<?php echo $notulen['id']; ?>">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                        
+                        <?php if ($notulen['status'] === 'final' && ($notulen['status_kehadiran'] === 'hadir' || $notulen['created_by_user_id'] == $user_id)): ?>
+                            <a href="generate_pdf.php?id=<?php echo $notulen['id']; ?>&download=1" 
+                              class="action-btn download" 
+                              title="Download Notulen (PDF)" 
+                              target="_blank">
+                                <i class="fas fa-download"></i>
+                            </a>
+                        <?php endif; ?>
+                    </div>
+                </div>
+            <?php endwhile; ?>
+        <?php else: ?>
+            <div class="empty-state">
+                <i class="fas fa-file-alt"></i>
+                <h3>Tidak ada notulen tersedia</h3>
+                <p><?php echo !empty($search_filter) || !empty($start_date_filter) || !empty($end_date_filter) 
+                    ? 'Coba ubah kata kunci pencarian atau filter tanggal' 
+                    : 'Belum ada notulen rapat yang tersedia untuk Anda.'; ?></p>
+            </div>
+        <?php endif; ?>
+    </div>
+
+      <!-- Pagination -->
+      <?php if ($total_pages > 1): ?>
+        <div class="pagination-container">
+          <div class="pagination-info">
+            Menampilkan <?php echo ($offset + 1); ?>-<?php echo min($offset + $limit, $total_notulens); ?> dari <?php echo $total_notulens; ?> notulen
+          </div>
+          
+          <ul class="pagination">
+            <?php if ($page > 1): ?>
+              <li>
+                <a href="?page=1<?php echo $search_filter ? '&search=' . urlencode($search_filter) : ''; ?><?php echo $start_date_filter ? '&start_date=' . $start_date_filter : ''; ?><?php echo $end_date_filter ? '&end_date=' . $end_date_filter : ''; ?>" title="Halaman pertama">
+                  <i class="fas fa-angle-double-left"></i>
+                </a>
+              </li>
+              <li>
+                <a href="?page=<?php echo $page - 1; ?><?php echo $search_filter ? '&search=' . urlencode($search_filter) : ''; ?><?php echo $start_date_filter ? '&start_date=' . $start_date_filter : ''; ?><?php echo $end_date_filter ? '&end_date=' . $end_date_filter : ''; ?>" title="Sebelumnya">
+                  <i class="fas fa-angle-left"></i>
+                </a>
+              </li>
+            <?php else: ?>
+              <li class="disabled">
+                <span><i class="fas fa-angle-double-left"></i></span>
+              </li>
+              <li class="disabled">
+                <span><i class="fas fa-angle-left"></i></span>
+              </li>
+            <?php endif; ?>
+            
+            <?php 
+            $start_page = max(1, $page - 2);
+            $end_page = min($total_pages, $page + 2);
+            
+            if ($start_page > 1) {
+              echo '<li><a href="?page=1';
+              if ($search_filter) echo '&search=' . urlencode($search_filter);
+              if ($start_date_filter) echo '&start_date=' . $start_date_filter;
+              if ($end_date_filter) echo '&end_date=' . $end_date_filter;
+              echo '">1</a></li>';
+              if ($start_page > 2) echo '<li class="disabled"><span>...</span></li>';
+            }
+            
+            for ($i = $start_page; $i <= $end_page; $i++): 
+            ?>
+              <li <?php echo ($i == $page) ? 'class="active"' : ''; ?>>
+                <a href="?page=<?php echo $i; ?><?php echo $search_filter ? '&search=' . urlencode($search_filter) : ''; ?><?php echo $start_date_filter ? '&start_date=' . $start_date_filter : ''; ?><?php echo $end_date_filter ? '&end_date=' . $end_date_filter : ''; ?>">
+                  <?php echo $i; ?>
+                </a>
+              </li>
+            <?php endfor; ?>
+            
+            <?php if ($end_page < $total_pages): 
+              if ($end_page < $total_pages - 1) echo '<li class="disabled"><span>...</span></li>';
+            ?>
+              <li>
+                <a href="?page=<?php echo $total_pages; ?><?php echo $search_filter ? '&search=' . urlencode($search_filter) : ''; ?><?php echo $start_date_filter ? '&start_date=' . $start_date_filter : ''; ?><?php echo $end_date_filter ? '&end_date=' . $end_date_filter : ''; ?>">
+                  <?php echo $total_pages; ?>
+                </a>
+              </li>
+            <?php endif; ?>
+            
+            <?php if ($page < $total_pages): ?>
+              <li>
+                <a href="?page=<?php echo $page + 1; ?><?php echo $search_filter ? '&search=' . urlencode($search_filter) : ''; ?><?php echo $start_date_filter ? '&start_date=' . $start_date_filter : ''; ?><?php echo $end_date_filter ? '&end_date=' . $end_date_filter : ''; ?>" title="Berikutnya">
+                  <i class="fas fa-angle-right"></i>
+                </a>
+              </li>
+              <li>
+                <a href="?page=<?php echo $total_pages; ?><?php echo $search_filter ? '&search=' . urlencode($search_filter) : ''; ?><?php echo $start_date_filter ? '&start_date=' . $start_date_filter : ''; ?><?php echo $end_date_filter ? '&end_date=' . $end_date_filter : ''; ?>" title="Halaman terakhir">
+                  <i class="fas fa-angle-double-right"></i>
+                </a>
+              </li>
+            <?php else: ?>
+              <li class="disabled">
+                <span><i class="fas fa-angle-right"></i></span>
+              </li>
+              <li class="disabled">
+                <span><i class="fas fa-angle-double-right"></i></span>
+              </li>
+            <?php endif; ?>
+          </ul>
+        </div>
+      <?php endif; ?>
     </div>
   </div>
 
-  <!-- Modal Tambah/Edit Notulen -->
-  <div class="modal-overlay" id="notulenModal">
-    <div class="modal-container">
+  <!-- Modal Detail Notulen -->
+  <div class="modal-overlay" id="detailModal">
+    <div class="modal-container wide-modal">
       <div class="modal-header">
-        <h2 id="modalTitle">Tambah Notulen Baru</h2>
-        <button class="modal-close" id="closeModal">&times;</button>
+        <h2 id="detailModalTitle">
+          <i class="fas fa-file-alt"></i> Detail Notulen Lengkap
+        </h2>
+        <button class="modal-close" id="closeDetailModal">&times;</button>
       </div>
       <div class="modal-body">
-        <form id="notulenForm" method="POST" action="notulis.php" enctype="multipart/form-data">
-          <input type="hidden" name="simpan_notulen" value="1" id="formAction">
-          <input type="hidden" name="id" id="notulenId">
-          <div class="form-group">
-            <label for="judulRapat">Judul Rapat *</label>
-            <input type="text" id="judulRapat" name="judul" placeholder="Masukkan judul rapat" required>
-          </div>
-          <div class="form-group">
-            <label for="tanggalRapat">Tanggal Rapat *</label>
-            <input type="date" id="tanggalRapat" name="tanggal" required>
-          </div>
-          <div class="form-group">
-            <label for="penanggungJawab">Penanggung Jawab</label>
-            <input type="text" id="penanggungJawab" name="penanggung_jawab" placeholder="Nama penanggung jawab">
-          </div>
-          <div class="form-group">
-            <label for="isiNotulen">Isi Notulen *</label>
-            <textarea id="isiNotulen" name="isi" rows="6" placeholder="Tulis isi notulen rapat di sini..."
-              required></textarea>
-          </div>
-          <div class="form-group">
-            <label for="lampiran">Lampiran (Opsional)</label>
-            <input type="file" id="lampiran" name="lampiran" accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.txt">
-            <small class="file-info">Format yang diizinkan: PDF, DOC, DOCX, JPG, JPEG, PNG, TXT. Maksimal 5MB.</small>
-            <div id="currentFile" class="current-file" style="margin-top: 5px; display: none;">
-              <small>File saat ini: <span id="currentFileName"></span></small>
-            </div>
-          </div>
-          <div class="form-actions">
-            <button type="button" class="btn btn-cancel" id="cancelBtn">Batal</button>
-            <button type="submit" class="btn btn-submit" id="submitBtn">Simpan Notulen</button>
-          </div>
-        </form>
+        <div id="detailModalContent">
+          <!-- Konten akan diisi oleh JavaScript -->
+        </div>
       </div>
     </div>
   </div>
 
-  <script>
-    document.addEventListener("DOMContentLoaded", function () {
-      /* ================= ELEMEN SELECTOR ================= */
-      const sidebar = document.querySelector(".sidebar");
-      const toggler = document.querySelector(".toggler");
-      const sidebarNav = document.querySelector(".sidebar-nav");
-
-      const modal = document.getElementById("notulenModal");
-      const tambahBtn = document.getElementById("tambahNotulenBtn");
-      const closeBtn = document.getElementById("closeModal");
-      const cancelBtn = document.getElementById("cancelBtn");
-      const notulenForm = document.getElementById("notulenForm");
-      const fileInput = document.getElementById("lampiran");
-
-      const modalTitle = document.getElementById("modalTitle");
-      const formAction = document.getElementById("formAction");
-      const notulenId = document.getElementById("notulenId");
-      const submitBtn = document.getElementById("submitBtn");
-      const currentFile = document.getElementById("currentFile");
-
-      // Validasi awal agar tidak error jika elemen tidak ditemukan
-      if (!sidebar || !toggler || !sidebarNav) return;
-
-      /* ================= EVENT SIDEBAR ================= */
-      toggler.addEventListener("click", function (e) {
-        e.stopPropagation();
-        if (window.innerWidth <= 768) {
-          sidebarNav.classList.toggle("active");
-        }
-      });
-
-      document.addEventListener("click", function (e) {
-        if (window.innerWidth <= 768 && !sidebar.contains(e.target)) {
-          sidebarNav.classList.remove("active");
-        }
-      });
-
-      window.addEventListener("resize", function () {
-        if (window.innerWidth > 768) {
-          sidebarNav.classList.remove("active");
-        }
-      });
-
-      /* ================= EVENT MODAL ================= */
-      if (tambahBtn) {
-        tambahBtn.addEventListener("click", function () {
-          resetModal();
-          showModal();
-        });
-      }
-
-      if (closeBtn) closeBtn.addEventListener("click", hideModal);
-      if (cancelBtn) cancelBtn.addEventListener("click", hideModal);
-
-      window.addEventListener("click", function (e) {
-        if (e.target === modal) hideModal();
-      });
-
-      document.addEventListener("keydown", function (e) {
-        if (e.key === "Escape" && modal?.style.display === "flex") {
-          hideModal();
-        }
-      });
-
-      if (notulenForm) notulenForm.addEventListener("submit", handleFormSubmit);
-      if (fileInput) fileInput.addEventListener("change", validateFile);
-
-      /* ================= HELPER FUNCTIONS ================= */
-      function showModal() {
-        if (modal) {
-          modal.style.display = "flex";
-          document.body.style.overflow = "hidden";
-        }
-      }
-
-      function hideModal() {
-        if (modal) {
-          modal.style.display = "none";
-          document.body.style.overflow = "auto";
-        }
-      }
-
-      function resetModal() {
-        notulenForm?.reset();
-        if (fileInput) fileInput.value = "";
-        if (currentFile) currentFile.style.display = "none";
-
-        if (formAction) {
-          formAction.name = "simpan_notulen";
-          formAction.value = "1";
-        }
-
-        if (notulenId) notulenId.value = "";
-        if (modalTitle) modalTitle.textContent = "Tambah Notulen";
-        if (submitBtn) submitBtn.textContent = "Simpan Notulen";
-
-        setDefaultDate();
-      }
-
-      function setDefaultDate() {
-        const dateInput = document.getElementById("tanggalRapat");
-        if (dateInput && !notulenId?.value) {
-          dateInput.value = new Date().toISOString().split("T")[0];
-        }
-      }
-
-      function handleFormSubmit(e) {
-        e.preventDefault();
-        const judul = document.getElementById("judulRapat")?.value.trim();
-        const tanggal = document.getElementById("tanggalRapat")?.value;
-        const isi = document.getElementById("isiNotulen")?.value.trim();
-
-        if (!judul || !tanggal || !isi) {
-          showNotification("Lengkapi semua field wajib!", "error");
-          return;
-        }
-        notulenForm.submit();
-      }
-
-      function validateFile() {
-        const file = fileInput.files[0];
-        if (!file) return;
-
-        const allowed = ["pdf", "doc", "docx", "jpg", "jpeg", "png", "txt"];
-        const ext = file.name.split(".").pop().toLowerCase();
-
-        if (!allowed.includes(ext) || file.size > 5 * 1024 * 1024) {
-          showNotification("File tidak valid (Format salah atau ukuran > 5MB)", "error");
-          fileInput.value = "";
-        }
-      }
-
-      function showNotification(msg, type = "info") {
-        const notif = document.createElement("div");
-        notif.className = `notification ${type}`;
-        notif.textContent = msg;
-        document.body.appendChild(notif);
-
-        setTimeout(() => {
-          notif.style.opacity = "0";
-          setTimeout(() => notif.remove(), 500);
-        }, 3000);
-      }
-    });
-  </script>
+  <script src="notulis-script.js"></script>
 </body>
 
 </html>
 <?php
+if (isset($stmt_data) && $stmt_data) {
+    $stmt_data->close();
+}
 if (isset($conn)) {
     $conn->close();
 }
