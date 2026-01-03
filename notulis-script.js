@@ -1,6 +1,7 @@
-// ================= DASHBOARD NOTULIS =================
+// tamu_script.js - VERSI TERBARU MENGIKUTI STRUKTUR NOTULIS
+
 document.addEventListener("DOMContentLoaded", function () {
-  /* ================= SIDEBAR (SEPERTI ADMIN) ================= */
+  /* ================= SIDEBAR MOBILE ================= */
   const sidebar = document.querySelector(".sidebar");
   const toggler = document.querySelector(".toggler");
   const sidebarNav = document.querySelector(".sidebar-nav");
@@ -33,6 +34,7 @@ document.addEventListener("DOMContentLoaded", function () {
   });
 
   /* ================= MODAL DETAIL ================= */
+  // ... (sisa kode modal detail tetap sama)
   const detailModal = document.getElementById("detailModal");
   const closeDetailBtn = document.getElementById("closeDetailModal");
   const detailModalContent = document.getElementById("detailModalContent");
@@ -71,6 +73,15 @@ document.addEventListener("DOMContentLoaded", function () {
       const notulenId = button.getAttribute('data-notulen-id');
       if (notulenId && notulenId !== '0') {
         showNotulenDetail(notulenId);
+      }
+    }
+    
+    // Tombol konfirmasi kehadiran dari list
+    if (e.target.closest('.action-btn.konfirmasi')) {
+      const button = e.target.closest('.action-btn.konfirmasi');
+      const notulenId = button.getAttribute('data-notulen-id');
+      if (notulenId && notulenId !== '0') {
+        konfirmasiKehadiranModal(notulenId);
       }
     }
   });
@@ -112,7 +123,7 @@ document.addEventListener("DOMContentLoaded", function () {
       endDate.value = '';
       
       // Redirect ke halaman 1 tanpa filter
-      window.location.href = 'notulis.php?page=1';
+      window.location.href = 'tamu.php?page=1';
     });
   }
 
@@ -136,11 +147,11 @@ document.addEventListener("DOMContentLoaded", function () {
     params.append('page', 1);
     
     // Redirect to filtered page
-    window.location.href = 'notulis.php?' + params.toString();
+    window.location.href = 'tamu.php?' + params.toString();
   }
 
   /* ================= FUNGSI DETAIL NOTULEN ================= */
-function showNotulenDetail(id) {
+  function showNotulenDetail(id) {
     if (!detailModal || !detailModalContent) return;
     
     detailModalContent.innerHTML = '<div class="loading-modal"><i class="fas fa-spinner fa-spin"></i> Memuat detail notulen...</div>';
@@ -179,7 +190,7 @@ function showNotulenDetail(id) {
         const persentaseHadir = totalPeserta > 0 ? Math.round((totalHadir / totalPeserta) * 100) : 0;
         
         // Tentukan apakah user bisa melihat detail lengkap
-        const canViewDetails = isCreator || userStatusKehadiran === 'hadir' || userRole === 'notulis' && isCreator;
+        const canViewDetails = userStatusKehadiran === 'hadir';
         
         // Tentukan status kehadiran user
         let userKehadiranSection = '';
@@ -199,10 +210,10 @@ function showNotulenDetail(id) {
                   <i class="fas fa-user-check"></i>
                   <span>Anda sudah konfirmasi: <strong>${statusText}</strong>${waktu}</span>
                 </div>
-                ${!canViewDetails && !isCreator ? `
+                ${!canViewDetails ? `
                   <div class="access-warning">
                     <i class="fas fa-exclamation-triangle"></i>
-                    <p>Sebagai peserta, Anda harus hadir untuk mengakses detail lengkap notulen.</p>
+                    <p>Karena Anda tidak hadir, akses ke detail notulen dibatasi.</p>
                   </div>
                 ` : ''}
               </div>
@@ -215,10 +226,10 @@ function showNotulenDetail(id) {
                 <h4><i class="fas fa-user-check"></i> Konfirmasi Kehadiran</h4>
               </div>
               <div class="kehadiran-info">
-                <p>Silakan konfirmasi kehadiran Anda:</p>
+                <p>Silakan konfirmasi kehadiran Anda untuk mengakses detail lengkap:</p>
                 <div class="modal-actions">
                   <button class="confirm-btn hadir" onclick="konfirmasiKehadiranModal(${notulen.id})">
-                    <i class="fas fa-check"></i> Hadir
+                    <i class="fas fa-check"></i> Konfirmasi Hadir
                   </button>
                 </div>
               </div>
@@ -226,27 +237,9 @@ function showNotulenDetail(id) {
           `;
         }
         
-        // Info khusus untuk pembuat notulen
-        let creatorInfo = '';
-        if (isCreator) {
-          creatorInfo = `
-            <div class="section-card">
-              <div class="section-header">
-                <h4><i class="fas fa-user-edit"></i> Anda adalah Pembuat Notulen</h4>
-              </div>
-              <div class="kehadiran-info">
-                <div class="kehadiran-status-display hadir">
-                  <i class="fas fa-check-circle"></i>
-                  <span>Anda memiliki akses penuh ke semua detail notulen ini.</span>
-                </div>
-              </div>
-            </div>
-          `;
-        }
-        
-        // Section peserta (hanya untuk yang memiliki akses)
+        // Section peserta (hanya untuk yang hadir)
         let pesertaSection = '';
-        if (canViewDetails || isCreator) {
+        if (canViewDetails) {
           pesertaSection = `
             <div class="section-card">
               <div class="section-header">
@@ -319,19 +312,19 @@ function showNotulenDetail(id) {
               </div>
               <div class="access-restricted">
                 <i class="fas fa-lock"></i>
-                <p>${isCreator ? 'Akses ke daftar peserta tersedia untuk pembuat notulen.' : 'Akses ke daftar peserta dibatasi hanya untuk peserta yang hadir.'}</p>
+                <p>Akses ke daftar peserta hanya tersedia untuk peserta yang hadir.</p>
               </div>
             </div>
           `;
         }
         
-        // Section pembahasan (hanya untuk yang memiliki akses)
+        // Section pembahasan (hanya untuk yang hadir)
         let pembahasanSection = '';
-        if (canViewDetails || isCreator) {
+        if (canViewDetails) {
           pembahasanSection = `
             <div class="section-card">
               <div class="section-header">
-                <h4><i class="fas fa-comments"></i> Pembahasan</h4>
+                <h4><i class="fas fa-comments"></i> Pembahasan Rapat</h4>
               </div>
               <div class="content-text">
                 ${notulen.pembahasan ? escapeHtml(notulen.pembahasan).replace(/\n/g, '<br>') : 
@@ -343,23 +336,23 @@ function showNotulenDetail(id) {
           pembahasanSection = `
             <div class="section-card">
               <div class="section-header">
-                <h4><i class="fas fa-comments"></i> Pembahasan</h4>
+                <h4><i class="fas fa-comments"></i> Pembahasan Rapat</h4>
               </div>
               <div class="access-restricted">
                 <i class="fas fa-lock"></i>
-                <p>${isCreator ? 'Konten pembahasan dapat diakses oleh pembuat notulen.' : 'Konten pembahasan hanya dapat diakses oleh peserta yang hadir.'}</p>
+                <p>Konten pembahasan hanya dapat diakses oleh peserta yang hadir.</p>
               </div>
             </div>
           `;
         }
         
-        // Section hasil akhir (hanya untuk yang memiliki akses)
+        // Section hasil akhir (hanya untuk yang hadir)
         let hasilAkhirSection = '';
-        if (canViewDetails || isCreator) {
+        if (canViewDetails) {
           hasilAkhirSection = `
             <div class="section-card">
               <div class="section-header">
-                <h4><i class="fas fa-check-circle"></i> Hasil Akhir</h4>
+                <h4><i class="fas fa-check-circle"></i> Hasil Akhir Rapat</h4>
               </div>
               <div class="content-text">
                 ${notulen.hasil_akhir ? escapeHtml(notulen.hasil_akhir).replace(/\n/g, '<br>') : 
@@ -371,19 +364,19 @@ function showNotulenDetail(id) {
           hasilAkhirSection = `
             <div class="section-card">
               <div class="section-header">
-                <h4><i class="fas fa-check-circle"></i> Hasil Akhir</h4>
+                <h4><i class="fas fa-check-circle"></i> Hasil Akhir Rapat</h4>
               </div>
               <div class="access-restricted">
                 <i class="fas fa-lock"></i>
-                <p>${isCreator ? 'Hasil akhir rapat dapat diakses oleh pembuat notulen.' : 'Hasil akhir rapat hanya dapat diakses oleh peserta yang hadir.'}</p>
+                <p>Hasil akhir rapat hanya dapat diakses oleh peserta yang hadir.</p>
               </div>
             </div>
           `;
         }
         
-        // Proses lampiran dengan penanganan yang benar
+        // Section lampiran (hanya untuk yang hadir)
         let lampiranSection = '';
-        if (canViewDetails || isCreator) {
+        if (canViewDetails) {
           let lampiranHtml = '';
           if (lampiran && lampiran.length > 0) {
             lampiranHtml = `
@@ -394,17 +387,13 @@ function showNotulenDetail(id) {
                     let fileName = '';
                     let filePath = '';
                     
-                    // Jika file adalah string biasa
                     if (typeof file === 'string') {
                       fileName = file;
-                      // Ekstrak nama file asli dari format timestamp_namafile.ext
                       if (fileName.includes('_')) {
                         fileName = fileName.split('_').slice(1).join('_');
                       }
                       filePath = `uploads/${file}`;
-                    }
-                    // Jika file adalah object
-                    else if (typeof file === 'object' && file !== null) {
+                    } else if (typeof file === 'object' && file !== null) {
                       fileName = file.original_name || file.file_name || 'file';
                       filePath = file.file_path || `uploads/${file.file_name || file}`;
                     }
@@ -433,7 +422,6 @@ function showNotulenDetail(id) {
                       </div>
                     `;
                   } catch (error) {
-                    console.error('Error processing file:', file, error);
                     return `<div class="error-message">Error loading file</div>`;
                   }
                 }).join('')}
@@ -454,7 +442,6 @@ function showNotulenDetail(id) {
                 <h4><i class="fas fa-paperclip"></i> Lampiran</h4>
                 <span class="section-count">${lampiran.length} file</span>
               </div>
-              
               ${lampiranHtml}
             </div>
           `;
@@ -466,26 +453,27 @@ function showNotulenDetail(id) {
               </div>
               <div class="access-restricted">
                 <i class="fas fa-lock"></i>
-                <p>${isCreator ? 'Lampiran dapat diakses oleh pembuat notulen.' : 'Lampiran hanya dapat diakses oleh peserta yang hadir.'}</p>
+                <p>Lampiran hanya dapat diakses oleh peserta yang hadir.</p>
               </div>
             </div>
           `;
         }
         
-        // Tombol download PDF (hanya untuk yang memiliki akses dan notulen final)
+        // Tombol download PDF (hanya untuk yang hadir dan notulen final)
         let downloadButtonSection = '';
-        if (notulen.status === 'final' && (canViewDetails || isCreator)) {
+        if (notulen.status === 'final' && canViewDetails) {
           downloadButtonSection = `
             <div class="modal-actions center-actions">
               <a href="generate_pdf.php?id=${notulen.id}&download=1" 
-                class="confirm-btn hadir download-full" target="_blank">
+                class="confirm-btn hadir download-full" 
+                target="_blank">
                 <i class="fas fa-download"></i> Download Notulen (PDF)
               </a>
             </div>
           `;
         }
         
-        // HTML untuk modal dengan layout yang rapi (TANPA TOMBOL HAPUS)
+        // HTML untuk modal dengan layout yang rapi (sama seperti notulis)
         const html = `
           <div class="detail-container">
             <!-- Header Notulen -->
@@ -493,18 +481,13 @@ function showNotulenDetail(id) {
               <h3 class="detail-title">${escapeHtml(notulen.judul)}</h3>
               <div class="detail-status-container">
                 <span class="notulen-status status-${notulen.status}">
-                  ${notulen.status === 'sent' ? 'Sent' : 'Final'}
+                  ${notulen.status === 'sent' ? 'Terkirim' : 'Akhir'}
                 </span>
                 <span class="info-badge">
                   <i class="fas fa-calendar"></i> ${tanggal}
                 </span>
-                ${isCreator ? `
-                  <span class="info-badge pembuat">
-                    <i class="fas fa-user-edit"></i> Pembuat Notulen
-                  </span>
-                ` : ''}
                 <span class="info-badge" style="background: var(--info-color);">
-                  <i class="fas fa-user-tag"></i> Notulis
+                  <i class="fas fa-user-tag"></i> Tamu
                 </span>
               </div>
             </div>
@@ -546,7 +529,7 @@ function showNotulenDetail(id) {
                 <div class="info-value">${escapeHtml(notulen.jurusan)}</div>
               </div>
               
-              ${canViewDetails || isCreator ? `
+              ${canViewDetails ? `
               <div class="info-item">
                 <div class="info-label">
                   <i class="fas fa-users"></i> Kehadiran
@@ -560,7 +543,6 @@ function showNotulenDetail(id) {
               ` : ''}
             </div>
             
-            ${creatorInfo}
             ${userKehadiranSection}
             ${pesertaSection}
             ${pembahasanSection}
@@ -609,7 +591,6 @@ function showNotulenDetail(id) {
       showNotification('Terjadi kesalahan jaringan', 'error');
     });
   }
-
 
   /* ================= HELPER FUNCTIONS ================= */
   function escapeHtml(text) {
