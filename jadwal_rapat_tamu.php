@@ -64,14 +64,9 @@ $role = $userLogin['role'];
 /* ==================================================
    5. FOTO PROFIL (FALLBACK)
 ================================================== */
-$foto_sekarang = $_SESSION['photo'] ?? $userLogin['photo'];
-
-$path_valid = (!empty($foto_sekarang) && file_exists($foto_sekarang))
-    ? $foto_sekarang
+$fotoProfil = (!empty($userLogin['photo']) && file_exists($userLogin['photo']))
+    ? $userLogin['photo']
     : 'uploads/profile_photos/default_profile.png';
-
-$current_photo_url = $path_valid . "?t=" . time();
-
 
 /* ==================================================
    6. DASHBOARD BERDASARKAN ROLE
@@ -279,14 +274,14 @@ $offset = $hari_pertama - 1;
 
         <!-- PROFIL LOGIN -->
         <li class="nav-item profile-user">
-          <img src="<?php echo $current_photo_url; ?>?v=<?php echo time(); ?>" class="profile-avatar">
+          <img src="<?= $fotoProfil ?>" class="profile-avatar">
 
           <div class="profile-info">
             <span class="profile-name">
-              <?= htmlspecialchars($userLogin['full_name']); ?>
+              <?= htmlspecialchars($userLogin['full_name']) ?>
             </span>
             <span class="profile-role">
-              <?= ucfirst($userLogin['role']); ?>
+              <?= ucfirst($userLogin['role']) ?>
             </span>
           </div>
         </li>
