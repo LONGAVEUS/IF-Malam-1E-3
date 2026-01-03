@@ -4,12 +4,8 @@ require_once 'koneksi.php';
 /* ==================================================
   FOTO PROFIL 
 ================================================== */
-$foto_sekarang = $_SESSION['photo'] ?? $userLogin['photo'];
-
-$path_valid = (!empty($foto_sekarang) && file_exists($foto_sekarang))
-    ? $foto_sekarang
-    : 'uploads/profile_photos/default_profile.png';
-
+$foto_sekarang = $userLogin['photo'];
+$path_valid = (!empty($userLogin['photo'])) ? $userLogin['photo'] : 'uploads/profile_photos/default_profile.png';
 $current_photo_url = $path_valid . "?t=" . time();
 
 // Ambil parameter bulan dan tahun dari URL, default ke bulan dan tahun saat ini
@@ -598,3 +594,4 @@ $offset = $hari_pertama - 1;
 if (isset($conn)) {
     $conn->close();
 }
+
