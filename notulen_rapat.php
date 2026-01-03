@@ -27,9 +27,9 @@ $userLogin = $stmtUser->get_result()->fetch_assoc();
 $stmtUser->close();
 
 /* ================== FOTO PROFIL ================== */
-$fotoProfil = (!empty($userLogin['photo']) && file_exists($userLogin['photo']))
-    ? $userLogin['photo']
-    : 'uploads/profile_photos/default_profile.png';
+$foto_sekarang = $userLogin['photo'];
+$path_valid = (!empty($userLogin['photo'])) ? $userLogin['photo'] : 'uploads/profile_photos/default_profile.png';
+$current_photo_url = $path_valid . "?t=" . time();
 
 /* ================== SESSION DATA ================== */
 $role = $_SESSION['role'];
@@ -1138,4 +1138,5 @@ $default_hari = $hari_list[date('N') - 1]; // N adalah 1 (Senin) hingga 7 (Mingg
 // Close connections
 if (isset($stmt_notulens) && $stmt_notulens) {
     $stmt_notulens->close();
+
 }
