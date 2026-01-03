@@ -18,11 +18,9 @@ $userLogin = $stmtUser->get_result()->fetch_assoc();
 $stmtUser->close();
 
 // Ambil foto profil
-$foto_sekarang = $_SESSION['photo'] ?? $userLogin['photo'];
-$path_valid = (!empty($foto_sekarang) && file_exists($foto_sekarang))
-    ? $foto_sekarang
-    : 'uploads/profile_photos/default_profile.png';
-$fotoProfil = $path_valid . "?t=" . time();
+$foto_sekarang = $userLogin['photo'];
+$path_valid = (!empty($userLogin['photo'])) ? $userLogin['photo'] : 'uploads/profile_photos/default_profile.png';
+$current_photo_url = $path_valid . "?t=" . time();
 
 // Ambil parameter bulan dan tahun dari URL
 $bulan = isset($_GET['bulan']) ? intval($_GET['bulan']) : date('n');
@@ -286,3 +284,4 @@ if (isset($conn)) {
     $conn->close();
 }
 ?>
+
