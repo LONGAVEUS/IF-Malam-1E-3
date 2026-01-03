@@ -1,37 +1,62 @@
 <?php
-error_reporting(0); 
-
 session_start();
 require_once 'koneksi.php';
 
-// Set header JSON
-header('Content-Type: application/json; charset=utf-8');
+// Enable error reporting for debugging
+error_reporting(E_ALL);
+ini_set('display_errors', 0); // Set to 1 for debugging
+
+header('Content-Type: application/json');
 
 try {
-    $notulen_id = isset($_GET['id']) ? intval($_GET['id']) : 0;
-    
-    if ($notulen_id <= 0) {
-        throw new Exception('ID notulen tidak valid');
+    // Check session
+    if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
+        throw new Exception('Unauthorized access');
     }
     
-    // Query database
-    $sql = "SELECT * FROM notulen WHERE Id = ?";
+    // Check role
+    if ($_SESSION['role'] !== 'notulis') {
+        throw new Exception('Access denied');
+    }
+    
+    $user_id = $_SESSION['user_id'];
+    
+    // Get notulen ID
+    if (!isset($_GET['id']) || empty($_GET['id'])) {
+        throw new Exception('Notulen ID tidak valid');
+    }
+    
+    $notulen_id = intval($_GET['id']);
+    
+    // Query untuk mendapatkan data notulen
+    $sql = "SELECT n.*, 
+            (SELECT COUNT(*) FROM peserta_notulen pn WHERE pn.notulen_id = n.id) as jumlah_peserta
+            FROM notulen n 
+            WHERE n.id = ? AND n.created_by_user_id = ?";
+    
     $stmt = $conn->prepare($sql);
-    $stmt->bind_param("i", $notulen_id);
+    if (!$stmt) {
+        throw new Exception('Database error: ' . $conn->error);
+    }
+    
+    $stmt->bind_param("ii", $notulen_id, $user_id);
     $stmt->execute();
     $result = $stmt->get_result();
     
     if ($result->num_rows === 0) {
-        throw new Exception('Notulen tidak ditemukan');
+        throw new Exception('Notulen tidak ditemukan atau Anda tidak memiliki akses');
     }
     
     $notulen = $result->fetch_assoc();
+    $stmt->close();
     
-    // Ambil data peserta
-    $sql_peserta = "SELECT u.user_id, u.full_name, u.nim, u.role 
-                   FROM peserta_notulen pn 
-                   JOIN user u ON pn.user_id = u.user_id 
-                   WHERE pn.notulen_id = ?";
+    // Query untuk mendapatkan peserta
+    $sql_peserta = "SELECT u.user_id, u.nim, u.full_name, u.role 
+                    FROM peserta_notulen pn 
+                    JOIN user u ON pn.user_id = u.user_id 
+                    WHERE pn.notulen_id = ? 
+                    ORDER BY u.full_name";
+    
     $stmt_peserta = $conn->prepare($sql_peserta);
     $stmt_peserta->bind_param("i", $notulen_id);
     $stmt_peserta->execute();
@@ -41,50 +66,46 @@ try {
     while ($peserta = $peserta_result->fetch_assoc()) {
         $peserta_details[] = $peserta;
     }
+    $stmt_peserta->close();
     
-    // Parse lampiran jika ada
-    $lampiran_files = [];
-    if (!empty($notulen['lampiran']) && $notulen['lampiran'] !== 'null') {
-        $lampiran_files = json_decode($notulen['lampiran'], true);
-        if (!is_array($lampiran_files)) {
-            $lampiran_files = [];
-        }
+    // Format tanggal jika perlu
+    if (!empty($notulen['tanggal'])) {
+        $notulen['tanggal'] = date('Y-m-d', strtotime($notulen['tanggal']));
     }
     
-    
-    // Siapkan response
+    // Prepare response
     $response = [
         'success' => true,
         'data' => [
-            'Id' => $notulen['Id'],
-            'judul' => $notulen['judul'],
-            'hari' => $notulen['hari'],
-            'tanggal' => $notulen['tanggal'],
-            'jam_mulai' => $notulen['jam_mulai'],
-            'jam_selesai' => $notulen['jam_selesai'],
-            'Tempat' => $notulen['Tempat'],
-            'notulis' => $notulen['notulis'],
-            'jurusan' => $notulen['jurusan'],
-            'penanggung_jawab' => $notulen['penanggung_jawab'],
-            'Pembahasan' => $notulen['Pembahasan'],
-            'Hasil_akhir' => $notulen['Hasil_akhir'],
-            'peserta_details' => $peserta_details,
-            'lampiran_files' => $lampiran_files
+            'id' => $notulen['id'],
+            'judul' => $notulen['judul'] ?? '',
+            'hari' => $notulen['hari'] ?? '',
+            'tanggal' => $notulen['tanggal'] ?? '',
+            'jam_mulai' => $notulen['jam_mulai'] ?? '',
+            'jam_selesai' => $notulen['jam_selesai'] ?? '',
+            'tempat' => $notulen['tempat'] ?? '',
+            'notulis' => $notulen['notulis'] ?? '',
+            'jurusan' => $notulen['jurusan'] ?? '',
+            'penanggung_jawab' => $notulen['penanggung_jawab'] ?? '',
+            'pembahasan' => $notulen['pembahasan'] ?? '',
+            'hasil_akhir' => $notulen['hasil_akhir'] ?? '',
+            'peserta_details' => $peserta_details
         ]
     ];
     
     echo json_encode($response, JSON_UNESCAPED_UNICODE);
     
 } catch (Exception $e) {
+    // Log error untuk debugging
+    error_log("Edit Notulen Error: " . $e->getMessage());
+    
     $response = [
         'success' => false,
         'error' => $e->getMessage()
     ];
+    
     echo json_encode($response, JSON_UNESCAPED_UNICODE);
-} finally {
-    if (isset($conn)) {
-        $conn->close();
-    }
 }
-exit();
+
+$conn->close();
 ?>
