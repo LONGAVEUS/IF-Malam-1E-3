@@ -27,19 +27,18 @@ $stmtUser->execute();
 $userLogin = $stmtUser->get_result()->fetch_assoc();
 $stmtUser->close();
 
-$foto_sekarang = $_SESSION['photo'] ?? $userLogin['photo'];
-
-$path_valid = (!empty($foto_sekarang) && file_exists($foto_sekarang))
-    ? $foto_sekarang
-    : 'uploads/profile_photos/default_profile.png';
-
+//foto
+$foto_sekarang = $userLogin['photo'];
+$path_valid = (!empty($userLogin['photo'])) ? $userLogin['photo'] : 'uploads/profile_photos/default_profile.png';
 $current_photo_url = $path_valid . "?t=" . time();
+
 // ================== LOGOUT ==================
 if (isset($_GET['action']) && $_GET['action'] === 'logout') {
     session_destroy();
     header("Location: login.php");
     exit();
 }
+
 
 
 // 1. Ambil Total Pengguna (dari tabel 'pengguna')
@@ -252,3 +251,4 @@ if (isset($conn)) {
     $conn->close();
 }
 ?>
+
