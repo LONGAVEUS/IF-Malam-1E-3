@@ -22,12 +22,8 @@ $userLogin = $stmtUser->get_result()->fetch_assoc();
 $stmtUser->close();
 
 /* ================== FOTO PROFIL ================== */
-$foto_sekarang = $_SESSION['photo'] ?? $userLogin['photo'];
-
-$path_valid = (!empty($foto_sekarang) && file_exists($foto_sekarang))
-    ? $foto_sekarang
-    : 'uploads/profile_photos/default_profile.png';
-
+$foto_sekarang = $userLogin['photo'];
+$path_valid = (!empty($userLogin['photo'])) ? $userLogin['photo'] : 'uploads/profile_photos/default_profile.png';
 $current_photo_url = $path_valid . "?t=" . time();
 
 /* ================== SESSION DATA ================== */
@@ -545,4 +541,5 @@ if (isset($stmt_data) && $stmt_data) {
 }
 if (isset($conn)) {
     $conn->close();
+
 }
