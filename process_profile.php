@@ -81,13 +81,13 @@ if (isset($_FILES['new_file_profile_pic']) && $_FILES['new_file_profile_pic']['e
     }
 
     $file_extension = pathinfo($_FILES['new_file_profile_pic']['name'], PATHINFO_EXTENSION);
-    $nama_file_baru = "profile_" . $user_id . "_" . time() . "." . $file_extension;
+    $nama_file_baru = "profile_" . $nim . "_" . time() . "." . $file_extension;
     $target_file = "uploads/profile_photos/" . $nama_file_baru;
 
     if (move_uploaded_file($_FILES['new_file_profile_pic']['tmp_name'], $target_file)) {
        // 1. Update ke Database
-       $stmt = $conn->prepare("UPDATE user SET photo = ? WHERE user_id = ?");
-       $stmt->bind_param("si", $target_file, $user_id);
+       $stmt = $conn->prepare("UPDATE user SET photo = ? WHERE nim = ?");
+       $stmt->bind_param("ss", $target_file, $nim);
        $stmt->execute();
 
        // 2. UPDATE SESSION 
