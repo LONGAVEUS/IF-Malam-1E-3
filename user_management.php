@@ -17,23 +17,21 @@ use Shuchkin\SimpleXLSX;
 
 
 // ================== DATA USER LOGIN ==================
-$user_id = $_SESSION['user_id'];
+$nim = $_SESSION['nim'];
 
 $stmtUser = $conn->prepare("
     SELECT full_name, role, photo 
     FROM user 
-    WHERE user_id = ?
+    WHERE nim = ?
 ");
-$stmtUser->bind_param("i", $user_id);
+$stmtUser->bind_param("s", $nim);
 $stmtUser->execute();
 $userLogin = $stmtUser->get_result()->fetch_assoc();
 $stmtUser->close();
 
-// Jika foto kosong / tidak ada
-$fotoProfil = (!empty($userLogin['photo']) && file_exists($userLogin['photo']))
-    ? $userLogin['photo']
-    : 'uploads/profile_photos/default_profile.png';
-
+$foto_sekarang = $userLogin['photo'];
+$path_valid = (!empty($userLogin['photo'])) ? $userLogin['photo'] : 'uploads/profile_photos/default_profile.png';
+$current_photo_url = $path_valid . "?t=" . time();
 
 /* ================== INISIALISASI ================== */
 $message = "";
