@@ -27,9 +27,11 @@ $userLogin = $stmtUser->get_result()->fetch_assoc();
 $stmtUser->close();
 
 /* ================== FOTO PROFIL ================== */
-$foto_sekarang = $userLogin['photo'];
-$path_valid = (!empty($userLogin['photo'])) ? $userLogin['photo'] : 'uploads/profile_photos/default_profile.png';
-$current_photo_url = $path_valid . "?t=" . time();
+$foto_sekarang = $_SESSION['photo'] ?? $userLogin['photo'];
+
+$path_valid = (!empty($foto_sekarang) && file_exists($foto_sekarang))
+    ? $foto_sekarang
+    : 'uploads/profile_photos/default_profile.png';
 
 /* ================== SESSION DATA ================== */
 $role = $_SESSION['role'];
@@ -404,6 +406,7 @@ $default_hari = $hari_list[date('N') - 1]; // N adalah 1 (Senin) hingga 7 (Mingg
 
 <!DOCTYPE html>
 <html lang="id">
+
 <head>
     <title>Notulen Rapat - Portal Notulis</title>
     <meta charset="UTF-8">
@@ -411,13 +414,14 @@ $default_hari = $hari_list[date('N') - 1]; // N adalah 1 (Senin) hingga 7 (Mingg
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="notulen-rapat.css">
 </head>
+
 <body>
     <!-- Sidebar -->
     <div class="sidebar">
         <div class="sidebar-header">
             <div class="logo-area">
                 <a href="#" class="header-logo">
-                    <img src="poltek1.png" alt="Politeknik Negeri Batam" />
+                    <img src="if.png" alt="Politeknik Negeri Batam" />
                 </a>
             </div>
 
@@ -460,7 +464,8 @@ $default_hari = $hari_list[date('N') - 1]; // N adalah 1 (Senin) hingga 7 (Mingg
                     </a>
                 </li>
                 <li class="nav-item">
-                    <a href="notulen_rapat.php?action=logout" class="nav-link" onclick="return confirm('Yakin ingin logout?');">
+                    <a href="notulen_rapat.php?action=logout" class="nav-link"
+                        onclick="return confirm('Yakin ingin logout?');">
                         <i class="fas fa-sign-out-alt nav-icon"></i>
                         <span class="nav-label">Keluar</span>
                     </a>
@@ -469,7 +474,7 @@ $default_hari = $hari_list[date('N') - 1]; // N adalah 1 (Senin) hingga 7 (Mingg
                 <!-- PROFIL LOGIN -->
                 <li class="nav-item profile-user">
                     <img src="<?php echo $current_photo_url; ?>?v=<?php echo time(); ?>" class="profile-avatar">
-                    
+
                     <div class="profile-info">
                         <span class="profile-name">
                             <?= htmlspecialchars($userLogin['full_name']); ?>
@@ -481,8 +486,8 @@ $default_hari = $hari_list[date('N') - 1]; // N adalah 1 (Senin) hingga 7 (Mingg
                 </li>
             </ul>
         </nav>
-    </div>
-    
+    </div>>
+
     <!-- Main Content -->
     <div class="main-content" id="mainContent">
         <div class="dashboard-header">
@@ -498,120 +503,136 @@ $default_hari = $hari_list[date('N') - 1]; // N adalah 1 (Senin) hingga 7 (Mingg
             </button>
         </div>
 
-        
+
         <!-- Daftar Notulen -->
         <div class="content-section">
             <div class="notulen-list">
                 <?php if ($result_notulens && $result_notulens->num_rows > 0): ?>
-                    <?php while ($notulen = $result_notulens->fetch_assoc()): ?>
-                        <?php
+                <?php while ($notulen = $result_notulens->fetch_assoc()): ?>
+                <?php
                         $tanggal_formatted = date('d M Y', strtotime($notulen['tanggal']));
                         $jam_mulai_formatted = date('H:i', strtotime($notulen['jam_mulai']));
                         $jam_selesai_formatted = date('H:i', strtotime($notulen['jam_selesai']));
                         ?>
-                        <div class="notulen-item clickable-item" data-id="<?php echo $notulen['id']; ?>">
-                            <div class="notulen-main">
-                                <div class="notulen-header">
-                                    <h3 class="notulen-title"><?php echo htmlspecialchars($notulen['judul']); ?></h3>
-                                    <span class="notulen-status status-<?php echo $notulen['status']; ?>">
-                                        <?php echo ucfirst($notulen['status']); ?>
-                                    </span>
-                                </div>
-                                <div class="notulen-meta">
-                                    <span class="notulen-meta-item">
-                                        <i class="fas fa-calendar"></i> <?php echo htmlspecialchars($notulen['hari']); ?>, <?php echo $tanggal_formatted; ?>
-                                    </span>
-                                    <span class="notulen-meta-item">
-                                        <i class="fas fa-clock"></i> <?php echo $jam_mulai_formatted; ?> - <?php echo $jam_selesai_formatted; ?>
-                                    </span>
-                                    <span class="notulen-meta-item">
-                                        <i class="fas fa-map-marker-alt"></i> <?php echo htmlspecialchars($notulen['tempat']); ?>
-                                    </span>
-                                    <span class="notulen-meta-item">
-                                        <i class="fas fa-user-edit"></i> <?php echo htmlspecialchars($notulen['notulis']); ?>
-                                    </span>
-                                    <span class="notulen-meta-item">
-                                        <i class="fas fa-graduation-cap"></i> <?php echo htmlspecialchars($notulen['jurusan']); ?>
-                                    </span>
-                                    <span class="notulen-meta-item">
-                                        <i class="fas fa-user"></i> <?php echo htmlspecialchars($notulen['penanggung_jawab']); ?>
-                                    </span>
-                                    <span class="notulen-meta-item">
-                                        <i class="fas fa-users"></i> <?php echo $notulen['jumlah_peserta']; ?> peserta
-                                    </span>
-                                    <?php if ($notulen['status'] == 'sent' || $notulen['status'] == 'final'): ?>
-                                        <span class="kehadiran-status <?php echo $notulen['jumlah_hadir'] == $notulen['jumlah_peserta'] ? 'hadir' : 'belum'; ?>">
-                                            <i class="fas fa-user-check"></i> 
-                                            <?php echo $notulen['jumlah_hadir']; ?> hadir
-                                        </span>
-                                    <?php endif; ?>
-                                </div>
-                            </div>
-                            <div class="notulen-actions">
-                                <?php if ($notulen['status'] == 'draft'): ?>
-                                    <a href="#" class="action-btn edit" title="Edit" onclick="openEditModal(<?php echo $notulen['id']; ?>); return false;">
-                                        <i class="fas fa-edit"></i>
-                                    </a>
-                                    <a href="notulen_rapat.php?action=send&id=<?php echo $notulen['id']; ?>" class="action-btn send" title="Kirim" onclick="return confirmAction('Kirim notulen ke peserta?')">
-                                        <i class="fas fa-paper-plane"></i>
-                                    </a>
-                                    <!-- Tombol Kirim Email Undangan -->
-                                    <button class="action-btn email" title="Kirim Email Undangan" 
-                                            data-id="<?php echo $notulen['id']; ?>"
-                                            onclick="sendEmailInvitation(<?php echo $notulen['id']; ?>)">
-                                        <i class="fas fa-envelope"></i>
-                                    </button>
-                                    <a href="notulen_rapat.php?action=delete&id=<?php echo $notulen['id']; ?>" class="action-btn delete" title="Hapus" onclick="return confirmAction('Yakin menghapus notulen?')">
-                                        <i class="fas fa-trash"></i>
-                                    </a>
-                                    
-                                <?php elseif ($notulen['status'] == 'sent'): ?>
-                                    <button class="action-btn view btn-kehadiran" title="Lihat Kehadiran" data-id="<?php echo $notulen['id']; ?>">
-                                        <i class="fas fa-user-check"></i>
-                                    </button>
-                                    <!-- Tombol Kirim Email Undangan -->
-                                    <button class="action-btn email" title="Kirim Email Undangan" 
-                                            data-id="<?php echo $notulen['id']; ?>"
-                                            onclick="sendEmailInvitation(<?php echo $notulen['id']; ?>)">
-                                        <i class="fas fa-envelope"></i>
-                                    </button>
-                                        <a href="notulen_rapat.php?action=finalize&id=<?php echo $notulen['id']; ?>" class="action-btn konfirmasi" title="Finalisasi" onclick="return confirmAction('Finalisasi notulen dan buat PDF?')">
-                                        <i class="fas fa-check-circle"></i>
-                                    </a>
-                                    
-                                <?php elseif ($notulen['status'] == 'final'): ?>
-                                    <button class="action-btn view btn-kehadiran" title="Lihat Kehadiran" data-id="<?php echo $notulen['id']; ?>">
-                                        <i class="fas fa-user-check"></i>
-                                    </button>
-                                    <?php
+                <div class="notulen-item clickable-item" data-id="<?php echo $notulen['id']; ?>">
+                    <div class="notulen-main">
+                        <div class="notulen-header">
+                            <h3 class="notulen-title"><?php echo htmlspecialchars($notulen['judul']); ?></h3>
+                            <span class="notulen-status status-<?php echo $notulen['status']; ?>">
+                                <?php echo ucfirst($notulen['status']); ?>
+                            </span>
+                        </div>
+                        <div class="notulen-meta">
+                            <span class="notulen-meta-item">
+                                <i class="fas fa-calendar"></i> <?php echo htmlspecialchars($notulen['hari']); ?>,
+                                <?php echo $tanggal_formatted; ?>
+                            </span>
+                            <span class="notulen-meta-item">
+                                <i class="fas fa-clock"></i> <?php echo $jam_mulai_formatted; ?> -
+                                <?php echo $jam_selesai_formatted; ?>
+                            </span>
+                            <span class="notulen-meta-item">
+                                <i class="fas fa-map-marker-alt"></i>
+                                <?php echo htmlspecialchars($notulen['tempat']); ?>
+                            </span>
+                            <span class="notulen-meta-item">
+                                <i class="fas fa-user-edit"></i> <?php echo htmlspecialchars($notulen['notulis']); ?>
+                            </span>
+                            <span class="notulen-meta-item">
+                                <i class="fas fa-graduation-cap"></i>
+                                <?php echo htmlspecialchars($notulen['jurusan']); ?>
+                            </span>
+                            <span class="notulen-meta-item">
+                                <i class="fas fa-user"></i>
+                                <?php echo htmlspecialchars($notulen['penanggung_jawab']); ?>
+                            </span>
+                            <span class="notulen-meta-item">
+                                <i class="fas fa-users"></i> <?php echo $notulen['jumlah_peserta']; ?> peserta
+                            </span>
+                            <?php if ($notulen['status'] == 'sent' || $notulen['status'] == 'final'): ?>
+                            <span
+                                class="kehadiran-status <?php echo $notulen['jumlah_hadir'] == $notulen['jumlah_peserta'] ? 'hadir' : 'belum'; ?>">
+                                <i class="fas fa-user-check"></i>
+                                <?php echo $notulen['jumlah_hadir']; ?> hadir
+                            </span>
+                            <?php endif; ?>
+                        </div>
+                    </div>
+                    <div class="notulen-actions">
+                        <?php if ($notulen['status'] == 'draft'): ?>
+                        <a href="#" class="action-btn edit" title="Edit"
+                            onclick="openEditModal(<?php echo $notulen['id']; ?>); return false;">
+                            <i class="fas fa-edit"></i>
+                        </a>
+                        <a href="notulen_rapat.php?action=send&id=<?php echo $notulen['id']; ?>" class="action-btn send"
+                            title="Kirim" onclick="return confirmAction('Kirim notulen ke peserta?')">
+                            <i class="fas fa-paper-plane"></i>
+                        </a>
+                        <!-- Tombol Kirim Email Undangan -->
+                        <button class="action-btn email" title="Kirim Email Undangan"
+                            data-id="<?php echo $notulen['id']; ?>"
+                            onclick="sendEmailInvitation(<?php echo $notulen['id']; ?>)">
+                            <i class="fas fa-envelope"></i>
+                        </button>
+                        <a href="notulen_rapat.php?action=delete&id=<?php echo $notulen['id']; ?>"
+                            class="action-btn delete" title="Hapus"
+                            onclick="return confirmAction('Yakin menghapus notulen?')">
+                            <i class="fas fa-trash"></i>
+                        </a>
+
+                        <?php elseif ($notulen['status'] == 'sent'): ?>
+                        <button class="action-btn view btn-kehadiran" title="Lihat Kehadiran"
+                            data-id="<?php echo $notulen['id']; ?>">
+                            <i class="fas fa-user-check"></i>
+                        </button>
+                        <!-- Tombol Kirim Email Undangan -->
+                        <button class="action-btn email" title="Kirim Email Undangan"
+                            data-id="<?php echo $notulen['id']; ?>"
+                            onclick="sendEmailInvitation(<?php echo $notulen['id']; ?>)">
+                            <i class="fas fa-envelope"></i>
+                        </button>
+                        <a href="notulen_rapat.php?action=finalize&id=<?php echo $notulen['id']; ?>"
+                            class="action-btn konfirmasi" title="Finalisasi"
+                            onclick="return confirmAction('Finalisasi notulen dan buat PDF?')">
+                            <i class="fas fa-check-circle"></i>
+                        </a>
+
+                        <?php elseif ($notulen['status'] == 'final'): ?>
+                        <button class="action-btn view btn-kehadiran" title="Lihat Kehadiran"
+                            data-id="<?php echo $notulen['id']; ?>">
+                            <i class="fas fa-user-check"></i>
+                        </button>
+                        <?php
                                     // Cari file PDF yang sudah digenerate
                                     $pdf_files = glob("pdf_files/notulen_{$notulen['id']}_*.pdf");
                                     if (!empty($pdf_files)) {
                                         $pdf_file = basename($pdf_files[0]);
                                         ?>
-                                        <a href="pdf_files/<?php echo $pdf_file; ?>" 
-                                           class="action-btn download" title="Download PDF" target="_blank" download>
-                                            <i class="fas fa-download"></i>
-                                        </a>
-                                    <?php } else { ?>
-                                        <a href="generate_pdf.php?id=<?php echo $notulen['id']; ?>&download=1" 
-                                           class="action-btn download" title="Buat PDF" target="_blank">
-                                            <i class="fas fa-file-pdf"></i>
-                                        </a>
-                                    <?php } ?>
-                                    <a href="notulen_rapat.php?action=delete&id=<?php echo $notulen['id']; ?>" class="action-btn delete" title="Hapus" onclick="return confirmAction('Yakin menghapus notulen?')">
-                                        <i class="fas fa-trash"></i>
-                                    </a>
-                                <?php endif; ?>
-                            </div>
-                        </div>
-                    <?php endwhile; ?>
-                <?php else: ?>
-                    <div class="empty-state">
-                        <i class="fas fa-file-alt"></i>
-                        <h3>Belum ada notulen</h3>
-                        <p>Mulai dengan membuat notulen baru menggunakan tombol "Tambah Notulen Baru" di atas.</p>
+                        <a href="pdf_files/<?php echo $pdf_file; ?>" class="action-btn download" title="Download PDF"
+                            target="_blank" download>
+                            <i class="fas fa-download"></i>
+                        </a>
+                        <?php } else { ?>
+                        <a href="generate_pdf.php?id=<?php echo $notulen['id']; ?>&download=1"
+                            class="action-btn download" title="Buat PDF" target="_blank">
+                            <i class="fas fa-file-pdf"></i>
+                        </a>
+                        <?php } ?>
+                        <a href="notulen_rapat.php?action=delete&id=<?php echo $notulen['id']; ?>"
+                            class="action-btn delete" title="Hapus"
+                            onclick="return confirmAction('Yakin menghapus notulen?')">
+                            <i class="fas fa-trash"></i>
+                        </a>
+                        <?php endif; ?>
                     </div>
+                </div>
+                <?php endwhile; ?>
+                <?php else: ?>
+                <div class="empty-state">
+                    <i class="fas fa-file-alt"></i>
+                    <h3>Belum ada notulen</h3>
+                    <p>Mulai dengan membuat notulen baru menggunakan tombol "Tambah Notulen Baru" di atas.</p>
+                </div>
                 <?php endif; ?>
             </div>
 
@@ -619,30 +640,31 @@ $default_hari = $hari_list[date('N') - 1]; // N adalah 1 (Senin) hingga 7 (Mingg
             <?php if ($total_pages > 1): ?>
             <div class="pagination-container">
                 <div class="pagination-info">
-                    Menampilkan <?php echo ($offset + 1); ?>-<?php echo min($offset + $limit, $total_notulens); ?> dari <?php echo $total_notulens; ?> notulen
+                    Menampilkan <?php echo ($offset + 1); ?>-<?php echo min($offset + $limit, $total_notulens); ?> dari
+                    <?php echo $total_notulens; ?> notulen
                 </div>
-                
+
                 <ul class="pagination">
                     <?php if ($page > 1): ?>
-                        <li>
-                            <a href="?page=1" title="Halaman pertama">
-                                <i class="fas fa-angle-double-left"></i>
-                            </a>
-                        </li>
-                        <li>
-                            <a href="?page=<?php echo $page - 1; ?>" title="Sebelumnya">
-                                <i class="fas fa-angle-left"></i>
-                            </a>
-                        </li>
+                    <li>
+                        <a href="?page=1" title="Halaman pertama">
+                            <i class="fas fa-angle-double-left"></i>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="?page=<?php echo $page - 1; ?>" title="Sebelumnya">
+                            <i class="fas fa-angle-left"></i>
+                        </a>
+                    </li>
                     <?php else: ?>
-                        <li class="disabled">
-                            <span><i class="fas fa-angle-double-left"></i></span>
-                        </li>
-                        <li class="disabled">
-                            <span><i class="fas fa-angle-left"></i></span>
-                        </li>
+                    <li class="disabled">
+                        <span><i class="fas fa-angle-double-left"></i></span>
+                    </li>
+                    <li class="disabled">
+                        <span><i class="fas fa-angle-left"></i></span>
+                    </li>
                     <?php endif; ?>
-                    
+
                     <?php 
                     // Tampilkan 3 halaman sebelum dan sesudah halaman aktif
                     $start_page = max(1, $page - 2);
@@ -655,37 +677,37 @@ $default_hari = $hari_list[date('N') - 1]; // N adalah 1 (Senin) hingga 7 (Mingg
                     
                     for ($i = $start_page; $i <= $end_page; $i++): 
                     ?>
-                        <li <?php echo ($i == $page) ? 'class="active"' : ''; ?>>
-                            <a href="?page=<?php echo $i; ?>"><?php echo $i; ?></a>
-                        </li>
+                    <li <?php echo ($i == $page) ? 'class="active"' : ''; ?>>
+                        <a href="?page=<?php echo $i; ?>"><?php echo $i; ?></a>
+                    </li>
                     <?php endfor; ?>
-                    
+
                     <?php if ($end_page < $total_pages): 
                         if ($end_page < $total_pages - 1) echo '<li class="disabled"><span>...</span></li>';
                     ?>
-                        <li>
-                            <a href="?page=<?php echo $total_pages; ?>"><?php echo $total_pages; ?></a>
-                        </li>
+                    <li>
+                        <a href="?page=<?php echo $total_pages; ?>"><?php echo $total_pages; ?></a>
+                    </li>
                     <?php endif; ?>
-                    
+
                     <?php if ($page < $total_pages): ?>
-                        <li>
-                            <a href="?page=<?php echo $page + 1; ?>" title="Berikutnya">
-                                <i class="fas fa-angle-right"></i>
-                            </a>
-                        </li>
-                        <li>
-                            <a href="?page=<?php echo $total_pages; ?>" title="Halaman terakhir">
-                                <i class="fas fa-angle-double-right"></i>
-                            </a>
-                        </li>
+                    <li>
+                        <a href="?page=<?php echo $page + 1; ?>" title="Berikutnya">
+                            <i class="fas fa-angle-right"></i>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="?page=<?php echo $total_pages; ?>" title="Halaman terakhir">
+                            <i class="fas fa-angle-double-right"></i>
+                        </a>
+                    </li>
                     <?php else: ?>
-                        <li class="disabled">
-                            <span><i class="fas fa-angle-right"></i></span>
-                        </li>
-                        <li class="disabled">
-                            <span><i class="fas fa-angle-double-right"></i></span>
-                        </li>
+                    <li class="disabled">
+                        <span><i class="fas fa-angle-right"></i></span>
+                    </li>
+                    <li class="disabled">
+                        <span><i class="fas fa-angle-double-right"></i></span>
+                    </li>
                     <?php endif; ?>
                 </ul>
             </div>
@@ -705,96 +727,111 @@ $default_hari = $hari_list[date('N') - 1]; // N adalah 1 (Senin) hingga 7 (Mingg
                     <div class="form-row">
                         <div class="form-group">
                             <label for="createJudul" class="required">Judul Rapat</label>
-                            <input type="text" name="judul" id="createJudul" class="form-control" placeholder="Masukkan judul rapat" required maxlength="35">
+                            <input type="text" name="judul" id="createJudul" class="form-control"
+                                placeholder="Masukkan judul rapat" required maxlength="35">
                         </div>
-                        
+
                         <div class="form-group">
                             <label for="createHari" class="required">Hari</label>
                             <select name="hari" id="createHari" class="form-control" required>
                                 <option value="">Pilih Hari</option>
-                                <option value="Senin" <?php echo ($default_hari == 'Senin') ? 'selected' : ''; ?>>Senin</option>
-                                <option value="Selasa" <?php echo ($default_hari == 'Selasa') ? 'selected' : ''; ?>>Selasa</option>
-                                <option value="Rabu" <?php echo ($default_hari == 'Rabu') ? 'selected' : ''; ?>>Rabu</option>
-                                <option value="Kamis" <?php echo ($default_hari == 'Kamis') ? 'selected' : ''; ?>>Kamis</option>
-                                <option value="Jumat" <?php echo ($default_hari == 'Jumat') ? 'selected' : ''; ?>>Jumat</option>
-                                <option value="Sabtu" <?php echo ($default_hari == 'Sabtu') ? 'selected' : ''; ?>>Sabtu</option>
-                                <option value="Minggu" <?php echo ($default_hari == 'Minggu') ? 'selected' : ''; ?>>Minggu</option>
+                                <option value="Senin" <?php echo ($default_hari == 'Senin') ? 'selected' : ''; ?>>Senin
+                                </option>
+                                <option value="Selasa" <?php echo ($default_hari == 'Selasa') ? 'selected' : ''; ?>>
+                                    Selasa</option>
+                                <option value="Rabu" <?php echo ($default_hari == 'Rabu') ? 'selected' : ''; ?>>Rabu
+                                </option>
+                                <option value="Kamis" <?php echo ($default_hari == 'Kamis') ? 'selected' : ''; ?>>Kamis
+                                </option>
+                                <option value="Jumat" <?php echo ($default_hari == 'Jumat') ? 'selected' : ''; ?>>Jumat
+                                </option>
+                                <option value="Sabtu" <?php echo ($default_hari == 'Sabtu') ? 'selected' : ''; ?>>Sabtu
+                                </option>
+                                <option value="Minggu" <?php echo ($default_hari == 'Minggu') ? 'selected' : ''; ?>>
+                                    Minggu</option>
                             </select>
                         </div>
                     </div>
-                    
+
                     <div class="form-row">
                         <div class="form-group">
                             <label for="createTanggal" class="required">Tanggal Rapat</label>
-                            <input type="date" name="tanggal" id="createTanggal" class="form-control" value="<?php echo $default_tanggal; ?>" required>
+                            <input type="date" name="tanggal" id="createTanggal" class="form-control"
+                                value="<?php echo $default_tanggal; ?>" required>
                         </div>
-                        
+
                         <div class="form-group">
                             <label for="createTempat" class="required">Tempat</label>
-                            <input type="text" name="tempat" id="createTempat" class="form-control" placeholder="Masukkan tempat rapat" required maxlength="55">
+                            <input type="text" name="tempat" id="createTempat" class="form-control"
+                                placeholder="Masukkan tempat rapat" required maxlength="55">
                         </div>
                     </div>
-                    
+
                     <div class="form-row">
                         <div class="form-group">
                             <label for="createJamMulai" class="required">Jam Mulai</label>
                             <input type="time" name="jam_mulai" id="createJamMulai" class="form-control" required>
                         </div>
-                        
+
                         <div class="form-group">
                             <label for="createJamSelesai" class="required">Jam Selesai</label>
                             <input type="time" name="jam_selesai" id="createJamSelesai" class="form-control" required>
                         </div>
                     </div>
-                    
+
                     <div class="form-row">
                         <div class="form-group">
                             <label for="createNotulis" class="required">Notulis</label>
-                            <input type="text" name="notulis" id="createNotulis" class="form-control" placeholder="Masukkan nama notulis" required maxlength="50">
+                            <input type="text" name="notulis" id="createNotulis" class="form-control"
+                                placeholder="Masukkan nama notulis" required maxlength="50">
                         </div>
-                        
+
                         <div class="form-group">
                             <label for="createJurusan" class="required">Jurusan</label>
-                            <input type="text" name="jurusan" id="createJurusan" class="form-control" placeholder="Masukkan jurusan" required maxlength="100">
+                            <input type="text" name="jurusan" id="createJurusan" class="form-control"
+                                placeholder="Masukkan jurusan" required maxlength="100">
                         </div>
                     </div>
-                    
+
                     <div class="form-row">
                         <div class="form-group">
                             <label for="createPenanggungJawab" class="required">Penanggung Jawab</label>
-                            <input type="text" name="penanggung_jawab" id="createPenanggungJawab" class="form-control" placeholder="Nama penanggung jawab rapat" required maxlength="50">
+                            <input type="text" name="penanggung_jawab" id="createPenanggungJawab" class="form-control"
+                                placeholder="Nama penanggung jawab rapat" required maxlength="50">
                         </div>
                     </div>
-                    
+
                     <div class="form-group">
                         <label for="pesertaSearch" class="required">Peserta Rapat</label>
                         <div class="peserta-search-container">
                             <div class="search-wrapper">
-                
-                                <input type="text" id="pesertaSearch" class="peserta-search" placeholder="Cari peserta (nama atau NIM)..." aria-label="Cari peserta rapat">
+
+                                <input type="text" id="pesertaSearch" class="peserta-search"
+                                    placeholder="Cari peserta (nama atau NIM)..." aria-label="Cari peserta rapat">
                             </div>
                             <div class="search-results" id="searchResults">
                                 <?php 
                                 // Reset pointer result users
                                 $result_users->data_seek(0);
                                 while ($user = $result_users->fetch_assoc()): ?>
-                                    <div class="search-result-item" data-id="<?php echo $user['user_id']; ?>" 
-                                         data-name="<?php echo htmlspecialchars($user['full_name']); ?>"
-                                         data-nim="<?php echo htmlspecialchars($user['nim']); ?>"
-                                         data-role="<?php echo htmlspecialchars($user['role']); ?>">
-                                        <div class="user-info">
-                                            <div class="result-name"><?php echo htmlspecialchars($user['full_name']); ?></div>
-                                            <div class="result-nim"><?php echo htmlspecialchars($user['nim']); ?></div>
-                                            <div class="result-role"><?php echo ucfirst($user['role']); ?></div>
+                                <div class="search-result-item" data-id="<?php echo $user['user_id']; ?>"
+                                    data-name="<?php echo htmlspecialchars($user['full_name']); ?>"
+                                    data-nim="<?php echo htmlspecialchars($user['nim']); ?>"
+                                    data-role="<?php echo htmlspecialchars($user['role']); ?>">
+                                    <div class="user-info">
+                                        <div class="result-name"><?php echo htmlspecialchars($user['full_name']); ?>
                                         </div>
-                                        <button type="button" class="result-add" title="Tambahkan">
-                                            <i class="fas fa-plus"></i>
-                                        </button>
+                                        <div class="result-nim"><?php echo htmlspecialchars($user['nim']); ?></div>
+                                        <div class="result-role"><?php echo ucfirst($user['role']); ?></div>
                                     </div>
+                                    <button type="button" class="result-add" title="Tambahkan">
+                                        <i class="fas fa-plus"></i>
+                                    </button>
+                                </div>
                                 <?php endwhile; ?>
                             </div>
                         </div>
-                        
+
                         <div class="peserta-list-container">
                             <div class="peserta-list-header">
                                 <span>Peserta Terpilih</span>
@@ -804,20 +841,22 @@ $default_hari = $hari_list[date('N') - 1]; // N adalah 1 (Senin) hingga 7 (Mingg
                                 <div class="no-participants">Belum ada peserta yang ditambahkan</div>
                             </div>
                         </div>
-                        
+
                         <input type="hidden" name="peserta_ids" id="pesertaIds" value="">
                     </div>
-                    
+
                     <div class="form-group">
                         <label for="createPembahasan">Pembahasan</label>
-                        <textarea name="pembahasan" id="createPembahasan" class="form-control" placeholder="Tulis pembahasan rapat di sini..." rows="5"></textarea>
+                        <textarea name="pembahasan" id="createPembahasan" class="form-control"
+                            placeholder="Tulis pembahasan rapat di sini..." rows="5"></textarea>
                     </div>
-                    
+
                     <div class="form-group">
                         <label for="createHasilAkhir">Hasil Akhir</label>
-                        <textarea name="hasil_akhir" id="createHasilAkhir" class="form-control" placeholder="Tulis hasil akhir rapat di sini..." rows="5"></textarea>
+                        <textarea name="hasil_akhir" id="createHasilAkhir" class="form-control"
+                            placeholder="Tulis hasil akhir rapat di sini..." rows="5"></textarea>
                     </div>
-                    
+
                     <div class="form-actions">
                         <button type="submit" name="create_notulen" class="btn btn-submit" data-action="draft">
                             <i class="fas fa-save"></i> Simpan Draft
@@ -861,13 +900,14 @@ $default_hari = $hari_list[date('N') - 1]; // N adalah 1 (Senin) hingga 7 (Mingg
                 <form method="POST" id="editNotulenForm" action="notulen_rapat.php">
                     <input type="hidden" name="notulen_id" id="editNotulenId">
                     <input type="hidden" name="edit_notulen" value="1">
-                    
+
                     <div class="form-row">
                         <div class="form-group">
                             <label for="editJudul" class="required">Judul Rapat</label>
-                            <input type="text" name="judul" id="editJudul" class="form-control" placeholder="Masukkan judul rapat" required maxlength="35">
+                            <input type="text" name="judul" id="editJudul" class="form-control"
+                                placeholder="Masukkan judul rapat" required maxlength="35">
                         </div>
-                        
+
                         <div class="form-group">
                             <label for="editHari" class="required">Hari</label>
                             <select name="hari" id="editHari" class="form-control" required>
@@ -882,78 +922,84 @@ $default_hari = $hari_list[date('N') - 1]; // N adalah 1 (Senin) hingga 7 (Mingg
                             </select>
                         </div>
                     </div>
-                    
+
                     <div class="form-row">
                         <div class="form-group">
                             <label for="editTanggal" class="required">Tanggal Rapat</label>
                             <input type="date" name="tanggal" id="editTanggal" class="form-control" required>
                         </div>
-                        
+
                         <div class="form-group">
                             <label for="editTempat" class="required">Tempat</label>
-                            <input type="text" name="tempat" id="editTempat" class="form-control" placeholder="Masukkan tempat rapat" required maxlength="55">
+                            <input type="text" name="tempat" id="editTempat" class="form-control"
+                                placeholder="Masukkan tempat rapat" required maxlength="55">
                         </div>
                     </div>
-                    
+
                     <div class="form-row">
                         <div class="form-group">
                             <label for="editJamMulai" class="required">Jam Mulai</label>
                             <input type="time" name="jam_mulai" id="editJamMulai" class="form-control" required>
                         </div>
-                        
+
                         <div class="form-group">
                             <label for="editJamSelesai" class="required">Jam Selesai</label>
                             <input type="time" name="jam_selesai" id="editJamSelesai" class="form-control" required>
                         </div>
                     </div>
-                    
+
                     <div class="form-row">
                         <div class="form-group">
                             <label for="editNotulis" class="required">Notulis</label>
-                            <input type="text" name="notulis" id="editNotulis" class="form-control" placeholder="Masukkan nama notulis" required maxlength="50">
+                            <input type="text" name="notulis" id="editNotulis" class="form-control"
+                                placeholder="Masukkan nama notulis" required maxlength="50">
                         </div>
-                        
+
                         <div class="form-group">
                             <label for="editJurusan" class="required">Jurusan</label>
-                            <input type="text" name="jurusan" id="editJurusan" class="form-control" placeholder="Masukkan jurusan" required maxlength="100">
+                            <input type="text" name="jurusan" id="editJurusan" class="form-control"
+                                placeholder="Masukkan jurusan" required maxlength="100">
                         </div>
                     </div>
-                    
+
                     <div class="form-row">
                         <div class="form-group">
                             <label for="editPenanggungJawab" class="required">Penanggung Jawab</label>
-                            <input type="text" name="penanggung_jawab" id="editPenanggungJawab" class="form-control" placeholder="Nama penanggung jawab rapat" required maxlength="50">
+                            <input type="text" name="penanggung_jawab" id="editPenanggungJawab" class="form-control"
+                                placeholder="Nama penanggung jawab rapat" required maxlength="50">
                         </div>
                     </div>
-                    
+
                     <div class="form-group">
                         <label for="editPesertaSearch" class="required">Peserta Rapat</label>
                         <div class="peserta-search-container">
                             <div class="search-wrapper">
-                                <input type="text" id="editPesertaSearch" class="peserta-search" placeholder="Cari peserta (nama atau NIM)..." aria-label="Cari peserta rapat">
+                                <input type="text" id="editPesertaSearch" class="peserta-search"
+                                    placeholder="Cari peserta (nama atau NIM)..." aria-label="Cari peserta rapat">
                             </div>
                             <div class="search-results" id="editSearchResults">
                                 <?php 
                                 // Reset pointer result users
                                 $result_users->data_seek(0);
                                 while ($user = $result_users->fetch_assoc()): ?>
-                                    <div class="search-result-item" data-id="<?php echo $user['user_id']; ?>" 
-                                         data-name="<?php echo htmlspecialchars($user['full_name']); ?>"
-                                         data-nim="<?php echo htmlspecialchars($user['nim']); ?>"
-                                         data-role="<?php echo htmlspecialchars($user['role']); ?>">
-                                        <div class="user-info">
-                                            <div class="result-name"><?php echo htmlspecialchars($user['full_name']); ?></div>
-                                            <div class="result-nim"><?php echo htmlspecialchars($user['nim']); ?></div>
-                                            <div class="result-role"><?php echo ucfirst($user['role']); ?></div>
+                                <div class="search-result-item" data-id="<?php echo $user['user_id']; ?>"
+                                    data-name="<?php echo htmlspecialchars($user['full_name']); ?>"
+                                    data-nim="<?php echo htmlspecialchars($user['nim']); ?>"
+                                    data-role="<?php echo htmlspecialchars($user['role']); ?>">
+                                    <div class="user-info">
+                                        <div class="result-name"><?php echo htmlspecialchars($user['full_name']); ?>
                                         </div>
-                                        <button type="button" class="result-add" title="Tambahkan">
-                                            <i class="fas fa-plus"></i>
-                                        </button>
+                                        <div class="result-nim"><?php echo htmlspecialchars($user['nim']); ?></div>
+                                        <div class="result-role"><?php echo ucfirst($user['role']); ?></div>
                                     </div>
+                                    <button type="button" class="result-add" title="Tambahkan">
+                                        <i class="fas fa-plus"></i>
+                                    </button>
+                                </div>
                                 <?php endwhile; ?>
                             </div>
                         </div>
-                        
+
                         <div class="peserta-list-container">
                             <div class="peserta-list-header">
                                 <span>Peserta Terpilih</span>
@@ -963,20 +1009,22 @@ $default_hari = $hari_list[date('N') - 1]; // N adalah 1 (Senin) hingga 7 (Mingg
                                 <div class="no-participants">Belum ada peserta yang ditambahkan</div>
                             </div>
                         </div>
-                        
+
                         <input type="hidden" name="peserta_ids" id="editPesertaIds" value="">
                     </div>
-                    
+
                     <div class="form-group">
                         <label for="editPembahasan">Pembahasan</label>
-                        <textarea name="pembahasan" id="editPembahasan" class="form-control" placeholder="Tulis pembahasan rapat di sini..." rows="5"></textarea>
+                        <textarea name="pembahasan" id="editPembahasan" class="form-control"
+                            placeholder="Tulis pembahasan rapat di sini..." rows="5"></textarea>
                     </div>
-                    
+
                     <div class="form-group">
                         <label for="editHasilAkhir">Hasil Akhir</label>
-                        <textarea name="hasil_akhir" id="editHasilAkhir" class="form-control" placeholder="Tulis hasil akhir rapat di sini..." rows="5"></textarea>
+                        <textarea name="hasil_akhir" id="editHasilAkhir" class="form-control"
+                            placeholder="Tulis hasil akhir rapat di sini..." rows="5"></textarea>
                     </div>
-                    
+
                     <div class="form-actions">
                         <button type="submit" class="btn btn-submit">
                             <i class="fas fa-save"></i> Simpan Perubahan
@@ -994,149 +1042,152 @@ $default_hari = $hari_list[date('N') - 1]; // N adalah 1 (Senin) hingga 7 (Mingg
     <div class="loading-overlay" id="loadingOverlay">
         <div class="loading-spinner"></div>
     </div>
-   <script>
-
+    <script>
         // Inisialisasi setelah DOM siap
-    document.addEventListener('DOMContentLoaded', function() {
-        // Inisialisasi sidebar
-        if (typeof initSidebar === 'function') {
-            initSidebar();
-        }
-        
-        // Tampilkan notifikasi dari PHP jika ada
-        <?php if (!empty($success_msg)): ?>
-            setTimeout(() => {
-                if (typeof showToast === 'function') {
-                    showToast('<?php echo addslashes($success_msg); ?>', 'success');
-                }
-            }, 300);
-        <?php endif; ?>
-        
-        <?php if (!empty($error_msg)): ?>
-            setTimeout(() => {
-                if (typeof showToast === 'function') {
-                    showToast('<?php echo addslashes($error_msg); ?>', 'error');
-                }
-            }, 300);
-        <?php endif; ?>
-        
-        // Sembunyikan loading overlay setelah delay
-        setTimeout(() => {
-            if (typeof hideLoading === 'function') {
-                hideLoading();
+        document.addEventListener('DOMContentLoaded', function () {
+            // Inisialisasi sidebar
+            if (typeof initSidebar === 'function') {
+                initSidebar();
             }
-        }, 500);
-    });
 
-    // Fungsi untuk mengirim email undangan
-    async function sendEmailInvitation(notulenId) {
-        if (!confirm('Kirim email undangan ke semua peserta?')) {
-            return;
+            // Tampilkan notifikasi dari PHP jika ada
+            <
+            ? php
+            if (!empty($success_msg)): ? >
+                setTimeout(() => {
+                    if (typeof showToast === 'function') {
+                        showToast('<?php echo addslashes($success_msg); ?>', 'success');
+                    }
+                }, 300); <
+            ? php endif; ? >
+
+            <
+            ? php
+            if (!empty($error_msg)): ? >
+                setTimeout(() => {
+                    if (typeof showToast === 'function') {
+                        showToast('<?php echo addslashes($error_msg); ?>', 'error');
+                    }
+                }, 300); <
+            ? php endif; ? >
+
+            // Sembunyikan loading overlay setelah delay
+            setTimeout(() => {
+                if (typeof hideLoading === 'function') {
+                    hideLoading();
+                }
+            }, 500);
+        });
+
+        // Fungsi untuk mengirim email undangan
+        async function sendEmailInvitation(notulenId) {
+            if (!confirm('Kirim email undangan ke semua peserta?')) {
+                return;
+            }
+
+            try {
+                // Tampilkan loading
+                const loadingOverlay = document.getElementById('loadingOverlay');
+                if (loadingOverlay) {
+                    loadingOverlay.classList.add('active');
+                }
+
+                const formData = new FormData();
+                formData.append('notulen_id', notulenId);
+
+                const response = await fetch('send_email.php', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    showToast(result.message || 'Email undangan berhasil dikirim!', 'success');
+                } else {
+                    showToast(result.error || 'Gagal mengirim email undangan', 'error');
+                }
+            } catch (error) {
+                console.error('Error sending email:', error);
+                showToast('Terjadi kesalahan saat mengirim email', 'error');
+            } finally {
+                // Sembunyikan loading
+                const loadingOverlay = document.getElementById('loadingOverlay');
+                if (loadingOverlay) {
+                    loadingOverlay.classList.remove('active');
+                }
+            }
         }
-        
-        try {
-            // Tampilkan loading
+
+        // Fungsi toast notification
+        function showToast(message, type = 'info') {
+            // Hapus toast yang sudah ada
+            const existingToasts = document.querySelectorAll('.toast-notification');
+            existingToasts.forEach(toast => {
+                toast.classList.add('hiding');
+                setTimeout(() => {
+                    if (toast.parentNode) {
+                        toast.parentNode.removeChild(toast);
+                    }
+                }, 300);
+            });
+
+            // Buat toast baru
+            const toast = document.createElement('div');
+            toast.className = `toast-notification toast-${type}`;
+
+            // Icon berdasarkan type
+            let icon = 'info-circle';
+            if (type === 'success') icon = 'check-circle';
+            if (type === 'error') icon = 'exclamation-triangle';
+            if (type === 'warning') icon = 'exclamation-circle';
+
+            toast.innerHTML = `
+            <i class="fas fa-${icon} toast-icon"></i>
+            <span class="toast-message">${message}</span>
+        `;
+
+            // Tambahkan ke body
+            document.body.appendChild(toast);
+
+            // Hapus toast setelah 5 detik
+            setTimeout(() => {
+                toast.classList.add('hiding');
+                setTimeout(() => {
+                    if (toast.parentNode) {
+                        toast.parentNode.removeChild(toast);
+                    }
+                }, 300);
+            }, 4700);
+        }
+
+        // Fungsi loading
+        function showLoading() {
             const loadingOverlay = document.getElementById('loadingOverlay');
             if (loadingOverlay) {
                 loadingOverlay.classList.add('active');
             }
-            
-            const formData = new FormData();
-            formData.append('notulen_id', notulenId);
-            
-            const response = await fetch('send_email.php', {
-                method: 'POST',
-                body: formData
-            });
-            
-            const result = await response.json();
-            
-            if (result.success) {
-                showToast(result.message || 'Email undangan berhasil dikirim!', 'success');
-            } else {
-                showToast(result.error || 'Gagal mengirim email undangan', 'error');
-            }
-        } catch (error) {
-            console.error('Error sending email:', error);
-            showToast('Terjadi kesalahan saat mengirim email', 'error');
-        } finally {
-            // Sembunyikan loading
+        }
+
+        function hideLoading() {
             const loadingOverlay = document.getElementById('loadingOverlay');
             if (loadingOverlay) {
                 loadingOverlay.classList.remove('active');
             }
         }
-    }
 
-    // Fungsi toast notification
-    function showToast(message, type = 'info') {
-        // Hapus toast yang sudah ada
-        const existingToasts = document.querySelectorAll('.toast-notification');
-        existingToasts.forEach(toast => {
-            toast.classList.add('hiding');
-            setTimeout(() => {
-                if (toast.parentNode) {
-                    toast.parentNode.removeChild(toast);
-                }
-            }, 300);
-        });
-        
-        // Buat toast baru
-        const toast = document.createElement('div');
-        toast.className = `toast-notification toast-${type}`;
-        
-        // Icon berdasarkan type
-        let icon = 'info-circle';
-        if (type === 'success') icon = 'check-circle';
-        if (type === 'error') icon = 'exclamation-triangle';
-        if (type === 'warning') icon = 'exclamation-circle';
-        
-        toast.innerHTML = `
-            <i class="fas fa-${icon} toast-icon"></i>
-            <span class="toast-message">${message}</span>
-        `;
-        
-        // Tambahkan ke body
-        document.body.appendChild(toast);
-        
-        // Hapus toast setelah 5 detik
-        setTimeout(() => {
-            toast.classList.add('hiding');
-            setTimeout(() => {
-                if (toast.parentNode) {
-                    toast.parentNode.removeChild(toast);
-                }
-            }, 300);
-        }, 4700);
-    }
-
-    // Fungsi loading
-    function showLoading() {
-        const loadingOverlay = document.getElementById('loadingOverlay');
-        if (loadingOverlay) {
-            loadingOverlay.classList.add('active');
+        // Fungsi konfirmasi aksi
+        function confirmAction(message) {
+            return confirm(message);
         }
-    }
-
-    function hideLoading() {
-        const loadingOverlay = document.getElementById('loadingOverlay');
-        if (loadingOverlay) {
-            loadingOverlay.classList.remove('active');
-        }
-    }
-
-    // Fungsi konfirmasi aksi
-    function confirmAction(message) {
-        return confirm(message);
-    }
     </script>
 
     <script src="notulen-rapat.js"></script>
 </body>
+
 </html>
 <?php
 // Close connections
 if (isset($stmt_notulens) && $stmt_notulens) {
     $stmt_notulens->close();
-
 }
