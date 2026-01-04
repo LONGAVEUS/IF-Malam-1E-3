@@ -221,7 +221,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                         $stmt_peserta->close();
                     }
                     
-                    $conn->commit(); // <-- INI SUDAH ADA
+                    $conn->commit(); // 
                     $success_msg = "Notulen berhasil diperbarui!";
                     
                     // REDIRECT
@@ -1191,3 +1191,4 @@ $default_hari = $hari_list[date('N') - 1]; // N adalah 1 (Senin) hingga 7 (Mingg
 if (isset($stmt_notulens) && $stmt_notulens) {
     $stmt_notulens->close();
 }
+
