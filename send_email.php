@@ -57,12 +57,12 @@ try {
     $mail->isSMTP();
     $mail->Host       = 'smtp.gmail.com';
     $mail->SMTPAuth   = true;
-    $mail->Username   = 'notulenE3@gmailcom';
-    $mail->Password   = 'jultkoumjsqrrkgo';
+    $mail->Username   = 'notulensie3@gmail.com';
+    $mail->Password   = 'tjansczundpangzt';
     $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
     $mail->Port       = 587;
 
-    $mail->setFrom('maysya2561@gmail.com', 'Sistem Notulen');
+    $mail->setFrom('notulensie3@gmail.com', 'Undangan Rapat');
     $mail->isHTML(true);
     $mail->Subject = 'Undangan Rapat: ' . $notulen['judul'];
 
