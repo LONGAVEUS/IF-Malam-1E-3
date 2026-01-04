@@ -236,7 +236,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 $stmt_update->close();
                 
             } catch (Exception $e) {
-                $conn->rollback(); // <-- INI SUDAH ADA
+                $conn->rollback(); 
                 $error_msg = "Error: " . $e->getMessage();
             }
         }
@@ -302,7 +302,7 @@ if (isset($_GET['action']) && isset($_GET['id'])) {
         
     } elseif ($action == 'send_email') {
         // Kirim email undangan ke peserta
-        require_once 'send_email_function.php'; // Pastikan file ini dibuat
+        require_once 'send_email_.php'; 
         
         if (sendEmailToPeserta($notulen_id, $conn)) {
             $_SESSION['temp_success_msg'] = "Email undangan berhasil dikirim ke peserta!";
