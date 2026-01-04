@@ -102,13 +102,6 @@ $dashboard = ($role === 'admin') ? 'admin.php'
                 </li>
 
                 <li>
-                    <a href="notulen_list_admin.php" class="nav-link">
-                        <i class="fas fa-file-alt nav-icon"></i>
-                        <span class="nav-label">Notulen Rapat</span>
-                    </a>
-                </li>
-
-                <li>
                     <a href="user_management.php" class="nav-link">
                         <i class="fas fa-users nav-icon"></i>
                         <span class="nav-label">Daftar Pengguna</span>
