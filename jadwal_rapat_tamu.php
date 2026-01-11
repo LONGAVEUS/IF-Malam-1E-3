@@ -22,6 +22,13 @@ $foto_sekarang = $userLogin['photo'];
 $path_valid = (!empty($userLogin['photo'])) ? $userLogin['photo'] : 'uploads/profile_photos/default_profile.png';
 $current_photo_url = $path_valid . "?t=" . time();
 
+// ================== LOGOUT ==================
+if (isset($_GET['action']) && $_GET['action'] === 'logout') {
+    session_destroy();
+    header("Location: login.php");
+    exit();
+}
+
 // Ambil parameter bulan dan tahun dari URL
 $bulan = isset($_GET['bulan']) ? intval($_GET['bulan']) : date('n');
 $tahun = isset($_GET['tahun']) ? intval($_GET['tahun']) : date('Y');
@@ -88,200 +95,299 @@ function getNamaBulan($bulan) {
 $jumlah_hari = date('t', strtotime("$tahun-$bulan-01"));
 $hari_pertama = date('N', strtotime("$tahun-$bulan-01"));
 $offset = $hari_pertama - 1;
+
+// Dashboard URL untuk tamu
+$dashboard_url = "tamu.php";
 ?>
 
 <!DOCTYPE html>
 <html lang="id">
 <head>
-  <title>Jadwal Rapat - Portal Tamu</title>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  <link rel="stylesheet" href="jadwal-style.css">
+<title>Jadwal Rapat - Portal Tamu</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<link rel="stylesheet" href="jadwal-style.css">
+
 </head>
+
 <body>
-  <!-- Sidebar -->
-  <div class="sidebar" id="sidebar">
-    <div class="sidebar-header">
-      <div class="logo-area">
-        <a href="tamu.php" class="header-logo">
-          <img src="if.png" alt="Politeknik Negeri Batam">
-        </a>
-      </div>
-      <button class="toggler">
-        <span class="dekstop-icon"></span>
-        <div class="hamburger-icon">
-          <span></span>
-          <span></span>
-          <span></span>
-        </div>
-      </button>
+<!-- Sidebar -->
+<div class="sidebar">
+  <div class="sidebar-header">
+    <div class="logo-area">
+      <a href="tamu.php" class="header-logo">
+        <img src="if.png" alt="Politeknik Negeri Batam">
+      </a>
     </div>
 
-    <nav class="sidebar-nav">
-      <ul class="nav-list primary-nav">
-        <li class="nav-item">
-          <a href="tamu.php" class="nav-link">
-            <i class="fas fa-th-large nav-icon"></i>
-            <span class="nav-label">Dashboard</span>
-          </a>
-        </li>
-        <li class="nav-item">
-          <a href="jadwal_rapat_tamu.php" class="nav-link active">
-            <i class="fas fa-calendar-alt nav-icon"></i>
-            <span class="nav-label">Jadwal Rapat</span>
-          </a>
-        </li>
-        <li class="nav-item">
-          <a href="tamu.php" class="nav-link">
-            <i class="fas fa-file-alt nav-icon"></i>
-            <span class="nav-label">Notulen Rapat</span>
-          </a>
-        </li>
-      </ul>
-
-      <ul class="nav-list secondary-nav">
-        <li class="nav-item">
-          <a href="profile.php" class="nav-link">
-            <i class="fas fa-user-circle nav-icon"></i>
-            <span class="nav-label">Profil Saya</span>
-          </a>
-        </li>
-        <li class="nav-item">
-          <a href="logout.php" class="nav-link">
-            <i class="fas fa-sign-in-alt nav-icon"></i>
-            <span class="nav-label">Keluar</span>
-          </a>
-        </li>
-
-        <!-- PROFIL LOGIN -->
-        <li class="nav-item profile-user">
-          <img src="<?= $fotoProfil ?>" class="profile-avatar">
-          <div class="profile-info">
-            <span class="profile-name">
-              <?= htmlspecialchars($userLogin['full_name']) ?>
-            </span>
-            <span class="profile-role">
-              <?= ucfirst($userLogin['role']) ?>
-            </span>
-          </div>
-        </li>
-      </ul>
-    </nav>
+    <button class="toggler" type="button">
+      <div class="hamburger-icon">
+        <span></span>
+        <span></span>
+        <span></span>
+      </div>
+    </button>
   </div>
 
-  <!-- Main Content -->
-  <div class="main-content" id="mainContent">
-    <div class="dashboard-header">
-      <div>
-        <h1>Jadwal Rapat - Portal Tamu</h1>
-        <p>Berikut adalah jadwal rapat yang sudah direncanakan. Klik pada rapat untuk melihat detail.</p>
-      </div>
-      <div class="time-info">
-        <div class="live-clock">
-          <i class="fas fa-clock"></i>
-          <span id="liveTime">Loading...</span>
+  <nav class="sidebar-nav">
+    <!-- Primary top nav -->
+    <ul class="nav-list primary-nav">
+      <li class="nav-item">
+        <a href="tamu.php" class="nav-link">
+          <i class="fas fa-th-large nav-icon"></i>
+          <span class="nav-label">Dashboard</span>
+        </a>
+      </li>
+      <li class="nav-item">
+        <a href="jadwal_rapat_tamu.php" class="nav-link active">
+          <i class="fas fa-calendar-alt nav-icon"></i>
+          <span class="nav-label">Jadwal Rapat</span>
+        </a>
+      </li>
+    </ul>
+
+    <!-- Secondary bottom nav -->
+    <ul class="nav-list secondary-nav">
+      <li class="nav-item">
+        <a href="profile.php" class="nav-link">
+          <i class="fas fa-user-circle nav-icon"></i>
+          <span class="nav-label">Profil Saya</span>
+        </a>
+      </li>
+      <li class="nav-item">
+        <a href="tamu.php?action=logout" class="nav-link" onclick="return confirm('Yakin ingin logout?');">
+          <i class="fas fa-sign-out-alt nav-icon"></i>
+          <span class="nav-label">Keluar</span>
+        </a>
+      </li>
+
+      <!-- PROFIL LOGIN -->
+      <li class="nav-item profile-user">
+        <img src="<?= $current_photo_url ?>" class="profile-avatar">
+        <div class="profile-info">
+          <span class="profile-name">
+            <?= htmlspecialchars($userLogin['full_name']) ?>
+          </span>
+          <span class="profile-role">
+            <?= ucfirst($userLogin['role']) ?>
+          </span>
         </div>
-        <div class="current-date" id="currentDate"></div>
+      </li>
+    </ul>
+  </nav>
+</div>
+
+<!-- Main Content -->
+<div class="main-content">
+  <div class="dashboard-header">
+    <div>
+      <h1>Jadwal Rapat - Portal Tamu</h1>
+      <p>Berikut adalah jadwal rapat yang sudah direncanakan. Klik pada teks notulen untuk melihat detail.</p>
+    </div>
+    <div class="time-info">
+      <div class="live-clock">
+        <i class="fas fa-clock"></i>
+        <span id="liveTime">Loading...</span>
+      </div>
+      <div class="current-date" id="currentDate"></div>
+    </div>
+  </div>
+
+  <div class="calendar-container">
+    <div class="calendar-header">
+      <div class="calendar-navigation">
+        <a href="jadwal_rapat_tamu.php?bulan=<?= $bulan_sebelumnya ?>&tahun=<?= $tahun_sebelumnya ?>" class="nav-btn">
+          <i class="fas fa-chevron-left"></i> Bulan Sebelumnya
+        </a>
+        <h2><?= getNamaBulan($bulan) . ' ' . $tahun ?></h2>
+        <a href="jadwal_rapat_tamu.php?bulan=<?= $bulan_selanjutnya ?>&tahun=<?= $tahun_selanjutnya ?>"
+          class="nav-btn">
+          Bulan Selanjutnya <i class="fas fa-chevron-right"></i>
+        </a>
+      </div>
+      <div class="calendar-actions">
+        <a href="jadwal_rapat_tamu.php" class="btn-today">Hari Ini</a>
       </div>
     </div>
 
-    <div class="calendar-container">
-      <div class="calendar-header">
-        <div class="calendar-navigation">
-          <a href="jadwal_rapat_tamu.php?bulan=<?= $bulan_sebelumnya ?>&tahun=<?= $tahun_sebelumnya ?>" class="nav-btn">
-            <i class="fas fa-chevron-left"></i> Bulan Sebelumnya
-          </a>
-          <h2><?= getNamaBulan($bulan) . ' ' . $tahun ?></h2>
-          <a href="jadwal_rapat_tamu.php?bulan=<?= $bulan_selanjutnya ?>&tahun=<?= $tahun_selanjutnya ?>" class="nav-btn">
-            Bulan Selanjutnya <i class="fas fa-chevron-right"></i>
-          </a>
-        </div>
-        <div class="calendar-actions">
-          <a href="jadwal_rapat_tamu.php" class="btn btn-today">Hari Ini</a>
-        </div>
+    <div class="calendar">
+      <div class="calendar-weekdays">
+        <div class="weekday">Senin</div>
+        <div class="weekday">Selasa</div>
+        <div class="weekday">Rabu</div>
+        <div class="weekday">Kamis</div>
+        <div class="weekday">Jumat</div>
+        <div class="weekday">Sabtu</div>
+        <div class="weekday">Minggu</div>
       </div>
 
-      <div class="calendar">
-        <div class="calendar-weekdays">
-          <div class="weekday">Senin</div>
-          <div class="weekday">Selasa</div>
-          <div class="weekday">Rabu</div>
-          <div class="weekday">Kamis</div>
-          <div class="weekday">Jumat</div>
-          <div class="weekday">Sabtu</div>
-          <div class="weekday">Minggu</div>
-        </div>
+      <div class="calendar-days">
+        <?php for ($i = 0; $i < $offset; $i++): ?>
+        <div class="calendar-day empty"></div>
+        <?php endfor; ?>
 
-        <div class="calendar-days">
-          <?php for ($i = 0; $i < $offset; $i++): ?>
-            <div class="calendar-day empty"></div>
-          <?php endfor; ?>
-
-          <?php for ($hari = 1; $hari <= $jumlah_hari; $hari++): ?>
-            <?php
-            $tanggal_lengkap = sprintf('%04d-%02d-%02d', $tahun, $bulan, $hari);
-            $is_today = ($tanggal_lengkap == date('Y-m-d')) ? 'today' : '';
-            $has_notulen = isset($notulen_per_hari[$hari]) ? 'has-events' : '';
-            ?>
-            
-            <div class="calendar-day <?= $is_today ?> <?= $has_notulen ?>" data-date="<?= $tanggal_lengkap ?>">
-              <div class="day-number"><?= $hari ?></div>
-              
-              <?php if (isset($notulen_per_hari[$hari])): ?>
-                <div class="day-events">
-                  <?php foreach ($notulen_per_hari[$hari] as $notulen): ?>
-                    <?php
-                    $status_class = 'sent';
-                    $time_display = !empty($notulen['jam_mulai']) ? date('H:i', strtotime($notulen['jam_mulai'])) : '';
-                    ?>
-                    
-                    <a href="tamu.php?notulen_id=<?= $notulen['id'] ?>" 
-                       class="event-item <?= $status_class ?>" 
-                       data-id="<?= $notulen['id'] ?>">
-                      <div class="event-title"><?= htmlspecialchars($notulen['judul']) ?></div>
-                      <div class="event-time">
-                        <?= $time_display ?> - <?= htmlspecialchars($notulen['tempat']) ?>
-                      </div>
-                    </a>
-                  <?php endforeach; ?>
-                </div>
-              <?php endif; ?>
-            </div>
-          <?php endfor; ?>
-
-          <?php
-          $total_cells = $offset + $jumlah_hari;
-          $remaining_cells = 42 - $total_cells;
-          if ($remaining_cells > 0):
-            for ($i = 0; $i < $remaining_cells; $i++):
+        <?php for ($hari = 1; $hari <= $jumlah_hari; $hari++): ?>
+        <?php
+          $tanggal_lengkap = sprintf('%04d-%02d-%02d', $tahun, $bulan, $hari);
+          $is_today = ($tanggal_lengkap == date('Y-m-d')) ? 'today' : '';
+          $has_notulen = isset($notulen_per_hari[$hari]) ? 'has-events' : '';
           ?>
-            <div class="calendar-day empty"></div>
-          <?php endfor; endif; ?>
-        </div>
-      </div>
 
-      <div class="calendar-legend">
+        <div class="calendar-day <?= $is_today ?> <?= $has_notulen ?>" data-date="<?= $tanggal_lengkap ?>">
+          <div class="day-number"><?= $hari ?></div>
+
+          <?php if (isset($notulen_per_hari[$hari])): ?>
+          <div class="day-events">
+            <?php 
+                $jumlah_notulen = count($notulen_per_hari[$hari]);
+                // Jika hanya ada 1 notulen, tampilkan judulnya
+                if ($jumlah_notulen == 1): 
+                  $notulen = $notulen_per_hari[$hari][0];
+                  $judul_pendek = strlen($notulen['judul']) > 20 ? substr($notulen['judul'], 0, 20) . '...' : $notulen['judul'];
+                ?>
+            <a href="<?= $dashboard_url ?>?notulen_id=<?= $notulen['id'] ?>" class="notulen-text-link"
+              title="<?= htmlspecialchars($notulen['judul']) ?>">
+              <?= htmlspecialchars($judul_pendek) ?>
+            </a>
+            <?php 
+                // Jika lebih dari 1 notulen, tampilkan jumlah notulen
+                else: 
+                  $tanggal_param = date('Y-m-d', strtotime($tanggal_lengkap));
+                ?>
+            <a href="<?= $dashboard_url ?>?tanggal=<?= $tanggal_param ?>" class="notulen-count-text"
+              title="Klik untuk melihat <?= $jumlah_notulen ?> notulen pada tanggal ini">
+              <?= $jumlah_notulen ?> Notulen
+            </a>
+            <?php endif; ?>
+          </div>
+          <?php endif; ?>
+        </div>
+        <?php endfor; ?>
+
+        <?php
+        $total_cells = $offset + $jumlah_hari;
+        $remaining_cells = 42 - $total_cells;
+        if ($remaining_cells > 0):
+          for ($i = 0; $i < $remaining_cells; $i++):
+        ?>
+        <div class="calendar-day empty"></div>
+        <?php endfor; endif; ?>
+      </div>
+    </div>
+
+    <div class="calendar-legend">
         <div class="legend-item">
           <span class="legend-color" style="background-color: #fff3cd;"></span>
           <span class="legend-text">Hari Ini</span>
         </div>
         <div class="legend-item">
+          <span class="legend-color" style="background-color: #f39c12;"></span>
+          <span class="legend-text">Draft</span>
+        </div>
+        <div class="legend-item">
           <span class="legend-color" style="background-color: #27ae60;"></span>
-          <span class="legend-text">Rapat Terjadwal</span>
+          <span class="legend-text">Terkirim</span>
+        </div>
+        <div class="legend-item">
+          <span class="legend-color" style="background-color: #2ecc71;"></span>
+          <span class="legend-text">Final</span>
         </div>
       </div>
     </div>
   </div>
 
-  <!-- Include JavaScript Eksternal -->
-  <script src="jadwal_script.js"></script>
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    try {
+      // Sidebar functionality
+      const sidebar = document.querySelector(".sidebar");
+      const toggler = document.querySelector(".toggler");
+      const sidebarNav = document.querySelector(".sidebar-nav");
+
+      if (!sidebar || !toggler || !sidebarNav) {
+        console.warn("Sidebar elements not found");
+        return;
+      }
+
+      toggler.addEventListener("click", function (e) {
+        e.stopPropagation();
+
+        // ================= MOBILE ONLY =================
+        if (window.innerWidth <= 768) {
+          sidebarNav.classList.toggle("active");
+        }
+      });
+
+      // ================= CLOSE DROPDOWN SAAT KLIK DI LUAR (MOBILE) =================
+      document.addEventListener("click", function (e) {
+        if (window.innerWidth <= 768) {
+          if (!sidebar.contains(e.target)) {
+            sidebarNav.classList.remove("active");
+          }
+        }
+      });
+
+      // ================= RESET SAAT RESIZE KE DESKTOP =================
+      window.addEventListener("resize", function () {
+        if (window.innerWidth > 768) {
+          sidebarNav.classList.remove("active");
+        }
+      });
+
+      // Live Clock functionality
+      function updateClock() {
+        try {
+          const now = new Date();
+          const timeString = now.toLocaleTimeString("id-ID", {
+            hour: "2-digit",
+            minute: "2-digit",
+            second: "2-digit"
+          });
+
+          const dateString = now.toLocaleDateString("id-ID", {
+            weekday: "long",
+            year: "numeric",
+            month: "long",
+            day: "numeric"
+          });
+
+          const timeElement = document.getElementById("liveTime");
+          const dateElement = document.getElementById("currentDate");
+
+          if (timeElement) {
+            timeElement.textContent = timeString;
+            timeElement.classList.add("updated");
+            setTimeout(() => timeElement.classList.remove("updated"), 500);
+          }
+
+          if (dateElement) {
+            dateElement.textContent = dateString;
+          }
+        } catch (error) {
+          console.error("Error updating clock:", error);
+        }
+      }
+
+      // Update clock every second
+      updateClock();
+      const clockInterval = setInterval(updateClock, 1000);
+
+      // Cleanup on page unload
+      window.addEventListener("beforeunload", function () {
+        clearInterval(clockInterval);
+      });
+
+    } catch (error) {
+      console.error("Error initializing page:", error);
+    }
+  });
+</script>
 </body>
+
 </html>
 
 <?php
 if (isset($conn)) {
-    $conn->close();
+  $conn->close();
 }
-?>
-
