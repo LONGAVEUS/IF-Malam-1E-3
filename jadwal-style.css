@@ -221,20 +221,6 @@ body {
   background: #2980b9;
 }
 
-.btn-today {
-  background: #27ae60;
-  border-radius: 0.375rem;
-  color: white;
-  font-size: 0.9rem;
-  padding: 0.5rem 1rem;
-  text-decoration: none;
-  transition: background 0.3s ease;
-}
-
-.btn-today:hover {
-  background: #219653;
-}
-
 /* ================= CALENDAR GRID STYLES ================= */
 .calendar {
   width: 100%;
@@ -290,6 +276,23 @@ body {
   background: #e3f2fd;
   box-shadow: 0 0.125rem 0.5rem rgba(0, 0, 0, 0.1);
   transform: translateY(-0.125rem);
+}
+
+/* ================= MOBILE EVENT BADGES WITH COLORS ================= */
+.calendar-day.has-events.draft::after {
+  background: #f39c12 !important;
+}
+
+.calendar-day.has-events.sent::after {
+  background: #27ae60 !important;
+}
+
+.calendar-day.has-events.final::after {
+  background: #2ecc71 !important;
+}
+
+.calendar-day.has-events.multi::after {
+  background: #9b59b6 !important;
 }
 
 .day-number {
@@ -841,18 +844,54 @@ body {
     padding: 0.75rem;
   }
 
+  /* ================= CALENDAR HEADER MOBILE - PERBAIKAN ================= */
   .calendar-header {
-    flex-direction: column;
-    gap: 0.9rem;
+    flex-direction: row !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    padding: 0.5rem 0 !important;
+    flex-wrap: nowrap !important;
   }
 
   .calendar-navigation {
-    flex-direction: column;
-    gap: 0.625rem;
+    flex-direction: row !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    width: 100% !important;
+    gap: 0.3rem !important;
   }
 
   .calendar-navigation h2 {
-    min-width: auto;
+    font-size: 1.1rem !important;
+    min-width: auto !important;
+    margin: 0 0.5rem !important;
+    text-align: center !important;
+    flex: 1 !important;
+  }
+
+  .nav-btn {
+    padding: 0.4rem 0.8rem !important;
+    font-size: 0.8rem !important;
+    white-space: nowrap !important;
+    flex: 0 0 auto !important;
+  }
+
+  /* Sembunyikan teks panjang, tampilkan hanya ikon dan teks pendek */
+  .nav-btn span {
+    display: none !important;
+  }
+
+  /* Tambahkan teks pendek setelah ikon */
+  .nav-btn[href*="sebelumnya"]::after {
+    content: " Prev" !important;
+    font-size: 0.7rem !important;
+    margin-left: 0.2rem !important;
+  }
+
+  .nav-btn[href*="selanjutnya"]::after {
+    content: " Next" !important;
+    font-size: 0.7rem !important;
+    margin-left: 0.2rem !important;
   }
 
   /* ================= CALENDAR GRID MOBILE ================= */
@@ -872,8 +911,8 @@ body {
   }
 
   .calendar-day {
-    min-height: 4rem;
-    max-height: 4rem;
+    min-height: 5rem !important;
+    max-height: 5rem !important;
     padding: 0.25rem;
   }
 
@@ -883,42 +922,48 @@ body {
 
   /* ================= DAY NUMBER MOBILE ================= */
   .day-number {
-    background: rgba(255, 255, 255, 0.8);
-    border-radius: 50%;
-    display: flex;
-    font-size: 0.7rem;
-    height: 1.25rem;
-    justify-content: center;
-    margin-bottom: 0;
-    position: absolute;
-    right: 0.25rem;
-    top: 0.25rem;
-    width: 1.25rem;
-    z-index: 2;
+    position: absolute !important;
+    top: 0.15rem !important;
+    right: 0.15rem !important;
+    background: transparent !important;
+    height: auto !important;
+    width: auto !important;
+    font-size: 0.8rem !important;
+    font-weight: bold;
+    margin-bottom: 0 !important;
   }
 
   .calendar-day.today .day-number {
-    background: #e74c3c;
-    color: white;
-    font-weight: bold;
+    color: #e74c3c !important;
+    background: transparent !important;
   }
 
-  /* ================= EVENT DISPLAY MOBILE ================= */
-  .notulen-text-link,
-  .notulen-count-text {
+  .calendar-day.has-events::after {
     display: none;
   }
 
+  /* ================= TAMPILKAN TEKS NOTULEN DI MOBILE ================= */
   .day-events {
-    left: 0;
-    padding-right: 0;
-    padding-top: 1.5rem;
-    position: absolute;
-    right: 0;
-    top: 0;
+    position: relative !important;
+    padding-top: 1.5rem !important;
+    display: block !important;
+    max-height: 3.5rem;
+    overflow-y: auto;
   }
 
-  /* ================= MOBILE EVENT LIST ================= */
+  .notulen-text-link,
+  .notulen-count-text {
+    display: block !important;
+    font-size: 0.65rem !important;
+    padding: 0.1rem 0.2rem !important;
+    margin-bottom: 0.1rem !important;
+    max-width: 100%;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  /* ================= EVENT DISPLAY MOBILE ================= */
   .mobile-events-list {
     display: block;
   }
@@ -961,9 +1006,31 @@ body {
 
 /* ================= EXTRA SMALL MOBILE STYLES ================= */
 @media (max-width: 480px) {
+  /* ================= CALENDAR HEADER MOBILE SANGAT KECIL ================= */
+  .calendar-navigation h2 {
+    font-size: 0.9rem !important;
+    margin: 0 0.2rem !important;
+  }
+
+  .nav-btn {
+    padding: 0.3rem 0.5rem !important;
+    font-size: 0.7rem !important;
+  }
+
+  .nav-btn[href*="sebelumnya"]::after {
+    font-size: 0.6rem !important;
+    margin-left: 0.1rem !important;
+  }
+
+  .nav-btn[href*="selanjutnya"]::after {
+    font-size: 0.6rem !important;
+    margin-left: 0.1rem !important;
+  }
+
+  /* ================= CALENDAR DAY MOBILE SANGAT KECIL ================= */
   .calendar-day {
-    min-height: 3.5rem;
-    max-height: 3.5rem;
+    min-height: 4rem !important;
+    max-height: 4rem !important;
   }
 
   .event-count-badge {
@@ -997,5 +1064,32 @@ body {
   .btn {
     justify-content: center;
     width: 100%;
+  }
+
+  /* ================= TEKS NOTULEN DI MOBILE YANG SANGAT KECIL ================= */
+  .notulen-text-link,
+  .notulen-count-text {
+    font-size: 0.6rem !important;
+    padding: 0.08rem 0.15rem !important;
+  }
+}
+
+/* ================= TAMBAHAN UNTUK MOBILE LEBIH BAIK ================= */
+@media (max-width: 360px) {
+  .calendar-navigation {
+    gap: 0.1rem !important;
+  }
+
+  .calendar-navigation h2 {
+    font-size: 0.8rem !important;
+  }
+
+  .nav-btn {
+    padding: 0.25rem 0.4rem !important;
+    font-size: 0.6rem !important;
+  }
+
+  .nav-btn i {
+    font-size: 0.7rem !important;
   }
 }
