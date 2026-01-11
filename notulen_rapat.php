@@ -27,11 +27,9 @@ $userLogin = $stmtUser->get_result()->fetch_assoc();
 $stmtUser->close();
 
 /* ================== FOTO PROFIL ================== */
-$foto_sekarang = $_SESSION['photo'] ?? $userLogin['photo'];
-
-$path_valid = (!empty($foto_sekarang) && file_exists($foto_sekarang))
-    ? $foto_sekarang
-    : 'uploads/profile_photos/default_profile.png';
+$foto_sekarang = $userLogin['photo'];
+$path_valid = (!empty($userLogin['photo'])) ? $userLogin['photo'] : 'uploads/profile_photos/default_profile.png';
+$current_photo_url = $path_valid . "?t=" . time();
 
 /* ================== SESSION DATA ================== */
 $role = $_SESSION['role'];
@@ -221,7 +219,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                         $stmt_peserta->close();
                     }
                     
-                    $conn->commit(); // 
+                    $conn->commit(); // <-- INI SUDAH ADA
                     $success_msg = "Notulen berhasil diperbarui!";
                     
                     // REDIRECT
@@ -569,10 +567,10 @@ $default_hari = $hari_list[date('N') - 1]; // N adalah 1 (Senin) hingga 7 (Mingg
                             <i class="fas fa-paper-plane"></i>
                         </a>
                         <!-- Tombol Kirim Email Undangan -->
-                        <button class="action-btn email" title="Kirim Email Undangan"
-                            data-id="<?php echo $notulen['id']; ?>"
-                            onclick="sendEmailInvitation(<?php echo $notulen['id']; ?>)">
-                            <i class="fas fa-envelope"></i>
+                        <button class="action-btn email" title="Kirim Email Undangan" 
+                        data-id="<?php echo $notulen['id']; ?>">
+                    <i class="fas fa-envelope"></i>
+                </button>
                         </button>
                         <a href="notulen_rapat.php?action=delete&id=<?php echo $notulen['id']; ?>"
                             class="action-btn delete" title="Hapus"
@@ -1043,143 +1041,38 @@ $default_hari = $hari_list[date('N') - 1]; // N adalah 1 (Senin) hingga 7 (Mingg
         <div class="loading-spinner"></div>
     </div>
     <script>
-        // Inisialisasi setelah DOM siap
-        document.addEventListener('DOMContentLoaded', function () {
-            // Inisialisasi sidebar
-            if (typeof initSidebar === 'function') {
-                initSidebar();
-            }
+    // Inisialisasi setelah DOM siap
+    document.addEventListener('DOMContentLoaded', function () {
+        // Inisialisasi sidebar
+        if (typeof initSidebar === 'function') {
+            initSidebar();
+        }
 
-            // Tampilkan notifikasi dari PHP jika ada
-            <
-            ? php
-            if (!empty($success_msg)): ? >
-                setTimeout(() => {
-                    if (typeof showToast === 'function') {
-                        showToast('<?php echo addslashes($success_msg); ?>', 'success');
-                    }
-                }, 300); <
-            ? php endif; ? >
-
-            <
-            ? php
-            if (!empty($error_msg)): ? >
-                setTimeout(() => {
-                    if (typeof showToast === 'function') {
-                        showToast('<?php echo addslashes($error_msg); ?>', 'error');
-                    }
-                }, 300); <
-            ? php endif; ? >
-
-            // Sembunyikan loading overlay setelah delay
+        // Tampilkan notifikasi dari PHP jika ada
+        <?php if (!empty($success_msg)): ?>
             setTimeout(() => {
-                if (typeof hideLoading === 'function') {
-                    hideLoading();
+                if (typeof showToast === 'function') {
+                    showToast('<?php echo addslashes($success_msg); ?>', 'success');
                 }
-            }, 500);
-        });
+            }, 300);
+        <?php endif; ?>
 
-        // Fungsi untuk mengirim email undangan
-        async function sendEmailInvitation(notulenId) {
-            if (!confirm('Kirim email undangan ke semua peserta?')) {
-                return;
-            }
-
-            try {
-                // Tampilkan loading
-                const loadingOverlay = document.getElementById('loadingOverlay');
-                if (loadingOverlay) {
-                    loadingOverlay.classList.add('active');
-                }
-
-                const formData = new FormData();
-                formData.append('notulen_id', notulenId);
-
-                const response = await fetch('send_email.php', {
-                    method: 'POST',
-                    body: formData
-                });
-
-                const result = await response.json();
-
-                if (result.success) {
-                    showToast(result.message || 'Email undangan berhasil dikirim!', 'success');
-                } else {
-                    showToast(result.error || 'Gagal mengirim email undangan', 'error');
-                }
-            } catch (error) {
-                console.error('Error sending email:', error);
-                showToast('Terjadi kesalahan saat mengirim email', 'error');
-            } finally {
-                // Sembunyikan loading
-                const loadingOverlay = document.getElementById('loadingOverlay');
-                if (loadingOverlay) {
-                    loadingOverlay.classList.remove('active');
-                }
-            }
-        }
-
-        // Fungsi toast notification
-        function showToast(message, type = 'info') {
-            // Hapus toast yang sudah ada
-            const existingToasts = document.querySelectorAll('.toast-notification');
-            existingToasts.forEach(toast => {
-                toast.classList.add('hiding');
-                setTimeout(() => {
-                    if (toast.parentNode) {
-                        toast.parentNode.removeChild(toast);
-                    }
-                }, 300);
-            });
-
-            // Buat toast baru
-            const toast = document.createElement('div');
-            toast.className = `toast-notification toast-${type}`;
-
-            // Icon berdasarkan type
-            let icon = 'info-circle';
-            if (type === 'success') icon = 'check-circle';
-            if (type === 'error') icon = 'exclamation-triangle';
-            if (type === 'warning') icon = 'exclamation-circle';
-
-            toast.innerHTML = `
-            <i class="fas fa-${icon} toast-icon"></i>
-            <span class="toast-message">${message}</span>
-        `;
-
-            // Tambahkan ke body
-            document.body.appendChild(toast);
-
-            // Hapus toast setelah 5 detik
+        <?php if (!empty($error_msg)): ?>
             setTimeout(() => {
-                toast.classList.add('hiding');
-                setTimeout(() => {
-                    if (toast.parentNode) {
-                        toast.parentNode.removeChild(toast);
-                    }
-                }, 300);
-            }, 4700);
-        }
+                if (typeof showToast === 'function') {
+                    showToast('<?php echo addslashes($error_msg); ?>', 'error');
+                }
+            }, 300);
+        <?php endif; ?>
 
-        // Fungsi loading
-        function showLoading() {
-            const loadingOverlay = document.getElementById('loadingOverlay');
-            if (loadingOverlay) {
-                loadingOverlay.classList.add('active');
+        // Sembunyikan loading overlay setelah delay
+        setTimeout(() => {
+            if (typeof hideLoading === 'function') {
+                hideLoading();
             }
-        }
-
-        function hideLoading() {
-            const loadingOverlay = document.getElementById('loadingOverlay');
-            if (loadingOverlay) {
-                loadingOverlay.classList.remove('active');
-            }
-        }
-
-        // Fungsi konfirmasi aksi
-        function confirmAction(message) {
-            return confirm(message);
-        }
+        }, 500);
+    });
+</script>
     </script>
 
     <script src="notulen-rapat.js"></script>
@@ -1191,4 +1084,3 @@ $default_hari = $hari_list[date('N') - 1]; // N adalah 1 (Senin) hingga 7 (Mingg
 if (isset($stmt_notulens) && $stmt_notulens) {
     $stmt_notulens->close();
 }
-
