@@ -2,6 +2,12 @@
 session_start();
 require_once 'koneksi.php';
 
+// Nama File: jadwal_rapat.php
+// Deskripsi: Menampilkan jadwal rapat dalam bentuk kalender untik notulis yang login
+// Dibuat oleh: Arnol Hutagalung - 3312511130
+// Tanggal: 2 Desember 2025
+
+
 // Proteksi login dan role notulis
 if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true || $_SESSION['role'] !== 'notulis') {
     header("Location: login.php");
@@ -105,7 +111,6 @@ $dashboard_url = "notulis.php";
 
 <!DOCTYPE html>
 <html lang="id">
-
 <head>
   <title>Jadwal Rapat - Notulis</title>
   <meta charset="UTF-8">
@@ -120,7 +125,7 @@ $dashboard_url = "notulis.php";
     <div class="sidebar-header">
       <div class="logo-area">
         <a href="notulis.php" class="header-logo">
-          <img src="if.png" alt="Politeknik Negeri Batam">
+          <img src="if.png" alt="Politeknik Negeri Batam" />
         </a>
       </div>
 
@@ -143,15 +148,15 @@ $dashboard_url = "notulis.php";
           </a>
         </li>
         <li class="nav-item">
-          <a href="jadwal_rapat.php" class="nav-link active">
-            <i class="fas fa-calendar-alt nav-icon"></i>
-            <span class="nav-label">Jadwal Rapat</span>
+          <a href="notulen_rapat.php" class="nav-link active">
+            <i class="fas fa-file-alt nav-icon"></i>
+            <span class="nav-label">Notulen Rapat</span>
           </a>
         </li>
         <li class="nav-item">
-          <a href="notulen_rapat.php" class="nav-link">
-            <i class="fas fa-file-alt nav-icon"></i>
-            <span class="nav-label">Notulen Rapat</span>
+          <a href="jadwal_rapat.php" class="nav-link">
+            <i class="fas fa-calendar-alt nav-icon"></i>
+            <span class="nav-label">Jadwal Rapat</span>
           </a>
         </li>
       </ul>
@@ -173,7 +178,7 @@ $dashboard_url = "notulis.php";
 
         <!-- PROFIL LOGIN -->
         <li class="nav-item profile-user">
-          <img src="<?= $current_photo_url ?>" class="profile-avatar">
+          <img src="<?= $current_photo_url ?>" class="profile-avatar" alt="Foto Profil" />
           <div class="profile-info">
             <span class="profile-name">
               <?= htmlspecialchars($userLogin['full_name']) ?>
@@ -205,18 +210,19 @@ $dashboard_url = "notulis.php";
 
     <div class="calendar-container">
       <div class="calendar-header">
-        <div class="calendar-navigation">
-          <a href="jadwal_rapat.php?bulan=<?= $bulan_sebelumnya ?>&tahun=<?= $tahun_sebelumnya ?>" class="nav-btn">
-            <i class="fas fa-chevron-left"></i> Bulan Sebelumnya
-          </a>
-          <h2><?= getNamaBulan($bulan) . ' ' . $tahun ?></h2>
-          <a href="jadwal_rapat.php?bulan=<?= $bulan_selanjutnya ?>&tahun=<?= $tahun_selanjutnya ?>" class="nav-btn">
-            Bulan Selanjutnya <i class="fas fa-chevron-right"></i>
-          </a>
-        </div>
-        <div class="calendar-actions">
-          <a href="jadwal_rapat.php" class="btn-today">Hari Ini</a>
-        </div>
+    <div class="calendar-navigation">
+        <a href="jadwal_rapat.php?bulan=<?= $bulan_sebelumnya ?>&tahun=<?= $tahun_sebelumnya ?>" 
+           class="nav-btn" data-short="Prev">
+            <i class="fas fa-chevron-left"></i>
+            <span>Bulan Sebelumnya</span>
+        </a>
+        <h2><?= getNamaBulan($bulan) . ' ' . $tahun ?></h2>
+        <a href="jadwal_rapat.php?bulan=<?= $bulan_selanjutnya ?>&tahun=<?= $tahun_selanjutnya ?>" 
+           class="nav-btn" data-short="Next">
+            <span>Bulan Selanjutnya</span>
+            <i class="fas fa-chevron-right"></i>
+        </a>
+    </div>
       </div>
 
       <div class="calendar">
@@ -232,55 +238,64 @@ $dashboard_url = "notulis.php";
 
         <div class="calendar-days">
           <?php for ($i = 0; $i < $offset; $i++): ?>
-          <div class="calendar-day empty"></div>
+            <div class="calendar-day empty"></div>
           <?php endfor; ?>
 
           <?php for ($hari = 1; $hari <= $jumlah_hari; $hari++): ?>
-          <?php
-            $tanggal_lengkap = sprintf('%04d-%02d-%02d', $tahun, $bulan, $hari);
-            $is_today = ($tanggal_lengkap == date('Y-m-d')) ? 'today' : '';
-            $has_notulen = isset($notulen_per_hari[$hari]) ? 'has-events' : '';
+            <?php
+              $tanggal_lengkap = sprintf('%04d-%02d-%02d', $tahun, $bulan, $hari);
+              $is_today = ($tanggal_lengkap == date('Y-m-d')) ? 'today' : '';
+              $has_notulen = isset($notulen_per_hari[$hari]) ? 'has-events' : '';
+              
+              // Tentukan class status untuk mobile
+              $status_class = '';
+              if (isset($notulen_per_hari[$hari])) {
+                  $jumlah_notulen = count($notulen_per_hari[$hari]);
+                  if ($jumlah_notulen == 1) {
+                      $status_class = $notulen_per_hari[$hari][0]['status'];
+                  } else {
+                      $status_class = 'multi';
+                  }
+              }
             ?>
 
-          <div class="calendar-day <?= $is_today ?> <?= $has_notulen ?>" data-date="<?= $tanggal_lengkap ?>">
-            <div class="day-number"><?= $hari ?></div>
+            <div class="calendar-day <?= $is_today ?> <?= $has_notulen ?> <?= $status_class ?>" data-date="<?= $tanggal_lengkap ?>">
+              <div class="day-number"><?= $hari ?></div>
 
-            <?php if (isset($notulen_per_hari[$hari])): ?>
-            <div class="day-events">
-              <?php 
-                  $jumlah_notulen = count($notulen_per_hari[$hari]);
-                  // Jika hanya ada 1 notulen, tampilkan judulnya
-                  if ($jumlah_notulen == 1): 
-                    $notulen = $notulen_per_hari[$hari][0];
-                    $status_class = $notulen['status']; // 'draft', 'sent', 'final'
-                    $judul_pendek = strlen($notulen['judul']) > 20 ? substr($notulen['judul'], 0, 20) . '...' : $notulen['judul'];
+              <?php if (isset($notulen_per_hari[$hari])): ?>
+                <div class="day-events">
+                  <?php 
+                    $jumlah_notulen = count($notulen_per_hari[$hari]);
+                    if ($jumlah_notulen == 1): 
+                      $notulen = $notulen_per_hari[$hari][0];
+                      $status_class_link = $notulen['status'];
+                      $judul_pendek = strlen($notulen['judul']) > 20 ? substr($notulen['judul'], 0, 20) . '...' : $notulen['judul'];
                   ?>
-              <a href="<?= $dashboard_url ?>?notulen_id=<?= $notulen['id'] ?>"
-                class="notulen-text-link <?= $status_class ?>" title="<?= htmlspecialchars($notulen['judul']) ?>">
-                <?= htmlspecialchars($judul_pendek) ?>
-              </a>
-              <?php 
-                  // Jika lebih dari 1 notulen, tampilkan jumlah notulen
-                  else: 
-                    $tanggal_param = date('Y-m-d', strtotime($tanggal_lengkap));
+                    <a href="<?= $dashboard_url ?>?notulen_id=<?= $notulen['id'] ?>"
+                      class="notulen-text-link <?= $status_class_link ?>" title="<?= htmlspecialchars($notulen['judul']) ?>">
+                      <?= htmlspecialchars($judul_pendek) ?>
+                    </a>
+                  <?php 
+                    else: 
+                      $tanggal_param = date('Y-m-d', strtotime($tanggal_lengkap));
                   ?>
-              <a href="<?= $dashboard_url ?>?tanggal=<?= $tanggal_param ?>" class="notulen-count-text"
-                title="Klik untuk melihat <?= $jumlah_notulen ?> notulen pada tanggal ini">
-                <?= $jumlah_notulen ?> Notulen
-              </a>
+                    <a href="<?= $dashboard_url ?>?tanggal=<?= $tanggal_param ?>" class="notulen-count-text"
+                      title="Klik untuk melihat <?= $jumlah_notulen ?> notulen pada tanggal ini">
+                      <?= $jumlah_notulen ?> Notulen
+                    </a>
+                  <?php endif; ?>
+                </div>
               <?php endif; ?>
             </div>
-            <?php endif; ?>
-          </div>
           <?php endfor; ?>
 
           <?php
-          $total_cells = $offset + $jumlah_hari;
-          $remaining_cells = 42 - $total_cells;
-          if ($remaining_cells > 0):
-            for ($i = 0; $i < $remaining_cells; $i++):
+            $total_cells = $offset + $jumlah_hari;
+            $remaining_cells = 42 - $total_cells;
+            if ($remaining_cells > 0):
+              for ($i = 0; $i < $remaining_cells; $i++):
           ?>
-          <div class="calendar-day empty"></div>
+            <div class="calendar-day empty"></div>
           <?php endfor; endif; ?>
         </div>
       </div>
@@ -305,95 +320,9 @@ $dashboard_url = "notulis.php";
       </div>
     </div>
   </div>
-
-    <script>
-      document.addEventListener("DOMContentLoaded", function () {
-        try {
-          // Sidebar functionality
-          const sidebar = document.querySelector(".sidebar");
-          const toggler = document.querySelector(".toggler");
-          const sidebarNav = document.querySelector(".sidebar-nav");
-
-          if (!sidebar || !toggler || !sidebarNav) {
-            console.warn("Sidebar elements not found");
-            return;
-          }
-
-          toggler.addEventListener("click", function (e) {
-            e.stopPropagation();
-
-            // ================= MOBILE ONLY =================
-            if (window.innerWidth <= 768) {
-              sidebarNav.classList.toggle("active");
-            }
-          });
-
-          // ================= CLOSE DROPDOWN SAAT KLIK DI LUAR (MOBILE) =================
-          document.addEventListener("click", function (e) {
-            if (window.innerWidth <= 768) {
-              if (!sidebar.contains(e.target)) {
-                sidebarNav.classList.remove("active");
-              }
-            }
-          });
-
-          // ================= RESET SAAT RESIZE KE DESKTOP =================
-          window.addEventListener("resize", function () {
-            if (window.innerWidth > 768) {
-              sidebarNav.classList.remove("active");
-            }
-          });
-
-          // Live Clock functionality
-          function updateClock() {
-            try {
-              const now = new Date();
-              const timeString = now.toLocaleTimeString("id-ID", {
-                hour: "2-digit",
-                minute: "2-digit",
-                second: "2-digit"
-              });
-
-              const dateString = now.toLocaleDateString("id-ID", {
-                weekday: "long",
-                year: "numeric",
-                month: "long",
-                day: "numeric"
-              });
-
-              const timeElement = document.getElementById("liveTime");
-              const dateElement = document.getElementById("currentDate");
-
-              if (timeElement) {
-                timeElement.textContent = timeString;
-                timeElement.classList.add("updated");
-                setTimeout(() => timeElement.classList.remove("updated"), 500);
-              }
-
-              if (dateElement) {
-                dateElement.textContent = dateString;
-              }
-            } catch (error) {
-              console.error("Error updating clock:", error);
-            }
-          }
-
-          // Update clock every second
-          updateClock();
-          const clockInterval = setInterval(updateClock, 1000);
-
-          // Cleanup on page unload
-          window.addEventListener("beforeunload", function () {
-            clearInterval(clockInterval);
-          });
-
-        } catch (error) {
-          console.error("Error initializing page:", error);
-        }
-      });
-    </script>
+  
+  <script src="jadwal-rapat.js"></script>
 </body>
-
 </html>
 
 <?php
