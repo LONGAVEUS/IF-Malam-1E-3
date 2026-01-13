@@ -8,6 +8,12 @@ if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
     exit();
 }
 
+// Proteksi role
+if ($_SESSION['role'] !== 'notulis') {
+    header("Location: login.php");
+    exit();
+}
+
 /* ================== DATA USER LOGIN ================== */
 $user_id = $_SESSION['user_id'];
 
@@ -184,6 +190,7 @@ $notulen_terkirim = $stats['sent_count'] ?? 0;
         <img src="if.png" alt="Politeknik Negeri Batam" />
       </a>
     </div>
+
     <button class="toggler" type="button">
       <div class="hamburger-icon">
         <span></span>
@@ -194,21 +201,22 @@ $notulen_terkirim = $stats['sent_count'] ?? 0;
   </div>
 
   <nav class="sidebar-nav">
+    <!-- Primary top nav -->
     <ul class="nav-list primary-nav">
       <li class="nav-item">
-        <a href="notulis.php" class="nav-link">
+        <a href="notulis.php" class="nav-link <?php echo isMenuActive('dashboard') ? 'active' : ''; ?>">
           <i class="fas fa-th-large nav-icon"></i>
           <span class="nav-label">Dashboard</span>
         </a>
       </li>
       <li class="nav-item">
-        <a href="notulen_rapat.php" class="nav-link">
+        <a href="notulen_rapat.php" class="nav-link <?php echo isMenuActive('notulen') ? 'active' : ''; ?>">
           <i class="fas fa-file-alt nav-icon"></i>
           <span class="nav-label">Notulen Rapat</span>
         </a>
       </li>
       <li class="nav-item">
-        <a href="jadwal_rapat.php" class="nav-link">
+        <a href="jadwal_rapat.php" class="nav-link <?php echo isMenuActive('jadwal') ? 'active' : ''; ?>">
           <i class="fas fa-calendar-alt nav-icon"></i>
           <span class="nav-label">Jadwal Rapat</span>
         </a>
