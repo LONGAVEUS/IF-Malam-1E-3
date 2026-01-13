@@ -22,8 +22,12 @@ $userLogin = $stmtUser->get_result()->fetch_assoc();
 $stmtUser->close();
 
 /* ================== FOTO PROFIL ================== */
-$foto_sekarang = $userLogin['photo'];
-$path_valid = (!empty($userLogin['photo'])) ? $userLogin['photo'] : 'uploads/profile_photos/default_profile.png';
+$foto_sekarang = $_SESSION['photo'] ?? $userLogin['photo'];
+
+$path_valid = (!empty($foto_sekarang) && file_exists($foto_sekarang))
+    ? $foto_sekarang
+    : 'uploads/profile_photos/default_profile.png';
+
 $current_photo_url = $path_valid . "?t=" . time();
 
 /* ================== SESSION DATA ================== */
@@ -192,19 +196,19 @@ $notulen_terkirim = $stats['sent_count'] ?? 0;
   <nav class="sidebar-nav">
     <ul class="nav-list primary-nav">
       <li class="nav-item">
-        <a href="notulis.php" class="nav-link <?php echo isMenuActive('dashboard') ? 'active' : ''; ?>">
+        <a href="notulis.php" class="nav-link">
           <i class="fas fa-th-large nav-icon"></i>
           <span class="nav-label">Dashboard</span>
         </a>
       </li>
       <li class="nav-item">
-        <a href="notulen_rapat.php" class="nav-link <?php echo isMenuActive('notulen') ? 'active' : ''; ?>">
+        <a href="notulen_rapat.php" class="nav-link">
           <i class="fas fa-file-alt nav-icon"></i>
           <span class="nav-label">Notulen Rapat</span>
         </a>
       </li>
       <li class="nav-item">
-        <a href="jadwal_rapat.php" class="nav-link <?php echo isMenuActive('jadwal') ? 'active' : ''; ?>">
+        <a href="jadwal_rapat.php" class="nav-link">
           <i class="fas fa-calendar-alt nav-icon"></i>
           <span class="nav-label">Jadwal Rapat</span>
         </a>
@@ -531,6 +535,7 @@ $notulen_terkirim = $stats['sent_count'] ?? 0;
     </div>
   </div>
 
+  <script src="https://cdn.jsdelivr.net/npm/signature_pad@4.0.0/dist/signature_pad.umd.min.js"></script>
   <script src="notulis-script.js"></script>
 </body>
 
@@ -541,5 +546,4 @@ if (isset($stmt_data) && $stmt_data) {
 }
 if (isset($conn)) {
     $conn->close();
-
 }
