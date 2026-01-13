@@ -168,6 +168,7 @@ $dashboard_url = "tamu.php";
           </a>
         </li>
         <li class="nav-item">
+          <!-- Logout menggunakan PHP - tidak perlu file terpisah -->
           <a href="tamu.php?action=logout" class="nav-link" onclick="return confirm('Yakin ingin logout?');">
             <i class="fas fa-sign-out-alt nav-icon"></i>
             <span class="nav-label">Keluar</span>
@@ -176,7 +177,7 @@ $dashboard_url = "tamu.php";
 
         <!-- Profil User -->
         <li class="nav-item profile-user">
-          <img src="<?= $current_photo_url ?>" class="profile-avatar" alt="Foto Profil" />
+          <img src="<?php echo $current_photo_url; ?>?v=<?php echo time(); ?>" class="profile-avatar">
           <div class="profile-info">
             <span class="profile-name">
               <?= htmlspecialchars($userLogin['full_name']) ?>
