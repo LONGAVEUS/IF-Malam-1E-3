@@ -304,8 +304,7 @@ function generateNotulenPDF($notulen_id, $conn = null) {
         $pdf->Cell(70, 4, 'Notulis Rapat', 0, 1, 'C');
         
         // ============ HALAMAN 2: DAFTAR HADIR ============
-        // Get peserta data
-        $sql_peserta = "SELECT u.full_name, u.nim, u.role, k.status 
+        $sql_peserta = "SELECT u.full_name, u.nim, u.role, k.status, k.signature_path 
                         FROM peserta_notulen pn 
                         JOIN user u ON pn.user_id = u.user_id 
                         LEFT JOIN kehadiran k ON pn.notulen_id = k.notulen_id AND pn.user_id = k.user_id 
@@ -325,94 +324,114 @@ function generateNotulenPDF($notulen_id, $conn = null) {
             $pdf->SetFont('Times', 'B', 14);
             $pdf->Cell(0, 6, strtoupper($notulen['judul']), 0, 1, 'C');
             $pdf->Ln(5);
-            
-            // Info rapat
-            $pdf->SetFont('Times', '', 10);
-            
-            $pdf->Cell(35, 6, 'Hari/Tanggal', 0, 0, 'L');
-            $pdf->Cell(5, 6, ':', 0, 0, 'L');
-            $pdf->Cell(0, 6, $notulen['hari'] . ', ' . $tanggal_format, 0, 1, 'L');
-            
-            $pdf->Cell(35, 6, 'Waktu', 0, 0, 'L');
-            $pdf->Cell(5, 6, ':', 0, 0, 'L');
-            $pdf->Cell(0, 6, $notulen['jam_mulai'] . ' - ' . $notulen['jam_selesai'], 0, 1, 'L');
-            
-            $pdf->Cell(35, 6, 'Tempat', 0, 0, 'L');
-            $pdf->Cell(5, 6, ':', 0, 0, 'L');
-            $pdf->Cell(0, 6, $notulen['tempat'], 0, 1, 'L');
-            
-            
-            $pdf->Cell(35, 6, 'Pemimpin Rapat', 0, 0, 'L');
-            $pdf->Cell(5, 6, ':', 0, 0, 'L');
-            $pdf->Cell(0, 6, $notulen['penanggung_jawab'], 0, 1, 'L');
-            
-            $pdf->Cell(35, 6, 'Notulis', 0, 0, 'L');
-            $pdf->Cell(5, 6, ':', 0, 0, 'L');
-            $pdf->Cell(0, 6, $notulen['notulis'], 0, 1, 'L');
-            
-            $pdf->Ln(8);
-            
-            // Garis pemisah sebelum tabel
+
+            // Garis pemisah
             $pdf->DrawSeparator();
-            
+
+            // Judul Notulen
+            $pdf->SetFont('Times', 'B', 16);
+            $pdf->Cell(0, 8, 'NOTULEN RAPAT', 0, 1, 'C');
+            $pdf->SetFont('Times', 'B', 14);
+            $pdf->Cell(0, 6, strtoupper($notulen['judul']), 0, 1, 'C');
+            $pdf->Ln(8);
+        
+            // Informasi Rapat
+            $pdf->SetFont('Times', '', 11);
+        
+            $pdf->Cell(40, 7, 'Hari/Tanggal', 0, 0, 'L');
+            $pdf->Cell(5, 7, ':', 0, 0, 'L');
+            $pdf->Cell(0, 7, $notulen['hari'] . ', ' . $tanggal_format, 0, 1, 'L');
+        
+            $pdf->Cell(40, 7, 'Waktu', 0, 0, 'L');
+            $pdf->Cell(5, 7, ':', 0, 0, 'L');
+            $pdf->Cell(0, 7, $notulen['jam_mulai'] . ' - ' . $notulen['jam_selesai'], 0, 1, 'L');
+        
+            $pdf->Cell(40, 7, 'Tempat', 0, 0, 'L');
+            $pdf->Cell(5, 7, ':', 0, 0, 'L');
+            $pdf->Cell(0, 7, $notulen['tempat'], 0, 1, 'L');
+        
+            $pdf->Cell(40, 7, 'Pemimpin Rapat', 0, 0, 'L');
+            $pdf->Cell(5, 7, ':', 0, 0, 'L');
+            $pdf->Cell(0, 7, $notulen['penanggung_jawab'], 0, 1, 'L');
+        
+            $pdf->Cell(40, 7, 'Notulis', 0, 0, 'L');
+            $pdf->Cell(5, 7, ':', 0, 0, 'L');
+            $pdf->Cell(0, 7, $notulen['notulis'], 0, 1, 'L');
+        
+            $pdf->Cell(40, 7, 'Jurusan', 0, 0, 'L');
+            $pdf->Cell(5, 7, ':', 0, 0, 'L');
+            $pdf->Cell(0, 7, $notulen['jurusan'], 0, 1, 'L');
+        
+            $pdf->Ln(8);
+        
+            // Garis pemisah
+            $pdf->DrawSeparator();
             // Header tabel
             $pdf->SetFillColor(230, 230, 230);
             $pdf->SetFont('Times', 'B', 10);
-            
             $pdf->Cell(10, 8, 'No', 1, 0, 'C', true);
-            $pdf->Cell(70, 8, 'Nama Peserta', 1, 0, 'C', true);
+            $pdf->Cell(60, 8, 'Nama Peserta', 1, 0, 'C', true); 
             $pdf->Cell(35, 8, 'NIM', 1, 0, 'C', true);
             $pdf->Cell(30, 8, 'Jabatan', 1, 0, 'C', true);
-            $pdf->Cell(25, 8, 'Kehadiran', 1, 1, 'C', true);
+            $pdf->Cell(20, 8, 'Status', 1, 0, 'C', true); 
+            $pdf->Cell(25, 8, 'Tanda Tangan', 1, 1, 'C', true); 
             
-            // Data peserta
-            $pdf->SetFont('Times', '', 10);
+            // Variabel rekap
             $no = 1;
             $total_hadir = 0;
             $total_tidak_hadir = 0;
             $total_belum_konfirmasi = 0;
             
-            $fill = false;
+            $pdf->SetFont('Times', '', 10);
             while ($peserta = $result_peserta->fetch_assoc()) {
-                $fill = !$fill;
-                $pdf->SetFillColor($fill ? 245 : 255, $fill ? 245 : 255, $fill ? 245 : 255);
-                
-                $status_text = '';
-                switch($peserta['status']) {
-                    case 'hadir': 
-                        $status_text = 'Hadir'; 
-                        $total_hadir++; 
-                        $pdf->SetTextColor(0, 128, 0);
-                        break;
-                    case 'tidak_hadir': 
-                        $status_text = 'Tidak Hadir'; 
-                        $total_tidak_hadir++; 
-                        $pdf->SetTextColor(255, 0, 0);
-                        break;
-                    default: 
-                        $status_text = 'Belum Konfirmasi';
-                        $total_belum_konfirmasi++;
-                        $pdf->SetTextColor(128, 128, 128);
+                // Tentukan status dan tambah hitungan rekap
+                $status_db = trim(strtolower($peserta['status'] ?? ''));
+                if ($status_db === 'hadir') {
+                    $status_text = 'Hadir';
+                    $total_hadir++;
+                } elseif ($status_db === 'tidak_hadir') {
+                    $status_text = 'Tidak Hadir';
+                    $total_tidak_hadir++;
+                } else {
+                    $status_text = '-';
+                    $total_belum_konfirmasi++;
                 }
+    
+                $row_height = 12; // Tinggi baris supaya TTD muat
                 
-                $pdf->Cell(10, 7, $no, 1, 0, 'C', $fill);
-                $pdf->SetTextColor(0, 0, 0);
-                $pdf->Cell(70, 7, $peserta['full_name'], 1, 0, 'L', $fill);
-                $pdf->Cell(35, 7, $peserta['nim'], 1, 0, 'C', $fill);
-                $pdf->Cell(30, 7, ucfirst($peserta['role']), 1, 0, 'C', $fill);
+                $pdf->Cell(10, $row_height, $no++, 1, 0, 'C');
+                $pdf->Cell(60, $row_height, $peserta['full_name'], 1, 0, 'L');
+                $pdf->Cell(35, $row_height, $peserta['nim'], 1, 0, 'C');
+                $pdf->Cell(30, $row_height, ucfirst($peserta['role']), 1, 0, 'C');
+                $pdf->Cell(20, $row_height, $status_text, 1, 0, 'C');
+
+                // Koordinat sebelum cetak kotak TTD
+                $x = $pdf->GetX();
+                $y = $pdf->GetY();
                 
-                // Kembalikan warna untuk status
-                switch($peserta['status']) {
-                    case 'hadir': $pdf->SetTextColor(0, 128, 0); break;
-                    case 'tidak_hadir': $pdf->SetTextColor(255, 0, 0); break;
-                    default: $pdf->SetTextColor(128, 128, 128);
+                // Gambar kotak TTD
+                $pdf->Cell(25, $row_height, '', 1, 1, 'C'); 
+
+                // Tempelkan gambar TTD jika status Hadir
+                if ($status_db === 'hadir' && !empty($peserta['signature_path'])) {
+                    $ttd_file = 'uploads/' . $peserta['signature_path'];
+                    if (file_exists($ttd_file)) {
+                        // Posisi: x+2 agar tidak mepet kiri, y+1 agar tidak mepet atas
+                        $pdf->Image($ttd_file, $x + 2, $y + 1, 21, 10);
+                    }
                 }
-                
-                $pdf->Cell(25, 7, $status_text, 1, 1, 'C', $fill);
-                
-                $no++;
             }
             
+            // CETAK REKAP (Pasti muncul karena variabel sudah dihitung di atas)
+            $pdf->Ln(10);
+            $pdf->SetFont('Times', 'B', 11);
+            $pdf->Cell(0, 7, 'Rekap Kehadiran:', 0, 1, 'L');
+            $pdf->SetFont('Times', '', 10);
+            $pdf->Cell(0, 6, 'Total Peserta: ' . ($total_hadir + $total_tidak_hadir + $total_belum_konfirmasi) . ' orang', 0, 1, 'L');
+            $pdf->Cell(0, 6, 'Hadir: ' . $total_hadir . ' orang', 0, 1, 'L');
+            $pdf->Cell(0, 6, 'Tidak Hadir: ' . $total_tidak_hadir . ' orang', 0, 1, 'L');
+            $pdf->Cell(0, 6, 'Belum Konfirmasi: ' . $total_belum_konfirmasi . ' orang', 0, 1, 'L');
+        
             $pdf->SetTextColor(0, 0, 0);
             
             // Statistik kehadiran
@@ -480,7 +499,7 @@ function generateNotulenPDF($notulen_id, $conn = null) {
             
             // Tampilkan semua lampiran gambar
             foreach ($lampiran_files as $index => $file) {
-                $file_path = 'uploads/lampiran/' . $file['file_name'];
+                $file_path = 'uploads/signatures/' . $file['file_name'];
                 
                 // Check if file exists and is an image
                 if (file_exists($file_path) && 
