@@ -1,8 +1,4 @@
-// ================== FUNGSI KONFIRMASI UNTUK AKSI ==================
-function confirmAction(message) {
-    return confirm(message);
-}
-// notulen-rapat.js - VERSI BAHARU TANPA SISTEM LAMPIRAN
+// notulen-rapat.js - VERSI BAHARU DENGAN ATURAN EDIT DAN HAPUS
 document.addEventListener('DOMContentLoaded', function() {
     // Elements
     const notulenModal = document.getElementById('notulenModal');
@@ -38,7 +34,6 @@ document.addEventListener('DOMContentLoaded', function() {
         setupEventListeners();
         setDefaultDateAndDay();
         setupEditModal();
-        // Sistem lampiran dihapus
     }
     
     function loadAllUsers() {
@@ -159,6 +154,24 @@ document.addEventListener('DOMContentLoaded', function() {
                 const button = event.target.closest('.btn-email') || event.target.closest('.action-btn.email');
                 const notulenId = button.dataset.id;
                 sendEmailInvitation(notulenId);
+            }
+            
+            // Handle konfirmasi hapus untuk status sent
+            if (event.target.closest('.action-btn.delete')) {
+                const button = event.target.closest('.action-btn.delete');
+                const notulenItem = button.closest('.notulen-item');
+                const notulenId = notulenItem.dataset.id;
+                
+                // Cek status notulen dari elemen status badge
+                const statusBadge = notulenItem.querySelector('.notulen-status');
+                const status = statusBadge ? statusBadge.textContent.toLowerCase().trim() : '';
+                
+                // Jika status sent, tampilkan pesan khusus
+                if (status === 'sent') {
+                    event.preventDefault();
+                    showToast('Notulen dengan status "sent" tidak dapat dihapus!', 'error');
+                    return false;
+                }
             }
         });
     }
@@ -577,158 +590,158 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Fungsi openEditModal
     window.openEditModal = async function(notulenId) {
-    try {
-        console.log('Membuka modal edit untuk notulen ID:', notulenId);
-        
-        // Show loading overlay
-        const loadingOverlay = document.getElementById('loadingOverlay');
-        if (loadingOverlay) {
-            loadingOverlay.classList.add('active');
-        }
-        
-        // Save notulen ID untuk fungsi hapus lampiran
-        currentNotulenId = notulenId;
-        
-        // Open modal
-        const editModal = document.getElementById('editNotulenModal');
-        if (!editModal) {
-            throw new Error('Edit modal tidak ditemukan');
-        }
-        
-        editModal.classList.add('active');
-        document.body.style.overflow = 'hidden';
-        
-        // Show loading state in modal
-        const modalBody = editModal.querySelector('.modal-body');
-        if (!modalBody) {
-            throw new Error('Modal body tidak ditemukan');
-        }
-        
-        const originalContent = modalBody.innerHTML;
-        modalBody.innerHTML = `
-            <div class="loading" style="text-align: center; padding: 40px;">
-                <i class="fas fa-spinner fa-spin fa-2x" style="margin-bottom: 15px;"></i>
-                <div style="font-size: 16px; color: #3498db;">Memuat data notulen...</div>
-            </div>
-        `;
-        
-        // Fetch data dengan timeout dan error handling
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
-        
-        const response = await fetch(`edit_notulen.php?id=${notulenId}`, {
-            signal: controller.signal
-        });
-        
-        clearTimeout(timeoutId);
-        
-        // Check if response is OK
-        if (!response.ok) {
-            const errorText = await response.text();
-            console.error('Server response error:', errorText);
-            throw new Error(`Server error: ${response.status} ${response.statusText}`);
-        }
-        
-        // Parse response as JSON
-        const result = await response.json();
-        
-        console.log('Response dari server:', result);
-        
-        // Check if response is successful
-        if (!result.success) {
-            throw new Error(result.error || 'Gagal memuat data notulen');
-        }
-        
-        // Restore modal content
-        modalBody.innerHTML = originalContent;
-        
-        // Setup ulang event listeners untuk modal edit
-        setTimeout(() => {
-            setupEditModal();
-        }, 100);
-        
-        const data = result.data;
-        
-        // Set nilai ke form fields
-        const setFieldValue = (id, value) => {
-            const field = document.getElementById(id);
-            if (field) {
-                field.value = value || '';
+        try {
+            console.log('Membuka modal edit untuk notulen ID:', notulenId);
+            
+            // Show loading overlay
+            const loadingOverlay = document.getElementById('loadingOverlay');
+            if (loadingOverlay) {
+                loadingOverlay.classList.add('active');
             }
-        };
-        
-        setFieldValue('editNotulenId', data.id);
-        setFieldValue('editJudul', data.judul);
-        setFieldValue('editHari', data.hari);
-        setFieldValue('editTanggal', data.tanggal);
-        setFieldValue('editJamMulai', data.jam_mulai);
-        setFieldValue('editJamSelesai', data.jam_selesai);
-        setFieldValue('editTempat', data.tempat);
-        setFieldValue('editNotulis', data.notulis);
-        setFieldValue('editJurusan', data.jurusan);
-        setFieldValue('editPenanggungJawab', data.penanggung_jawab);
-        setFieldValue('editPembahasan', data.pembahasan);
-        setFieldValue('editHasilAkhir', data.hasil_akhir);
-        
-        // Set peserta
-        if (data.peserta_details && Array.isArray(data.peserta_details)) {
-            window.selectedPesertaEdit = data.peserta_details.map(p => ({
-                id: String(p.user_id || p.id),
-                name: p.full_name || p.name || '',
-                nim: p.nim || '',
-                role: p.role || '',
-                email: p.email || '' // Tambahkan email jika ada
-            })).filter(p => p.id && p.name); // Filter out invalid entries
-        } else {
-            window.selectedPesertaEdit = [];
+            
+            // Save notulen ID
+            currentNotulenId = notulenId;
+            
+            // Open modal
+            const editModal = document.getElementById('editNotulenModal');
+            if (!editModal) {
+                throw new Error('Edit modal tidak ditemukan');
+            }
+            
+            editModal.classList.add('active');
+            document.body.style.overflow = 'hidden';
+            
+            // Show loading state in modal
+            const modalBody = editModal.querySelector('.modal-body');
+            if (!modalBody) {
+                throw new Error('Modal body tidak ditemukan');
+            }
+            
+            const originalContent = modalBody.innerHTML;
+            modalBody.innerHTML = `
+                <div class="loading" style="text-align: center; padding: 40px;">
+                    <i class="fas fa-spinner fa-spin fa-2x" style="margin-bottom: 15px;"></i>
+                    <div style="font-size: 16px; color: #3498db;">Memuat data notulen...</div>
+                </div>
+            `;
+            
+            // Fetch data dengan timeout dan error handling
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+            
+            const response = await fetch(`edit_notulen.php?id=${notulenId}`, {
+                signal: controller.signal
+            });
+            
+            clearTimeout(timeoutId);
+            
+            // Check if response is OK
+            if (!response.ok) {
+                const errorText = await response.text();
+                console.error('Server response error:', errorText);
+                throw new Error(`Server error: ${response.status} ${response.statusText}`);
+            }
+            
+            // Parse response as JSON
+            const result = await response.json();
+            
+            console.log('Response dari server:', result);
+            
+            // Check if response is successful
+            if (!result.success) {
+                throw new Error(result.error || 'Gagal memuat data notulen');
+            }
+            
+            // Restore modal content
+            modalBody.innerHTML = originalContent;
+            
+            // Setup ulang event listeners untuk modal edit
+            setTimeout(() => {
+                setupEditModal();
+            }, 100);
+            
+            const data = result.data;
+            
+            // Set nilai ke form fields
+            const setFieldValue = (id, value) => {
+                const field = document.getElementById(id);
+                if (field) {
+                    field.value = value || '';
+                }
+            };
+            
+            setFieldValue('editNotulenId', data.id);
+            setFieldValue('editJudul', data.judul);
+            setFieldValue('editHari', data.hari);
+            setFieldValue('editTanggal', data.tanggal);
+            setFieldValue('editJamMulai', data.jam_mulai);
+            setFieldValue('editJamSelesai', data.jam_selesai);
+            setFieldValue('editTempat', data.tempat);
+            setFieldValue('editNotulis', data.notulis);
+            setFieldValue('editJurusan', data.jurusan);
+            setFieldValue('editPenanggungJawab', data.penanggung_jawab);
+            setFieldValue('editPembahasan', data.pembahasan);
+            setFieldValue('editHasilAkhir', data.hasil_akhir);
+            
+            // Set peserta
+            if (data.peserta_details && Array.isArray(data.peserta_details)) {
+                window.selectedPesertaEdit = data.peserta_details.map(p => ({
+                    id: String(p.user_id || p.id),
+                    name: p.full_name || p.name || '',
+                    nim: p.nim || '',
+                    role: p.role || '',
+                    email: p.email || '' // Tambahkan email jika ada
+                })).filter(p => p.id && p.name); // Filter out invalid entries
+            } else {
+                window.selectedPesertaEdit = [];
+            }
+            
+            // Update peserta display
+            updateEditSelectedPesertaList();
+            updateEditSearchResults();
+            
+            // Reset search
+            const editPesertaSearch = document.getElementById('editPesertaSearch');
+            if (editPesertaSearch) {
+                editPesertaSearch.value = '';
+            }
+            
+            // Hide loading overlay
+            if (loadingOverlay) {
+                loadingOverlay.classList.remove('active');
+            }
+            
+        } catch (error) {
+            console.error('Error loading edit modal:', error);
+            
+            // Show error message
+            let errorMessage = 'Gagal memuat data notulen. ';
+            
+            if (error.name === 'AbortError') {
+                errorMessage += 'Waktu permintaan habis. Silakan coba lagi.';
+            } else if (error.message.includes('JSON')) {
+                errorMessage += 'Format data tidak valid.';
+            } else {
+                errorMessage += error.message;
+            }
+            
+            showToast(errorMessage, 'error');
+            
+            // Close modal
+            const editModal = document.getElementById('editNotulenModal');
+            if (editModal) {
+                editModal.classList.remove('active');
+            }
+            
+            // Hide loading
+            const loadingOverlay = document.getElementById('loadingOverlay');
+            if (loadingOverlay) {
+                loadingOverlay.classList.remove('active');
+            }
+            
+            document.body.style.overflow = 'auto';
         }
-        
-        // Update peserta display
-        updateEditSelectedPesertaList();
-        updateEditSearchResults();
-        
-        // Reset search
-        const editPesertaSearch = document.getElementById('editPesertaSearch');
-        if (editPesertaSearch) {
-            editPesertaSearch.value = '';
-        }
-        
-        // Hide loading overlay
-        if (loadingOverlay) {
-            loadingOverlay.classList.remove('active');
-        }
-        
-    } catch (error) {
-        console.error('Error loading edit modal:', error);
-        
-        // Show error message
-        let errorMessage = 'Gagal memuat data notulen. ';
-        
-        if (error.name === 'AbortError') {
-            errorMessage += 'Waktu permintaan habis. Silakan coba lagi.';
-        } else if (error.message.includes('JSON')) {
-            errorMessage += 'Format data tidak valid.';
-        } else {
-            errorMessage += error.message;
-        }
-        
-        showToast(errorMessage, 'error');
-        
-        // Close modal
-        const editModal = document.getElementById('editNotulenModal');
-        if (editModal) {
-            editModal.classList.remove('active');
-        }
-        
-        // Hide loading
-        const loadingOverlay = document.getElementById('loadingOverlay');
-        if (loadingOverlay) {
-            loadingOverlay.classList.remove('active');
-        }
-        
-        document.body.style.overflow = 'auto';
-    }
-};
+    };
     
     function resetEditForm() {
         window.selectedPesertaEdit = [];
@@ -797,198 +810,193 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     function handleEditFormSubmit(event) {
-    event.preventDefault();
-    
-    const form = event.target;
-    const submitBtn = form.querySelector('button[type="submit"]');
-    const originalText = submitBtn.innerHTML;
-    
-    // Show loading
-    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Menyimpan...';
-    submitBtn.disabled = true;
-    
-    // Validate peserta
-    if (!window.selectedPesertaEdit || window.selectedPesertaEdit.length === 0) {
-        showToast('Pilih minimal 1 peserta!', 'error');
-        submitBtn.innerHTML = originalText;
-        submitBtn.disabled = false;
-        return;
-    }
-    
-    const formData = new FormData(form);
-    
-    fetch('notulen_rapat.php', {
-        method: 'POST',
-        body: formData
-    })
-    .then(response => response.text())
-    .then(data => {
-        console.log('Full server response:', data);
+        event.preventDefault();
         
-        // Cek berbagai pola respons
-        if (data.includes('Notulen berhasil diperbarui!') || 
-            data.includes('berhasil') || 
-            data.includes('success')) {
-            showToast('Notulen berhasil diperbarui!', 'success');
-            
-            setTimeout(() => {
-                closeEditModal();
-                window.location.reload();
-            }, 1500);
-        } else {
-            // Try to extract error message
-            let errorMsg = 'Terjadi kesalahan saat menyimpan!';
-            
-            // Cek pola error umum
-            const errorMatch = data.match(/class="alert alert-danger"[^>]*>.*?<i[^>]*><\/i>\s*(.*?)<\/div>/s);
-            if (errorMatch && errorMatch[1]) {
-                errorMsg = errorMatch[1].trim();
-            } else if (data.includes('SQLSTATE') || data.includes('SQL syntax')) {
-                errorMsg = 'Error database. Silakan hubungi administrator.';
-            } else if (data.includes('Allowed memory size')) {
-                errorMsg = 'File terlalu besar. Kurangi ukuran file.';
-            }
-            
-            showToast(errorMsg, 'error');
-            
-            // Log full error untuk debugging
-            console.error('Error response:', data);
+        const form = event.target;
+        const submitBtn = form.querySelector('button[type="submit"]');
+        const originalText = submitBtn.innerHTML;
+        
+        // Show loading
+        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Menyimpan...';
+        submitBtn.disabled = true;
+        
+        // Validate peserta
+        if (!window.selectedPesertaEdit || window.selectedPesertaEdit.length === 0) {
+            showToast('Pilih minimal 1 peserta!', 'error');
+            submitBtn.innerHTML = originalText;
+            submitBtn.disabled = false;
+            return;
         }
-    })
-    .catch(error => {
-        console.error('Network error:', error);
-        showToast('Gagal terhubung ke server!', 'error');
-    })
-    .finally(() => {
-        submitBtn.innerHTML = originalText;
-        submitBtn.disabled = false;
-    });
-}
-
-    // ================== FUNGSI KIRIM EMAIL UNDANGAN ==================
-    async function sendEmailInvitation(notulenId) {
-    console.log('sendEmailInvitation called with notulenId:', notulenId);
-    
-    if (!notulenId || notulenId === 0) {
-        console.error('Invalid notulenId:', notulenId);
-        showToast('Error: ID Notulen tidak valid', 'error');
-        return;
-    }
-    
-    if (!confirm('Kirim email undangan ke semua peserta?')) {
-        return;
-    }
-    
-    try {
-        showLoading();
         
-        console.log('Sending email for notulen ID:', notulenId);
+        const formData = new FormData(form);
         
-        const formData = new FormData();
-        formData.append('notulen_id', notulenId);
-        
-        // TEST: Coba dulu dengan console log untuk debugging
-        console.log('FormData prepared, sending to send_email.php');
-        
-        // Simulasi delay untuk testing
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        
-        // Kirim request ke server
-        const response = await fetch('send_email.php', {
+        fetch('notulen_rapat.php', {
             method: 'POST',
-            body: formData,
-            headers: {
-                'Accept': 'application/json'
-            }
-        });
-        
-        // Dapatkan teks respons
-        const responseText = await response.text();
-        console.log('Response text (first 500 chars):', responseText.substring(0, 500));
-        
-        // Coba parse sebagai JSON
-        try {
-            const result = JSON.parse(responseText);
-            console.log('Parsed result:', result);
+            body: formData
+        })
+        .then(response => response.text())
+        .then(data => {
+            console.log('Full server response:', data);
             
-            if (result.success) {
-                showToast(result.message || 'Email undangan berhasil dikirim!', 'success');
+            // Cek berbagai pola respons
+            if (data.includes('Notulen berhasil diperbarui!') || 
+                data.includes('berhasil') || 
+                data.includes('success')) {
+                showToast('Notulen berhasil diperbarui!', 'success');
                 
-                // Optional: reload halaman setelah beberapa detik
                 setTimeout(() => {
+                    closeEditModal();
                     window.location.reload();
-                }, 2000);
+                }, 1500);
             } else {
-                showToast(result.error || 'Gagal mengirim email undangan', 'error');
-            }
-        } catch (jsonError) {
-            console.error('JSON Parse Error:', jsonError);
-            console.error('Full Response:', responseText);
-            
-            // Tampilkan error yang lebih informatif
-            showToast('Terjadi kesalahan pada server. Lihat console untuk detail.', 'error');
-        }
-    } catch (error) {
-        console.error('Network Error:', error);
-        showToast('Gagal terhubung ke server: ' + error.message, 'error');
-    } finally {
-        hideLoading();
-    }
-} 
-    // ================== FUNGSI BANTU LAINNYA ==================
-    async function showKehadiranModal(notulenId) {
-    try {
-        kehadiranModal.classList.add('active');
-        document.body.style.overflow = 'hidden';
-        
-        const response = await fetch(`get_kehadiran.php?notulen_id=${notulenId}`);
-        const data = await response.json();
-        
-        let html = '<div class="peserta-detail-list">';
-        
-        if (data.length === 0) {
-            html += '<p class="no-attachment">Belum ada data kehadiran.</p>';
-        } else {
-            data.forEach((item, index) => {
-                let statusClass = 'belum';
-                let statusText = 'Belum Konfirmasi';
+                // Try to extract error message
+                let errorMsg = 'Terjadi kesalahan saat menyimpan!';
                 
-                if (item.status === 'hadir') {
-                    statusClass = 'hadir';
-                    statusText = 'Hadir';
-                } else if (item.status === 'tidak_hadir') {
-                    statusClass = 'tidak_hadir';
-                    statusText = 'Tidak Hadir';
+                // Cek pola error umum
+                const errorMatch = data.match(/class="alert alert-danger"[^>]*>.*?<i[^>]*><\/i>\s*(.*?)<\/div>/s);
+                if (errorMatch && errorMatch[1]) {
+                    errorMsg = errorMatch[1].trim();
+                } else if (data.includes('SQLSTATE') || data.includes('SQL syntax')) {
+                    errorMsg = 'Error database. Silakan hubungi administrator.';
+                } else if (data.includes('Allowed memory size')) {
+                    errorMsg = 'File terlalu besar. Kurangi ukuran file.';
                 }
                 
-                const waktuKonfirmasi = item.waktu_konfirmasi 
-                    ? new Date(item.waktu_konfirmasi).toLocaleString('id-ID')
-                    : '-';
+                showToast(errorMsg, 'error');
                 
-                html += `
-                    <div class="peserta-detail-item">
-                        <div class="peserta-number">${index + 1}.</div>
-                        <div class="peserta-name">${item.full_name}</div>
-                        <div class="peserta-nim">${item.nim}</div>
-                        <div class="peserta-role">${item.role}</div>
-                        <div class="peserta-status ${statusClass}">
-                            ${statusText}
-                            ${item.waktu_konfirmasi ? `<br><small>${waktuKonfirmasi}</small>` : ''}
-                        </div>
-                    </div>
-                `;
-            });
+                // Log full error untuk debugging
+                console.error('Error response:', data);
+            }
+        })
+        .catch(error => {
+            console.error('Network error:', error);
+            showToast('Gagal terhubung ke server!', 'error');
+        })
+        .finally(() => {
+            submitBtn.innerHTML = originalText;
+            submitBtn.disabled = false;
+        });
+    }
+    
+    // ================== FUNGSI KIRIM EMAIL UNDANGAN ==================
+    async function sendEmailInvitation(notulenId) {
+        console.log('sendEmailInvitation called with notulenId:', notulenId);
+        
+        if (!notulenId || notulenId === 0) {
+            console.error('Invalid notulenId:', notulenId);
+            showToast('Error: ID Notulen tidak valid', 'error');
+            return;
         }
         
-        html += '</div>';
-        document.getElementById('kehadiranContent').innerHTML = html;
+        if (!confirm('Kirim email undangan ke semua peserta?')) {
+            return;
+        }
         
-    } catch (error) {
-        console.error('Error loading kehadiran:', error);
-        document.getElementById('kehadiranContent').innerHTML = 
-            '<div class="error-message">Gagal memuat data kehadiran. Silakan coba lagi.</div>';
+        try {
+            showLoading();
+            
+            console.log('Sending email for notulen ID:', notulenId);
+            
+            const formData = new FormData();
+            formData.append('notulen_id', notulenId);
+            
+            // Kirim request ke server
+            const response = await fetch('send_email.php', {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'Accept': 'application/json'
+                }
+            });
+            
+            // Dapatkan teks respons
+            const responseText = await response.text();
+            console.log('Response text (first 500 chars):', responseText.substring(0, 500));
+            
+            // Coba parse sebagai JSON
+            try {
+                const result = JSON.parse(responseText);
+                console.log('Parsed result:', result);
+                
+                if (result.success) {
+                    showToast(result.message || 'Email undangan berhasil dikirim!', 'success');
+                    
+                    // Optional: reload halaman setelah beberapa detik
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 2000);
+                } else {
+                    showToast(result.error || 'Gagal mengirim email undangan', 'error');
+                }
+            } catch (jsonError) {
+                console.error('JSON Parse Error:', jsonError);
+                console.error('Full Response:', responseText);
+                
+                // Tampilkan error yang lebih informatif
+                showToast('Terjadi kesalahan pada server. Lihat console untuk detail.', 'error');
+            }
+        } catch (error) {
+            console.error('Network Error:', error);
+            showToast('Gagal terhubung ke server: ' + error.message, 'error');
+        } finally {
+            hideLoading();
+        }
+    } 
+    
+    // ================== FUNGSI BANTU LAINNYA ==================
+    async function showKehadiranModal(notulenId) {
+        try {
+            kehadiranModal.classList.add('active');
+            document.body.style.overflow = 'hidden';
+            
+            const response = await fetch(`get_kehadiran.php?notulen_id=${notulenId}`);
+            const data = await response.json();
+            
+            let html = '<div class="peserta-detail-list">';
+            
+            if (data.length === 0) {
+                html += '<p class="no-attachment">Belum ada data kehadiran.</p>';
+            } else {
+                data.forEach((item, index) => {
+                    let statusClass = 'belum';
+                    let statusText = 'Belum Konfirmasi';
+                    
+                    if (item.status === 'hadir') {
+                        statusClass = 'hadir';
+                        statusText = 'Hadir';
+                    } else if (item.status === 'tidak_hadir') {
+                        statusClass = 'tidak_hadir';
+                        statusText = 'Tidak Hadir';
+                    }
+                    
+                    const waktuKonfirmasi = item.waktu_konfirmasi 
+                        ? new Date(item.waktu_konfirmasi).toLocaleString('id-ID')
+                        : '-';
+                    
+                    html += `
+                        <div class="peserta-detail-item">
+                            <div class="peserta-number">${index + 1}.</div>
+                            <div class="peserta-name">${item.full_name}</div>
+                            <div class="peserta-nim">${item.nim}</div>
+                            <div class="peserta-role">${item.role}</div>
+                            <div class="peserta-status ${statusClass}">
+                                ${statusText}
+                                ${item.waktu_konfirmasi ? `<br><small>${waktuKonfirmasi}</small>` : ''}
+                            </div>
+                        </div>
+                    `;
+                });
+            }
+            
+            html += '</div>';
+            document.getElementById('kehadiranContent').innerHTML = html;
+            
+        } catch (error) {
+            console.error('Error loading kehadiran:', error);
+            document.getElementById('kehadiranContent').innerHTML = 
+                '<div class="error-message">Gagal memuat data kehadiran. Silakan coba lagi.</div>';
+        }
     }
-}
     
     // Fungsi toast notification
     function showToast(message, type = 'info') {
@@ -1061,6 +1069,11 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
     }
+    
+    // Fungsi konfirmasi aksi
+    window.confirmAction = function(message) {
+        return confirm(message);
+    };
     
     // Validasi peserta sebelum submit
     function validatePeserta() {
