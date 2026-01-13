@@ -30,7 +30,9 @@ $userLogin = $stmtUser->get_result()->fetch_assoc();
 $stmtUser->close();
 
 $foto_sekarang = $userLogin['photo'];
+
 $path_valid = (!empty($userLogin['photo'])) ? $userLogin['photo'] : 'uploads/profile_photos/default_profile.png';
+
 $current_photo_url = $path_valid . "?t=" . time();
 
 /* ================== INISIALISASI ================== */
@@ -463,17 +465,25 @@ if (!$is_search) {
                 <input type="number" id="modal_angkatan" name="edit_angkatan" required>
 
                 <label for="modal_angkatan">Role</label>
-                <select name="edit_role" id="modal_role">
-                    <option value="admin">Admin</option>
-                    <option value="notulis">Notulis</option>
-                    <option value="tamu">Tamu</option>
-                </select>
+                <div class="custom-select-wrapper">
+                    <div class="select-styled" id="select-role-trigger">Tamu</div>
+                    <ul class="select-options" id="options-role">
+                        <li data-value="admin">Admin</li>
+                        <li data-value="notulis">Notulis</li>
+                        <li data-value="tamu" class="active">Tamu</li>
+                    </ul>
+                    <input type="hidden" name="edit_role" id="modal_role" value="tamu">
+                </div>
 
                 <label for="modal_angkatan">Status</label>
-                <select name="edit_is_active" id="modal_is_active">
-                    <option value="1">Aktif</option>
-                    <option value="0">Nonaktif</option>
-                </select>
+                <div class="custom-select-wrapper">
+                    <div class="select-styled" id="select-status-trigger">Aktif</div>
+                    <ul class="select-options" id="options-status">
+                        <li data-value="1">Aktif</li>
+                        <li data-value="0">Nonaktif</li>
+                    </ul>
+                    <input type="hidden" name="edit_is_active" id="modal_is_active" value="1">
+                </div>
                 <button type="submit" name="edit_user" class="btn-update-modal">Update</button>
             </form>
         </div>
@@ -482,12 +492,8 @@ if (!$is_search) {
     <script>
         const modal = document.getElementById("editUserModal");
 
-        // 2. Fungsi buka modal (dipanggil dari onclick)
         function openEditModal(id, name, jurusan, angkatan, role, status) {
-            if (!modal) {
-                console.error("Modal element not found!");
-                return;
-            }
+            if (!modal) return;
 
             modal.style.display = "block";
 
@@ -495,26 +501,65 @@ if (!$is_search) {
             document.getElementById("modal_full_name").value = name;
             document.getElementById("modal_jurusan").value = jurusan;
             document.getElementById("modal_angkatan").value = angkatan;
-            document.getElementById("modal_role").value = role;
-            document.getElementById("modal_is_active").value = status;
+
+            // --- Update Dropdown Kustom ROLE ---
+            const roleHiddenInput = document.getElementById("modal_role");
+            roleHiddenInput.value = role;
+            updateCustomSelectUI(roleHiddenInput, role);
+
+            // --- Update Dropdown Kustom STATUS ---
+            const statusHiddenInput = document.getElementById("modal_is_active");
+            statusHiddenInput.value = status;
+            updateCustomSelectUI(statusHiddenInput, status);
         }
 
-        // 3. Fungsi tutup modal
+        function updateCustomSelectUI(hiddenInput, value) {
+            const wrapper = hiddenInput.closest('.custom-select-wrapper');
+            const trigger = wrapper.querySelector('.select-styled');
+            const options = wrapper.querySelectorAll('li');
+
+            options.forEach(opt => {
+                opt.classList.remove('active');
+                if (opt.getAttribute('data-value') == value) {
+                    opt.classList.add('active');
+                    trigger.innerText = opt.innerText; 
+                }
+            });
+        }
+
+        document.querySelectorAll('.custom-select-wrapper').forEach(wrapper => {
+            const trigger = wrapper.querySelector('.select-styled');
+            const optionsList = wrapper.querySelector('.select-options');
+            const hiddenInput = wrapper.querySelector('input[type="hidden"]');
+
+            trigger.addEventListener('click', () => {
+                optionsList.style.display = optionsList.style.display === 'block' ? 'none' : 'block';
+            });
+
+            wrapper.querySelectorAll('li').forEach(opt => {
+                opt.addEventListener('click', () => {
+                    trigger.innerText = opt.innerText;
+                    hiddenInput.value = opt.getAttribute('data-value');
+                    optionsList.style.display = 'none';
+
+                    wrapper.querySelectorAll('li').forEach(li => li.classList.remove('active'));
+                    opt.classList.add('active');
+                });
+            });
+        });
+
         function closeEditModal() {
-            if (modal) {
-                modal.style.display = "none";
-            }
+            if (modal) modal.style.display = "none";
         }
 
-        // 4. Tutup modal jika klik di luar area modal
         window.onclick = function (e) {
             if (e.target === modal) {
                 closeEditModal();
             }
+            if (!e.target.closest('.custom-select-wrapper')) {
+                document.querySelectorAll('.select-options').forEach(el => el.style.display = 'none');
+            }
         };
-
-
-
 
         document.addEventListener("DOMContentLoaded", function () {
             const sidebar = document.querySelector(".sidebar");
