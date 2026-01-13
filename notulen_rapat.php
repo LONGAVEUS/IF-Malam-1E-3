@@ -251,31 +251,50 @@ if (isset($_GET['action']) && isset($_GET['id'])) {
     unset($_SESSION['temp_error_msg']);
     
     if ($action == 'delete') {
-        // Hapus notulen
-        $sql_delete = "DELETE FROM notulen WHERE id = ? AND created_by_user_id = ?";
-        $stmt_delete = $conn->prepare($sql_delete);
-        $stmt_delete->bind_param("ii", $notulen_id, $user_id);
+        // Hapus notulen - hanya jika status draft atau final
+        $sql_check = "SELECT status FROM notulen WHERE id = ? AND created_by_user_id = ?";
+        $stmt_check = $conn->prepare($sql_check);
+        $stmt_check->bind_param("ii", $notulen_id, $user_id);
+        $stmt_check->execute();
+        $result_check = $stmt_check->get_result();
         
-        if ($stmt_delete->execute()) {
-            // Hapus peserta notulen
-            $sql_delete_peserta = "DELETE FROM peserta_notulen WHERE notulen_id = ?";
-            $stmt_delete_peserta = $conn->prepare($sql_delete_peserta);
-            $stmt_delete_peserta->bind_param("i", $notulen_id);
-            $stmt_delete_peserta->execute();
-            $stmt_delete_peserta->close();
+        if ($result_check->num_rows > 0) {
+            $notulen_data = $result_check->fetch_assoc();
+            $status = $notulen_data['status'];
             
-            // Hapus kehadiran
-            $sql_delete_kehadiran = "DELETE FROM kehadiran WHERE notulen_id = ?";
-            $stmt_delete_kehadiran = $conn->prepare($sql_delete_kehadiran);
-            $stmt_delete_kehadiran->bind_param("i", $notulen_id);
-            $stmt_delete_kehadiran->execute();
-            $stmt_delete_kehadiran->close();
-            
-            $_SESSION['temp_success_msg'] = "Notulen berhasil dihapus!";
+            // Hanya izinkan hapus untuk status draft atau final
+            if ($status == 'draft' || $status == 'final') {
+                $sql_delete = "DELETE FROM notulen WHERE id = ? AND created_by_user_id = ?";
+                $stmt_delete = $conn->prepare($sql_delete);
+                $stmt_delete->bind_param("ii", $notulen_id, $user_id);
+                
+                if ($stmt_delete->execute()) {
+                    // Hapus peserta notulen
+                    $sql_delete_peserta = "DELETE FROM peserta_notulen WHERE notulen_id = ?";
+                    $stmt_delete_peserta = $conn->prepare($sql_delete_peserta);
+                    $stmt_delete_peserta->bind_param("i", $notulen_id);
+                    $stmt_delete_peserta->execute();
+                    $stmt_delete_peserta->close();
+                    
+                    // Hapus kehadiran
+                    $sql_delete_kehadiran = "DELETE FROM kehadiran WHERE notulen_id = ?";
+                    $stmt_delete_kehadiran = $conn->prepare($sql_delete_kehadiran);
+                    $stmt_delete_kehadiran->bind_param("i", $notulen_id);
+                    $stmt_delete_kehadiran->execute();
+                    $stmt_delete_kehadiran->close();
+                    
+                    $_SESSION['temp_success_msg'] = "Notulen berhasil dihapus!";
+                } else {
+                    $_SESSION['temp_error_msg'] = "Gagal menghapus notulen!";
+                }
+                $stmt_delete->close();
+            } else {
+                $_SESSION['temp_error_msg'] = "Notulen dengan status 'sent' tidak dapat dihapus!";
+            }
         } else {
-            $_SESSION['temp_error_msg'] = "Gagal menghapus notulen!";
+            $_SESSION['temp_error_msg'] = "Notulen tidak ditemukan atau Anda tidak memiliki akses!";
         }
-        $stmt_delete->close();
+        $stmt_check->close();
         
         // Redirect untuk menghindari resubmission
         header("Location: notulen_rapat.php?page=" . $page);
@@ -484,7 +503,7 @@ $default_hari = $hari_list[date('N') - 1]; // N adalah 1 (Senin) hingga 7 (Mingg
                 </li>
             </ul>
         </nav>
-    </div>>
+    </div>
 
     <!-- Main Content -->
     <div class="main-content" id="mainContent">
@@ -558,6 +577,7 @@ $default_hari = $hari_list[date('N') - 1]; // N adalah 1 (Senin) hingga 7 (Mingg
                     </div>
                     <div class="notulen-actions">
                         <?php if ($notulen['status'] == 'draft'): ?>
+                        <!-- DRAFT: Edit, Kirim, Kirim Email, Hapus -->
                         <a href="#" class="action-btn edit" title="Edit"
                             onclick="openEditModal(<?php echo $notulen['id']; ?>); return false;">
                             <i class="fas fa-edit"></i>
@@ -566,11 +586,9 @@ $default_hari = $hari_list[date('N') - 1]; // N adalah 1 (Senin) hingga 7 (Mingg
                             title="Kirim" onclick="return confirmAction('Kirim notulen ke peserta?')">
                             <i class="fas fa-paper-plane"></i>
                         </a>
-                        <!-- Tombol Kirim Email Undangan -->
                         <button class="action-btn email" title="Kirim Email Undangan" 
-                        data-id="<?php echo $notulen['id']; ?>">
-                    <i class="fas fa-envelope"></i>
-                </button>
+                                data-id="<?php echo $notulen['id']; ?>">
+                            <i class="fas fa-envelope"></i>
                         </button>
                         <a href="notulen_rapat.php?action=delete&id=<?php echo $notulen['id']; ?>"
                             class="action-btn delete" title="Hapus"
@@ -579,11 +597,15 @@ $default_hari = $hari_list[date('N') - 1]; // N adalah 1 (Senin) hingga 7 (Mingg
                         </a>
 
                         <?php elseif ($notulen['status'] == 'sent'): ?>
+                        <!-- SENT: Edit, Lihat Kehadiran, Kirim Email, Finalisasi -->
+                        <a href="#" class="action-btn edit" title="Edit"
+                            onclick="openEditModal(<?php echo $notulen['id']; ?>); return false;">
+                            <i class="fas fa-edit"></i>
+                        </a>
                         <button class="action-btn view btn-kehadiran" title="Lihat Kehadiran"
                             data-id="<?php echo $notulen['id']; ?>">
                             <i class="fas fa-user-check"></i>
                         </button>
-                        <!-- Tombol Kirim Email Undangan -->
                         <button class="action-btn email" title="Kirim Email Undangan"
                             data-id="<?php echo $notulen['id']; ?>"
                             onclick="sendEmailInvitation(<?php echo $notulen['id']; ?>)">
@@ -596,6 +618,7 @@ $default_hari = $hari_list[date('N') - 1]; // N adalah 1 (Senin) hingga 7 (Mingg
                         </a>
 
                         <?php elseif ($notulen['status'] == 'final'): ?>
+                        <!-- FINAL: Lihat Kehadiran, Download PDF, Hapus -->
                         <button class="action-btn view btn-kehadiran" title="Lihat Kehadiran"
                             data-id="<?php echo $notulen['id']; ?>">
                             <i class="fas fa-user-check"></i>
@@ -1072,7 +1095,6 @@ $default_hari = $hari_list[date('N') - 1]; // N adalah 1 (Senin) hingga 7 (Mingg
             }
         }, 500);
     });
-</script>
     </script>
 
     <script src="notulen-rapat.js"></script>
@@ -1084,3 +1106,4 @@ $default_hari = $hari_list[date('N') - 1]; // N adalah 1 (Senin) hingga 7 (Mingg
 if (isset($stmt_notulens) && $stmt_notulens) {
     $stmt_notulens->close();
 }
+?>
