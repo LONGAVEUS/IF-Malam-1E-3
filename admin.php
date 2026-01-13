@@ -39,27 +39,55 @@ if (isset($_GET['action']) && $_GET['action'] === 'logout') {
     exit();
 }
 
-
-
-// 1. Ambil Total Pengguna (dari tabel 'pengguna')
+// 1. Ambil Total Pengguna
 $sql_user_count = "SELECT COUNT(user_id) AS total FROM user WHERE is_active = 1";
 $result_user_count = $conn->query($sql_user_count);
 $total_pengguna = $result_user_count ? $result_user_count->fetch_assoc()['total'] : 0;
 
-// 2. Ambil Total Jadwal Aktif (Asumsi: tabel 'jadwal', kolom 'status')
-$sql_jadwal_aktif = "SELECT COUNT(id) AS total FROM jadwal WHERE status = 'Aktif'";
-$result_jadwal_aktif = $conn->query($sql_jadwal_aktif);
-$total_jadwal_aktif = $result_jadwal_aktif ? $result_jadwal_aktif->fetch_assoc()['total'] : 0;
+// 2. Ambil Total Notulen Aktif (semua status)
+$sql_notulen_aktif = "SELECT COUNT(id) AS total FROM notulen";
+$result_notulen_aktif = $conn->query($sql_notulen_aktif);
+$total_notulen_aktif = $result_notulen_aktif ? $result_notulen_aktif->fetch_assoc()['total'] : 0;
 
-// 3. Ambil Total Notulen Hari Ini (Asumsi: tabel 'notulen', kolom 'tanggal')
+// 3. Ambil Total Notulen Hari Ini (tanggal = hari ini)
 $today = date('Y-m-d');
 $sql_notulen_hari_ini = "SELECT COUNT(id) AS total FROM notulen WHERE DATE(tanggal) = '$today'";
 $result_notulen_hari_ini = $conn->query($sql_notulen_hari_ini);
 $notulen_hari_ini = $result_notulen_hari_ini ? $result_notulen_hari_ini->fetch_assoc()['total'] : 0;
 
-// 4. Ambil statistik jumlah pengguna per jurusan
+// 4. Ambil statistik jumlah pengguna per jurusan untuk diagram batang
 $sql_unit = "SELECT jurusan, COUNT(*) as total FROM user GROUP BY jurusan ORDER BY total DESC";
 $result_unit = $conn->query($sql_unit);
+
+// 5. Ambil statistik notulen untuk diagram pie
+$sql_notulen_stats = "SELECT 
+    SUM(CASE WHEN status = 'final' THEN 1 ELSE 0 END) as final,
+    SUM(CASE WHEN status IN ('draft', 'sent') THEN 1 ELSE 0 END) as draft
+    FROM notulen";
+$result_notulen_stats = $conn->query($sql_notulen_stats);
+$notulen_stats = $result_notulen_stats ? $result_notulen_stats->fetch_assoc() : ['final' => 0, 'draft' => 0];
+
+// Hitung persentase untuk diagram pie
+$total_notulen_all = $notulen_stats['final'] + $notulen_stats['draft'];
+$persentase_final = $total_notulen_all > 0 ? ($notulen_stats['final'] / $total_notulen_all) * 100 : 0;
+$persentase_draft = $total_notulen_all > 0 ? ($notulen_stats['draft'] / $total_notulen_all) * 100 : 0;
+
+// Persiapkan data jurusan untuk diagram batang
+$jurusan_data = [];
+$max_jurusan = 0; // Untuk skala diagram
+if ($result_unit && $result_unit->num_rows > 0) {
+    while ($row = $result_unit->fetch_assoc()) {
+        $nama_jurusan = !empty($row['jurusan']) ? $row['jurusan'] : 'Umum/Lainnya';
+        $total = $row['total'];
+        $jurusan_data[] = [
+            'nama' => $nama_jurusan,
+            'total' => $total
+        ];
+        if ($total > $max_jurusan) {
+            $max_jurusan = $total;
+        }
+    }
+}
 ?>
 
 <!DOCTYPE html>
@@ -109,12 +137,6 @@ $result_unit = $conn->query($sql_unit);
           <a href="jadwal_rapat.php" class="nav-link">
             <i class="fas fa-calendar-alt nav-icon"></i>
             <span class="nav-label">Jadwal Rapat</span>
-          </a>
-        </li>
-        <li class="nav-item">
-          <a href="#" class="nav-link">
-            <i class="fas fa-file-alt nav-icon"></i>
-            <span class="nav-label">Notulen Rapat</span>
           </a>
         </li>
         <li class="nav-item">
@@ -172,8 +194,8 @@ $result_unit = $conn->query($sql_unit);
         <div class="count-label">Total Pengguna</div>
       </div>
       <div class="user-count-box active-schedule">
-        <div class="count-number"><?php echo $total_jadwal_aktif; ?></div>
-        <div class="count-label">Jadwal Aktif</div>
+        <div class="count-number"><?php echo $total_notulen_aktif; ?></div>
+        <div class="count-label">Notulen Aktif</div>
       </div>
       <div class="user-count-box daily-notes">
         <div class="count-number"><?php echo $notulen_hari_ini; ?></div>
@@ -181,25 +203,54 @@ $result_unit = $conn->query($sql_unit);
       </div>
     </div>
 
-    <div class="users-section-grid">
-      <div class="card user-list-card">
-        <h3><i class="fas fa-university"></i> Statistik Pengguna Per Unit</h3>
-        <div class="user-list" id="user-data-list">
-          <?php
-          if ($result_unit && $result_unit->num_rows > 0) {
-            while ($row = $result_unit->fetch_assoc()) {
-              $nama_jurusan = !empty($row['jurusan']) ? $row['jurusan'] : 'Umum/Lainnya';
-            ?>
-          <div class='user-item'>
-            <div class='user-name'><strong><?php echo htmlspecialchars($nama_jurusan); ?></strong></div>
-            <div class='user-status'><?php echo $row['total']; ?> User </div>
+    <div class="charts-container">
+      <!-- Diagram Batang untuk Statistik Pengguna per Jurusan -->
+      <div class="chart-card">
+        <h3><i class="fas fa-university"></i> Statistik Pengguna Per Jurusan</h3>
+        <div class="bar-chart-horizontal">
+          <?php if (!empty($jurusan_data)): ?>
+            <?php foreach ($jurusan_data as $jurusan): ?>
+              <?php 
+              // Hitung persentase untuk lebar bar
+              $width_percent = $max_jurusan > 0 ? ($jurusan['total'] / $max_jurusan) * 100 : 0;
+              ?>
+              <div class="bar-row">
+                <div class="bar-label"><?php echo htmlspecialchars($jurusan['nama']); ?></div>
+                <div class="bar-container">
+                  <div class="bar-horizontal" style="width: <?php echo $width_percent; ?>%">
+                    <span class="bar-value"><?php echo $jurusan['total']; ?></span>
+                  </div>
+                </div>
+              </div>
+            <?php endforeach; ?>
+          <?php else: ?>
+            <p class="no-data">Tidak ada data jurusan</p>
+          <?php endif; ?>
+        </div>
+      </div>
+
+      <!-- Diagram Pie untuk Statistik Notulen -->
+      <div class="chart-card">
+        <h3><i class="fas fa-file-alt"></i> Status Notulen</h3>
+        <div class="pie-chart-container">
+          <!-- Diagram Pie dengan CSS conic-gradient (tanpa JavaScript) -->
+          <div class="pie-chart" style="
+            background: conic-gradient(
+              #4CAF50 0% <?php echo $persentase_final; ?>%,
+              #FF9800 <?php echo $persentase_final; ?>% 100%
+            );
+          "></div>
+          
+          <div class="pie-legend">
+            <div class="legend-item">
+              <span class="legend-color final"></span>
+              <span class="legend-text">Final: <?php echo $notulen_stats['final']; ?> (<?php echo round($persentase_final, 1); ?>%)</span>
+            </div>
+            <div class="legend-item">
+              <span class="legend-color draft"></span>
+              <span class="legend-text">Draft: <?php echo $notulen_stats['draft']; ?> (<?php echo round($persentase_draft, 1); ?>%)</span>
+            </div>
           </div>
-          <?php
-            }
-          } else {
-            echo "<p style='text-align: center; padding: 20px; color: #666;'>Tidak ada pengguna yang ditemukan.</p>";
-          }
-          ?>
         </div>
       </div>
     </div>
@@ -241,7 +292,6 @@ $result_unit = $conn->query($sql_unit);
     });
   </script>
 
-
 </body>
 
 </html>
@@ -251,4 +301,3 @@ if (isset($conn)) {
     $conn->close();
 }
 ?>
-
