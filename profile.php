@@ -124,21 +124,8 @@ $dashboard = ($role === 'admin') ? 'admin.php'
                     </a>
                 </li>
 
-                <li>
-                    <a href="#" class="nav-link">
-                        <i class="fas fa-bell nav-icon"></i>
-                        <span class="nav-label">Notifikasi</span>
-                    </a>
-                </li>
-
                 <?php elseif ($role === 'tamu'): ?>
 
-                <li>
-                    <a href="tamu.php" class="nav-link">
-                        <i class="fas fa-file-alt nav-icon"></i>
-                        <span class="nav-label">Notulen Rapat</span>
-                    </a>
-                </li>
 
                 <li>
                     <a href="jadwal_rapat_tamu.php" class="nav-link">
