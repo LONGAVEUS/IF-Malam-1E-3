@@ -2,6 +2,11 @@
 session_start();
 require_once 'koneksi.php';
 
+// Nama File: notulis.php
+// Deskripsi: Halaman dashboard untuk user dengan role notulis
+// Dibuat oleh: Arnol Hutagalung - 3312511130
+// Tanggal: 2 Desember 2025
+
 // Proteksi login
 if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
     header("Location: login.php");
@@ -71,7 +76,8 @@ $start_date_filter = isset($_GET['start_date']) ? $_GET['start_date'] : '';
 $end_date_filter = isset($_GET['end_date']) ? $_GET['end_date'] : '';
 
 /* ================== PAGINATION ================== */
-$limit = 5; // Notulen per halaman
+// Logika pagination - menghitung halaman dan offset
+$limit = 5;
 $page = isset($_GET['page']) ? max(1, intval($_GET['page'])) : 1;
 $offset = ($page - 1) * $limit;
 
@@ -126,7 +132,7 @@ $stmt_count->close();
 // Hitung total halaman
 $total_pages = ceil($total_notulens / $limit);
 
-// Validasi page number
+// Validasi: jika halaman melebihi total, redirect ke halaman terakhir
 if ($page > $total_pages && $total_pages > 0) {
     header("Location: notulis.php?page=" . $total_pages);
     exit();
