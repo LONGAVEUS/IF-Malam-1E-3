@@ -500,7 +500,8 @@ $notulen_bulan_ini = $stats['month_count'] ?? 0;
     </div>
   </div>
 
-  <script src="tamu_script.js"></script> <!-- Gunakan script tamu yang sudah dimodifikasi -->
+  <script src="https://cdn.jsdelivr.net/npm/signature_pad@4.0.0/dist/signature_pad.umd.min.js"></script>
+  <script src="tamu_script.js"></script> 
 </body>
 
 </html>
