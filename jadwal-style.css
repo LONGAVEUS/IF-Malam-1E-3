@@ -1093,3 +1093,59 @@ body {
     font-size: 0.7rem !important;
   }
 }
+
+/* ================= ADMIN STATS STYLES ================= */
+.admin-stats {
+    display: flex;
+    gap: 1rem;
+    margin-top: 0.75rem;
+    flex-wrap: wrap;
+}
+
+.stat-badge {
+    background: rgba(255, 255, 255, 0.15);
+    border-radius: 0.375rem;
+    padding: 0.375rem 0.75rem;
+    font-size: 0.85rem;
+    color: white;
+    display: flex;
+    align-items: center;
+    gap: 0.375rem;
+}
+
+.stat-badge i {
+    color: #27ae60;
+}
+
+/* ================= NOTULIS BADGE IN CALENDAR ================= */
+.notulis-badge {
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 0.1875rem;
+    font-size: 0.6rem;
+    padding: 0.0625rem 0.25rem;
+    margin-left: 0.25rem;
+    font-style: italic;
+}
+
+.multi-badge {
+    margin-left: 0.25rem;
+    font-size: 0.7rem;
+    opacity: 0.8;
+}
+
+/* ================= MOBILE ADMIN STATS ================= */
+@media (max-width: 768px) {
+    .admin-stats {
+        gap: 0.5rem;
+    }
+    
+    .stat-badge {
+        font-size: 0.75rem;
+        padding: 0.25rem 0.5rem;
+    }
+    
+    .notulis-badge,
+    .multi-badge {
+        display: none; /* Sembunyikan di mobile untuk menghemat space */
+    }
+}
