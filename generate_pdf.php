@@ -153,7 +153,7 @@ function generateNotulenPDF($notulen_id, $conn = null) {
         $pdf->SetFont('Times', '', 11);
         $pdf->MultiLineText($notulen['hasil_akhir'] ?: '- Tidak ada hasil akhir -', 'J');
 
-        // --- 1. PROSES DATA TANDA TANGAN (Query sudah benar) ---
+// --- 1. PROSES DATA TANDA TANGAN ---
 $sql_ttd = "SELECT u.full_name, k.signature_path 
             FROM kehadiran k 
             JOIN user u ON k.user_id = u.user_id 
@@ -164,7 +164,7 @@ $stmt_ttd->bind_param("iss", $notulen_id, $notulen['penanggung_jawab'], $notulen
 $stmt_ttd->execute();
 $res_ttd = $stmt_ttd->get_result();
 
-$ttd_images = []; // Variabel penampung hasil query
+$ttd_images = []; 
 while($row = $res_ttd->fetch_assoc()) {
     $ttd_images[$row['full_name']] = $row['signature_path']; 
 }
@@ -175,32 +175,32 @@ $pdf->Cell(70, 6, 'Pemimpin Rapat,', 0, 0, 'C');
 $pdf->SetX(115);
 $pdf->Cell(70, 6, 'Notulis Rapat,', 0, 1, 'C');
 
-// --- 3. LOGIKA GAMBAR TTD (Gunakan $ttd_images) ---
+// --- 3. LOGIKA GAMBAR TTD ---
 $y_img = $pdf->GetY(); 
 
 // Gambar TTD Pemimpin Rapat
 if (isset($ttd_images[$notulen['penanggung_jawab']])) {
-    $path_p = 'uploads/' . $ttd_images[$notulen['penanggung_jawab']];
-    if (file_exists($path_p)) {
+    $path_p = 'uploads/signatures/' . $ttd_images[$notulen['penanggung_jawab']];
+    if (file_exists($path_p) && !empty($ttd_images[$notulen['penanggung_jawab']])) {
         $pdf->Image($path_p, 45, $y_img, 30, 15);
     }
 }
 
 // Gambar TTD Notulis Rapat
 if (isset($ttd_images[$notulen['notulis']])) {
-    $path_n = 'uploads/' . $ttd_images[$notulen['notulis']];
-    if (file_exists($path_n)) {
+    $path_n = 'uploads/signatures/' . $ttd_images[$notulen['notulis']];
+    if (file_exists($path_n) && !empty($ttd_images[$notulen['notulis']])) {
         $pdf->Image($path_n, 135, $y_img, 30, 15);
     }
 }
 
-        $pdf->Ln(18);
-        $pdf->SetFont('Times', 'BU', 11);
-        $pdf->SetX(25);
-        $pdf->Cell(70, 6, $notulen['penanggung_jawab'], 0, 0, 'C');
-        $pdf->SetX(115);
-        $pdf->Cell(70, 6, $notulen['notulis'], 0, 1, 'C');
-
+// --- 4. TAMPILAN NAMA ---
+$pdf->SetY($y_img + 18); 
+$pdf->SetFont('Times', 'BU', 11);
+$pdf->SetX(25);
+$pdf->Cell(70, 6, $notulen['penanggung_jawab'], 0, 0, 'C');
+$pdf->SetX(115);
+$pdf->Cell(70, 6, $notulen['notulis'], 0, 1, 'C');
         // --- HALAMAN 2: DAFTAR HADIR ---
         $sql_peserta = "SELECT u.full_name, u.nim, u.role, k.status, k.signature_path 
                         FROM peserta_notulen pn 
@@ -237,8 +237,10 @@ if (isset($ttd_images[$notulen['notulis']])) {
                 $x_ttd = $pdf->GetX();
                 $pdf->Cell(55, 12, '', 1, 1, 'C');
                 if (($p['status'] ?? '') == 'hadir' && !empty($p['signature_path'])) {
-                    $img = 'uploads/' . $p['signature_path'];
-                    if (file_exists($img)) $pdf->Image($img, $x_ttd + 15, $y + 1, 25, 10);
+                  $img = 'uploads/signatures/' . $p['signature_path']; 
+                    if (file_exists($img)) {
+                       $pdf->Image($img, $x_ttd + 15, $y + 1, 25, 10);
+                    }
                 }
             }
         }
