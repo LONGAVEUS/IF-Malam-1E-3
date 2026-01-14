@@ -299,16 +299,17 @@ $dashboard_url = "tamu.php";
           <span class="legend-text">Hari Ini</span>
         </div>
         <div class="legend-item">
-          <span class="legend-color" style="background-color: #f39c12;"></span>
-          <span class="legend-text">Draft</span>
-        </div>
-        <div class="legend-item">
           <span class="legend-color" style="background-color: #27ae60;"></span>
           <span class="legend-text">Terkirim</span>
         </div>
         <div class="legend-item">
           <span class="legend-color" style="background-color: #2ecc71;"></span>
           <span class="legend-text">Final</span>
+        </div>
+        <div class="legend-item">
+          <span class="legend-color" style="background-color: #9b59b6;"></span>
+          <span class="legend-text">Multiple Notulen</span>
+        </div>
         </div>
       </div>
     </div>
