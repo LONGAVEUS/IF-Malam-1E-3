@@ -190,12 +190,6 @@ $notulen_bulan_ini = $stats['month_count'] ?? 0;
           <span class="nav-label">Jadwal Rapat</span>
         </a>
       </li>
-      <li class="nav-item">
-        <a href="tamu.php" class="nav-link">
-          <i class="fas fa-file-alt nav-icon"></i>
-          <span class="nav-label">Notulen Rapat</span>
-        </a>
-      </li>
     </ul>
 
     <ul class="nav-list secondary-nav">
@@ -513,3 +507,4 @@ if (isset($conn)) {
     $conn->close();
 }
 ?>
+
