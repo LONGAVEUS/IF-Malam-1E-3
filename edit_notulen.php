@@ -4,7 +4,7 @@ require_once 'koneksi.php';
 
 // Enable error reporting for debugging
 error_reporting(E_ALL);
-ini_set('display_errors', 0); // Set to 1 for debugging
+ini_set('display_errors', 0);
 
 header('Content-Type: application/json');
 
@@ -29,10 +29,11 @@ try {
     $notulen_id = intval($_GET['id']);
     
     // Query untuk mendapatkan data notulen
+    // PERUBAHAN: Hanya izinkan edit untuk status draft dan sent
     $sql = "SELECT n.*, 
             (SELECT COUNT(*) FROM peserta_notulen pn WHERE pn.notulen_id = n.id) as jumlah_peserta
             FROM notulen n 
-            WHERE n.id = ? AND n.created_by_user_id = ?";
+            WHERE n.id = ? AND n.created_by_user_id = ? AND n.status IN ('draft', 'sent')";
     
     $stmt = $conn->prepare($sql);
     if (!$stmt) {
@@ -44,7 +45,7 @@ try {
     $result = $stmt->get_result();
     
     if ($result->num_rows === 0) {
-        throw new Exception('Notulen tidak ditemukan atau Anda tidak memiliki akses');
+        throw new Exception('Notulen tidak ditemukan, Anda tidak memiliki akses, atau notulen sudah final dan tidak dapat diedit');
     }
     
     $notulen = $result->fetch_assoc();
@@ -96,7 +97,6 @@ try {
     echo json_encode($response, JSON_UNESCAPED_UNICODE);
     
 } catch (Exception $e) {
-    // Log error untuk debugging
     error_log("Edit Notulen Error: " . $e->getMessage());
     
     $response = [
