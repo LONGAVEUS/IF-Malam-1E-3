@@ -71,16 +71,27 @@ try {
     }
 
     $mail->Body = "
-        <h3>Undangan Rapat</h3>
-        <p><b>Judul:</b> {$notulen['judul']}</p>
-        <p><b>Tanggal:</b> {$notulen['tanggal']}</p>
-        <p><b>Waktu:</b> {$notulen['jam_mulai']} - {$notulen['jam_selesai']}</p>
-        <p><b>Tempat:</b> {$notulen['tempat']}</p>
+        <h3>Undangan Resmi Pertemuan / Rapat</h3>
+        <p>Dengan hormat,</p>
+        <p>Bersama surat ini, kami mengundang Bapak/Ibu untuk menghadiri rapat yang akan dilaksanakan pada:</p>
+    
+        <table style='border-collapse: collapse;'>
+            <tr><td style='width: 100px;'><b>Agenda</b></td><td>: {$notulen['judul']}</td></tr>
+            <tr><td><b>Tanggal</b></td><td>: " . date('d F Y', strtotime($notulen['tanggal'])) . "</td></tr>
+            <tr><td><b>Waktu</b></td><td>: {$notulen['jam_mulai']} - {$notulen['jam_selesai']} WIB</td></tr>
+            <tr><td><b>Tempat</b></td><td>: {$notulen['tempat']}</td></tr>
+        </table>
 
-        <p> anda telah di undang rapat segera konfirmasi kehadiran di situs yang telah disediakan <p>
-    ";
+       <p>Mengingat pentingnya pembahasan dalam agenda ini, kami mengharapkan kehadiran Bapak/Ibu tepat pada waktunya.</p>
+    
+       <p>Mohon melakukan konfirmasi kehadiran melalui tautan/situs yang telah disediakan sebelum waktu pelaksanaan.</p>
+    
+       <p>Demikian undangan ini kami sampaikan. Atas perhatian dan kerjasamanya, kami ucapkan terima kasih.</p>
+       <br>
+       <p>Hormat kami,<br><b>Sekretariat/Panitia Rapat</b></p>";
 
     $mail->send();
+
 
     echo json_encode(['success' => true, 'message' => 'Email berhasil dikirim']);
 
