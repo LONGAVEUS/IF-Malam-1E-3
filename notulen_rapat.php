@@ -433,12 +433,12 @@ $default_hari = $hari_list[date('N') - 1]; // N adalah 1 (Senin) hingga 7 (Mingg
 </head>
 
 <body>
-    <!-- Sidebar -->
+     <!-- Sidebar -->
     <div class="sidebar">
         <div class="sidebar-header">
             <div class="logo-area">
                 <a href="#" class="header-logo">
-                    <img src="if.png" alt="Politeknik Negeri Batam" />
+                    <img src="if.png" alt="Politeknik Negeri Batam">
                 </a>
             </div>
 
@@ -452,6 +452,7 @@ $default_hari = $hari_list[date('N') - 1]; // N adalah 1 (Senin) hingga 7 (Mingg
         </div>
 
         <nav class="sidebar-nav">
+            <!-- Primary top nav -->
             <ul class="nav-list primary-nav">
                 <li class="nav-item">
                     <a href="notulis.php" class="nav-link">
@@ -473,6 +474,7 @@ $default_hari = $hari_list[date('N') - 1]; // N adalah 1 (Senin) hingga 7 (Mingg
                 </li>
             </ul>
 
+            <!-- Secondary bottom nav -->
             <ul class="nav-list secondary-nav">
                 <li class="nav-item">
                     <a href="profile.php" class="nav-link">
@@ -481,8 +483,8 @@ $default_hari = $hari_list[date('N') - 1]; // N adalah 1 (Senin) hingga 7 (Mingg
                     </a>
                 </li>
                 <li class="nav-item">
-                    <a href="notulen_rapat.php?action=logout" class="nav-link"
-                        onclick="return confirm('Yakin ingin logout?');">
+                    <!-- Logout menggunakan PHP - tidak perlu file terpisah -->
+                    <a href="notulen_rapat.php?action=logout" class="nav-link" onclick="return confirm('Yakin ingin logout?');">
                         <i class="fas fa-sign-out-alt nav-icon"></i>
                         <span class="nav-label">Keluar</span>
                     </a>
@@ -509,9 +511,8 @@ $default_hari = $hari_list[date('N') - 1]; // N adalah 1 (Senin) hingga 7 (Mingg
     <div class="main-content" id="mainContent">
         <div class="dashboard-header">
             <h1>Kelola Notulen Rapat</h1>
-            <p>Buat dan kelala notulen rapat Anda di sini</p><br>
+            <p>Buat dan kelola notulen rapat Anda di sini</p><br>
         </div>
-
         <!-- Tombol Tambah Notulen -->
         <div class="section-header">
             <h2><i class="fas fa-file-alt"></i> Daftar Notulen Anda</h2>
@@ -1064,12 +1065,38 @@ $default_hari = $hari_list[date('N') - 1]; // N adalah 1 (Senin) hingga 7 (Mingg
         <div class="loading-spinner"></div>
     </div>
     <script>
-    // Inisialisasi setelah DOM siap
-    document.addEventListener('DOMContentLoaded', function () {
-        // Inisialisasi sidebar
-        if (typeof initSidebar === 'function') {
-            initSidebar();
+    document.addEventListener("DOMContentLoaded", function () {
+    const sidebar = document.querySelector(".sidebar");
+    const toggler = document.querySelector(".toggler");
+    const sidebarNav = document.querySelector(".sidebar-nav");
+
+    if (!sidebar || !toggler || !sidebarNav) return;
+
+    toggler.addEventListener("click", function (e) {
+        e.stopPropagation();
+
+        /* ================= MOBILE ONLY ================= */
+        if (window.innerWidth <= 768) {
+            sidebarNav.classList.toggle("active");
         }
+    });
+
+    /* ================= CLOSE DROPDOWN SAAT KLIK DI LUAR (MOBILE) ================= */
+    document.addEventListener("click", function (e) {
+        if (window.innerWidth <= 768) {
+            if (!sidebar.contains(e.target)) {
+                sidebarNav.classList.remove("active");
+            }
+        }
+    });
+
+    /* ================= RESET SAAT RESIZE KE DESKTOP ================= */
+    window.addEventListener("resize", function () {
+        if (window.innerWidth > 768) {
+            sidebarNav.classList.remove("active");
+        }
+    });
+
 
         // Tampilkan notifikasi dari PHP jika ada
         <?php if (!empty($success_msg)): ?>
